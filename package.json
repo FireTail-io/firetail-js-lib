@@ -1,0 +1,16 @@
+{
+  "name": "firetail",
+  "version": "0.0.0",
+  "description": "",
+  "main": "app.js",
+  "dependencies": {
+    "express": "^4.18.1",
+    "swagger-parser": "^10.0.3"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app"
+  },
+  "author": "Brian Shannon <brian@firetail.io>"
+}
