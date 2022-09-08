@@ -1,5 +1,5 @@
 const express = require('express')
-const firetailSetup = require("./firetail");
+const firetailSetup = require("../src");
 const app = express()
 const port = 3001
 

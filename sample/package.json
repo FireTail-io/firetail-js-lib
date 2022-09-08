@@ -1,0 +1,15 @@
+{
+  "name": "sample",
+  "version": "1.0.0",
+  "description": "",
+  "main": "service.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node service"
+  },
+  "author": "Brian Shannon <brian@firetail.io>",
+  "license": "LGPL-3.0",
+  "dependencies": {
+    "express": "^4.18.1"
+  }
+}
