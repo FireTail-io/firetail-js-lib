@@ -1,8 +1,23 @@
+// @ts-check
+
 const SwaggerParser = require("@apidevtools/swagger-parser");
+const defaultOpts = require("../config.json");
 
-let yamlPathSt = "./api.yaml"
+interface Options {
+    yamlPath: String | Function;
+}
 
-module.exports = function fileTaileSetup({apiYaml}){
+//=====================================================
+//==================================== file Taile Setup
+//=====================================================
+
+module.exports = function fileTaileSetup({yamlPath} : Options){
+
+  let yamlPathSt = defaultOpts.yamlPath
+  
+//++++++++++++++++++++++++++++ check user set yamlPath
+//++++++++++++++++++++++++++++++++++++++++++++++++++++
+
   if ("string" === typeof yamlPath) {
       yamlPathSt = yamlPath
   } else if ("function" === typeof yamlPath) {
@@ -10,23 +25,38 @@ module.exports = function fileTaileSetup({apiYaml}){
   } else if (process.env && process.env.API_YAML) {
     yamlPathSt = process.env.API_YAML
   }
-  // TODO: Should we catch or crash if spce is not found?
-  apiSpecPr = SwaggerParser.validate(yamlPathSt).then(({paths})=>paths);
   
-  return middleware
+//++++++++++++++++++++++++++++++++++ read in yaml file
+//++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+  // TODO: Should we catch or crash if spce is not found?
+  const apiSpecPr = SwaggerParser.validate(yamlPathSt).then(({paths})=>paths);
+  
+  return middleware.bind({yamlPathSt, apiSpecPr})
 } // END fileTaileSetup
 
+//=====================================================
+//========================================== middleware
+//=====================================================
+
 function middleware(req, res, next) {
-  
+
+  const { yamlPathSt, apiSpecPr } = this 
   const { method, originalUrl } = req
   
   let finishedAt, resBody, scama;
   const startedAt = new Date()
   
+//+++++++++++++++++++++++++++++++++++++++++++ stash fn
+//++++++++++++++++++++++++++++++++++++++++++++++++++++
+  
   const end  = res.end.bind(res)
   const send = res.send.bind(res)
   const json = res.json.bind(res)
   
+//++++++++++++++++++++++++++++++++++++++ call Validate
+//++++++++++++++++++++++++++++++++++++++++++++++++++++
+
   const callValidate = () =>{
     if (finishedAt && undefined !== scama) {
       if (scama) {
@@ -53,6 +83,9 @@ function middleware(req, res, next) {
     } // END if finishedAt && scama
   } // END callValidate
   
+//+++++++++++++++++++++++++++++++++++++ hi-jack res fn
+//++++++++++++++++++++++++++++++++++++++++++++++++++++
+
   res.send = (...args) => {
     resBody = args[0]
     return send(...args)
@@ -66,15 +99,24 @@ function middleware(req, res, next) {
     callValidate()
     return end(...args)
   }
+  
+//++++++++++++++++++++++++++++++++++ get ref for scama
+//++++++++++++++++++++++++++++++++++++++++++++++++++++
+  
   apiSpecPr.then(paths => {
     scama = paths[originalUrl] || null
     callValidate()
   }) // END apiSpecPr.then
+  
   next()
+  
 } // END middleware
 
-function validate(scama, {verb, url, resBody, startedAt, statusCode, headers:{accept}}, error) {
-  console.log(`${url} was FOUND in ${yamlPathSt}`)
+//=====================================================
+//============================================ validate
+//=====================================================
+
+function validate(scama, {verb, url, resBody, startedAt, statusCode, headers:{accept}}) {
   
   const response = scama.responses[statusCode]
   
@@ -91,6 +133,10 @@ function validate(scama, {verb, url, resBody, startedAt, statusCode, headers:{ac
   
 } // END validate
 
+//=====================================================
+//======================================== accept Types
+//=====================================================
+
 function acceptTypes(acceptSt) {
   
   return acceptSt.split(",").map(type=>type.split(";")[0])
@@ -101,6 +147,10 @@ function acceptTypes(acceptSt) {
   SHOULD be interpreted as "I prefer audio/basic, but send me any audio type if it is the best available after an 80% mark-down in quality."
   */
 } // END acceptTypes
+
+//=====================================================
+//============================= find Accept Content Key
+//=====================================================
 
 function findAcceptContentKey(acceptTypes,acceptContent) {
     // TODO: check for "something/*"

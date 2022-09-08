@@ -2,15 +2,42 @@
   "name": "firetail",
   "version": "0.0.0",
   "description": "",
-  "main": "app.js",
+  "main": "./index.js",
+  "license": "LGPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/firetail-io/firetail-js-lib.git"
+  },
+  "bugs": {
+    "url": "https://github.com/firetail-io/firetail-js-lib/issues"
+  },
+  "homepage": "https://github.com/firetail-io/firetail-js-lib#readme",
+  "author": "Brian Shannon <brian@firetail.io>",
   "dependencies": {
-    "express": "^4.18.1",
     "swagger-parser": "^10.0.3"
   },
-  "devDependencies": {},
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node app"
+  "devDependencies": {
+    "@types/node": "^18.7.16",
+    "jest": "^29.0.2",
+    "nodemon": "^2.0.19",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.8.2"
   },
-  "author": "Brian Shannon <brian@firetail.io>"
+  "scripts": {
+    "test": "jest --no-cache ",
+    "test:go": "npm test -- --watch --coverage",
+    "test:update": "npm test -- --updateSnapshot",
+    "test:cover": "npm test -- --coverage --no-cache",
+    "test:watch": "npm test -- --watch --runInBand"
+  },
+  "jest": {
+    "testPathIgnorePatterns": [
+      "/node_modules/"
+    ],
+    "coverageDirectory": "coverage",
+    "collectCoverageFrom": [
+      "src/**/*.js"
+    ],
+    "verbose": true
+  }
 }
