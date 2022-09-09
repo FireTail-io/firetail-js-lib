@@ -39,4 +39,13 @@ test('...', () => {
   const next = ()=>{}
   firetailMiddleware(req(), res(), next)
   
+// check yaml path can be set
+   // via Env
+   // via opts args
+   // via package.json
+
+// check yaml exists
+  
+  
+  
 });

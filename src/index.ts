@@ -5,13 +5,14 @@ const defaultOpts = require("../config.json");
 
 interface Options {
     yamlPath: String | Function;
+    overRideError: Function;
 }
 
 //=====================================================
 //==================================== file Taile Setup
 //=====================================================
 
-module.exports = function fileTaileSetup({yamlPath} : Options){
+module.exports = function fileTaileSetup({yamlPath, overRideError}: Options) : Function{
 
   let yamlPathSt = defaultOpts.yamlPath
   
@@ -30,7 +31,8 @@ module.exports = function fileTaileSetup({yamlPath} : Options){
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
 
   // TODO: Should we catch or crash if spce is not found?
-  const apiSpecPr = SwaggerParser.validate(yamlPathSt).then(({paths})=>paths);
+  const apiSpecPr = SwaggerParser.validate(yamlPathSt)
+                                 .then(({paths})=>paths);
   
   return middleware.bind({yamlPathSt, apiSpecPr})
 } // END fileTaileSetup
@@ -42,97 +44,175 @@ module.exports = function fileTaileSetup({yamlPath} : Options){
 function middleware(req, res, next) {
 
   const { yamlPathSt, apiSpecPr } = this 
-  const { method, originalUrl } = req
   
-  let finishedAt, resBody, scama;
-  const startedAt = new Date()
+    const data = {
+        yamlPathSt,
+        verb: req.method.toLowerCase(),
+        url: req.originalUrl,
+        resBody:false,
+        reqBody:req.body,
+        startedAt:new Date(),
+        finishedAt:false,
+        statusCode: res.statusCode,
+        headers:req.headers,
+        params: req.params
+      }
+  
+  let specificScama;
+  
+//++++++++++++++++++++++++++++++++++++++ error handler
+//++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+  const errorHandler = err => {
+    const errContent = "function" === typeof overRideError ? overRideError(err) : err
+    
+    res.status(err.status)
+    stashFnCalls["object" === typeof errContent ? "json" : "send"](errContent)
+    stashFnCalls.end()
+  } // END errorHandler
   
 //+++++++++++++++++++++++++++++++++++++++++++ stash fn
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
-  
-  const end  = res.end.bind(res)
-  const send = res.send.bind(res)
-  const json = res.json.bind(res)
-  
-//++++++++++++++++++++++++++++++++++++++ call Validate
-//++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-  const callValidate = () =>{
-    if (finishedAt && undefined !== scama) {
-      if (scama) {
-          const scamaVerb = scama[method.toLowerCase()]
-          if (scamaVerb) {
-            const data = {
-                verb: method,
-                url: originalUrl,
-                resBody,
-                startedAt,
-                finishedAt,
-                statusCode: res.statusCode,
-                headers:req.headers,
-                params: req.params
-              }
-            console.log(req.get('Content-Type'))
-            validate(scamaVerb, data)
-          } else {
-            console.log(`${originalUrl} ${method} was not found. Only "${Object.keys(scama).join(",").toUpperCase()}" should be used`)
-          }
-      } else {
-        console.log(originalUrl + " was NOT in " + yamlPathSt)
-      }
-    } // END if finishedAt && scama
-  } // END callValidate
+  const stashFnCalls = {
+     end  : res.end.bind(res),
+     send : res.send.bind(res),
+     json : res.json.bind(res)
+  } // END stashFnCalls
   
 //+++++++++++++++++++++++++++++++++++++ hi-jack res fn
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
 
   res.send = (...args) => {
-    resBody = args[0]
-    return send(...args)
+    data.resBody = args[0]
+    return stashFnCalls.send(...args)
   }
   res.json = (...args) => {
-    resBody = args[0]
-    return json(...args)
+    data.resBody = args[0]
+    return stashFnCalls.json(...args)
   }
   res.end = (...args) => {
-    finishedAt = new Date()
-    callValidate()
-    return end(...args)
-  }
+    data.finishedAt = new Date()
+    try {
+    // TODO: may need to buffer the responce..
+    // as we can override the responce with out
+    // warning about app sending data down the wire
+        after(specificScama, data)
+        return stashFnCalls.end(...args)
+    } catch(err) {
+        errorHandler(err);
+    }
+  } // END res.end
   
 //++++++++++++++++++++++++++++++++++ get ref for scama
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
   
   apiSpecPr.then(paths => {
-    scama = paths[originalUrl] || null
-    callValidate()
+    specificScama = before(paths[data.url] || null, data)
+    next()
   }) // END apiSpecPr.then
-  
-  next()
+  .catch(err=> {
+    // If specificScama is set then before was fine
+    // and this error is coming from the app and not our problem
+    if (specificScama) {
+      throw err
+    }
+    errorHandler(err)
+  })
   
 } // END middleware
 
 //=====================================================
-//============================================ validate
+//========================== validate BEFORE controller
 //=====================================================
 
-function validate(scama, {verb, url, resBody, startedAt, statusCode, headers:{accept}}) {
-  
-  const response = scama.responses[statusCode]
+function before(scamaForEndPoint,data){
+    
+    const { url } = data
+    
+//+++++++ check is there us a scama for that end-point
+//++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    if ( ! scamaForEndPoint) {
+        throw {
+            status:400,
+            message:`${url} was NOT in ${data.yamlPathSt}`
+        }
+    }
+
+//+++++++++++++++++++++++++++++++++++++++++ check verb
+//++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    const { verb } = data
+    const scamaVerb = scamaForEndPoint[verb]
+    
+    if ( ! scamaVerb) {
+        throw {
+            status:400,
+            message:`${url} ${verb} was not found. Only "${Object.keys(scamaForEndPoint).join(",").toUpperCase()}" should be used`
+        }
+    }
+    
+//++++++++ check caller has the right security headers
+//++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+//+++++++++++++++++++++ check Content-Type if has body
+//++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    const contentType = headers["Content-Type"]
+    
+//++++++++++++++++++++++ check body is the right shape
+//++++++++++++++++++++++++++++++++++++++++++++++++++++
+    const { reqBody } = data
+
+//++++++++++++++++++ check accept type can be returned
+//++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    const { accept } = headers
+    
+    return scamaVerb
+    
+} // END before
+
+//=====================================================
+//=========================== validate AFTER controller
+//=====================================================
+
+function after(specificScama, data){
+
+    const { statusCode, accept, resBody } = data
+    
+// check return Content-Type is in callers accept type
+//++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+//+++++++++++++++ check return data is the right shape
+//++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+//++++++++++++++++++++++++ check stats code in in yaml
+//++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+  const response = specificScama.responses[statusCode]
   
   if (response){
     const contentKey = findAcceptContentKey(acceptTypes(accept),Object.keys(response.content))
     if (contentKey){
       console.log(resBody, response.content[contentKey], "IS validate?")
     } else {
-      console.log(`Could not find a matching type. Available types are ${Object.keys(response.content)}`)
+        throw {
+            status:400,
+            message:`Could not find a matching type. Available types are ${Object.keys(response.content)}`
+        }
     }
   } else {
-    console.log(`StatusCode ${statusCode} was not found. Available codes are ${Object.keys(scama.responses)}`)
+     throw {
+         status:400,
+         message:`StatusCode ${statusCode} was not found. Available codes are ${Object.keys(specificScama.responses)}`
+     }
   }
   
-} // END validate
+} // END after
 
+//=====================================================
+//============================================= HELPERS
 //=====================================================
 //======================================== accept Types
 //=====================================================

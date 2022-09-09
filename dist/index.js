@@ -5,7 +5,7 @@ var defaultOpts = require("../config.json");
 //==================================== file Taile Setup
 //=====================================================
 module.exports = function fileTaileSetup(_a) {
-    var yamlPath = _a.yamlPath;
+    var yamlPath = _a.yamlPath, overRideError = _a.overRideError;
     var yamlPathSt = defaultOpts.yamlPath;
     //++++++++++++++++++++++++++++ check user set yamlPath
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -21,7 +21,8 @@ module.exports = function fileTaileSetup(_a) {
     //++++++++++++++++++++++++++++++++++ read in yaml file
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
     // TODO: Should we catch or crash if spce is not found?
-    var apiSpecPr = SwaggerParser.validate(yamlPathSt).then(function (_a) {
+    var apiSpecPr = SwaggerParser.validate(yamlPathSt)
+        .then(function (_a) {
         var paths = _a.paths;
         return paths;
     });
@@ -32,43 +33,33 @@ module.exports = function fileTaileSetup(_a) {
 //=====================================================
 function middleware(req, res, next) {
     var _a = this, yamlPathSt = _a.yamlPathSt, apiSpecPr = _a.apiSpecPr;
-    var method = req.method, originalUrl = req.originalUrl;
-    var finishedAt, resBody, scama;
-    var startedAt = new Date();
+    var data = {
+        yamlPathSt: yamlPathSt,
+        verb: req.method.toLowerCase(),
+        url: req.originalUrl,
+        resBody: false,
+        reqBody: req.body,
+        startedAt: new Date(),
+        statusCode: res.statusCode,
+        headers: req.headers,
+        params: req.params
+    };
+    var specificScama;
+    //++++++++++++++++++++++++++++++++++++++ error handler
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++
+    var errorHandler = function (err) {
+        var errContent = "function" === typeof overRideError ? overRideError(err) : err;
+        res.status(err.status);
+        stashFnCalls["object" === typeof errContent ? "json" : "send"](errContent);
+        stashFnCalls.end();
+    }; // END errorHandler
     //+++++++++++++++++++++++++++++++++++++++++++ stash fn
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
-    var end = res.end.bind(res);
-    var send = res.send.bind(res);
-    var json = res.json.bind(res);
-    //++++++++++++++++++++++++++++++++++++++ call Validate
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++
-    var callValidate = function () {
-        if (finishedAt && undefined !== scama) {
-            if (scama) {
-                var scamaVerb = scama[method.toLowerCase()];
-                if (scamaVerb) {
-                    var data = {
-                        verb: method,
-                        url: originalUrl,
-                        resBody: resBody,
-                        startedAt: startedAt,
-                        finishedAt: finishedAt,
-                        statusCode: res.statusCode,
-                        headers: req.headers,
-                        params: req.params
-                    };
-                    console.log(req.get('Content-Type'));
-                    validate(scamaVerb, data);
-                }
-                else {
-                    console.log(originalUrl + " " + method + " was not found. Only \"" + Object.keys(scama).join(",").toUpperCase() + "\" should be used");
-                }
-            }
-            else {
-                console.log(originalUrl + " was NOT in " + yamlPathSt);
-            }
-        } // END if finishedAt && scama
-    }; // END callValidate
+    var stashFnCalls = {
+        end: res.end.bind(res),
+        send: res.send.bind(res),
+        json: res.json.bind(res)
+    }; // END stashFnCalls
     //+++++++++++++++++++++++++++++++++++++ hi-jack res fn
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
     res.send = function () {
@@ -76,53 +67,118 @@ function middleware(req, res, next) {
         for (var _i = 0; _i < arguments.length; _i++) {
             args[_i] = arguments[_i];
         }
-        resBody = args[0];
-        return send.apply(void 0, args);
+        data.resBody = args[0];
+        return stashFnCalls.send.apply(stashFnCalls, args);
     };
     res.json = function () {
         var args = [];
         for (var _i = 0; _i < arguments.length; _i++) {
             args[_i] = arguments[_i];
         }
-        resBody = args[0];
-        return json.apply(void 0, args);
+        data.resBody = args[0];
+        return stashFnCalls.json.apply(stashFnCalls, args);
     };
     res.end = function () {
         var args = [];
         for (var _i = 0; _i < arguments.length; _i++) {
             args[_i] = arguments[_i];
         }
-        finishedAt = new Date();
-        callValidate();
-        return end.apply(void 0, args);
-    };
+        data.finishedAt = new Date();
+        try {
+            // TODO: may need to buffer the responce..
+            // as we can override the responce with out
+            // warning about app sending data down the wire
+            after(specificScama, data);
+            return stashFnCalls.end.apply(stashFnCalls, args);
+        }
+        catch (err) {
+            errorHandler(err);
+        }
+    }; // END res.end
     //++++++++++++++++++++++++++++++++++ get ref for scama
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
     apiSpecPr.then(function (paths) {
-        scama = paths[originalUrl] || null;
-        callValidate();
-    }); // END apiSpecPr.then
-    next();
+        specificScama = before(paths[data.url] || null, data);
+        next();
+    }) // END apiSpecPr.then
+        .catch(function (err) {
+        // If specificScama is set then before was fine
+        // and this error is coming from the app and not our problem
+        if (specificScama) {
+            throw err;
+        }
+        errorHandler(err);
+    });
 } // END middleware
 //=====================================================
-//============================================ validate
+//========================== validate BEFORE controller
 //=====================================================
-function validate(scama, _a) {
-    var verb = _a.verb, url = _a.url, resBody = _a.resBody, startedAt = _a.startedAt, statusCode = _a.statusCode, accept = _a.headers.accept;
-    var response = scama.responses[statusCode];
+function before(scamaForEndPoint, data) {
+    var url = data.url;
+    //+++++++ check is there us a scama for that end-point
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++
+    if (!scamaForEndPoint) {
+        throw {
+            status: 400,
+            message: url + " was NOT in " + data.yamlPathSt
+        };
+    }
+    //+++++++++++++++++++++++++++++++++++++++++ check verb
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++
+    var verb = data.verb;
+    var scamaVerb = scamaForEndPoint[verb];
+    if (!scamaVerb) {
+        throw {
+            status: 400,
+            message: url + " " + verb + " was not found. Only \"" + Object.keys(scamaForEndPoint).join(",").toUpperCase() + "\" should be used"
+        };
+    }
+    //++++++++ check caller has the right security headers
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++
+    //+++++++++++++++++++++ check Content-Type if has body
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++
+    var contentType = headers["Content-Type"];
+    //++++++++++++++++++++++ check body is the right shape
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++
+    var reqBody = data.reqBody;
+    //++++++++++++++++++ check accept type can be returned
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++
+    var accept = headers.accept;
+    return scamaVerb;
+} // END before
+//=====================================================
+//=========================== validate AFTER controller
+//=====================================================
+function after(specificScama, data) {
+    var statusCode = data.statusCode, accept = data.accept, resBody = data.resBody;
+    // check return Content-Type is in callers accept type
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++
+    //+++++++++++++++ check return data is the right shape
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++
+    //++++++++++++++++++++++++ check stats code in in yaml
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++
+    var response = specificScama.responses[statusCode];
     if (response) {
         var contentKey = findAcceptContentKey(acceptTypes(accept), Object.keys(response.content));
         if (contentKey) {
             console.log(resBody, response.content[contentKey], "IS validate?");
         }
         else {
-            console.log("Could not find a matching type. Available types are " + Object.keys(response.content));
+            throw {
+                status: 400,
+                message: "Could not find a matching type. Available types are " + Object.keys(response.content)
+            };
         }
     }
     else {
-        console.log("StatusCode " + statusCode + " was not found. Available codes are " + Object.keys(scama.responses));
+        throw {
+            status: 400,
+            message: "StatusCode " + statusCode + " was not found. Available codes are " + Object.keys(specificScama.responses)
+        };
     }
-} // END validate
+} // END after
+//=====================================================
+//============================================= HELPERS
 //=====================================================
 //======================================== accept Types
 //=====================================================
@@ -149,4 +205,4 @@ function findAcceptContentKey(acceptTypes, acceptContent) {
         }
     } // END for
     return false;
-} // END findAcceptContentKey
+} // END findAcceptContentKey 
