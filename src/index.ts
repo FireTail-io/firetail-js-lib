@@ -96,7 +96,9 @@ function middleware(req, res, next) {
     // TODO: may need to buffer the responce..
     // as we can override the responce with out
     // warning about app sending data down the wire
-        after(specificScama, data)
+        if (specificScama) {
+            after(specificScama, data)
+        }
         return stashFnCalls.end(...args)
     } catch(err) {
         errorHandler(err);
