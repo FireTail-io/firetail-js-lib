@@ -1,5 +1,5 @@
 {
-  "name": "firetail",
+  "name": "firetail-js-lib",
   "version": "0.0.0",
   "description": "",
   "main": "./dist/index.js",
@@ -24,6 +24,10 @@
     "typescript": "^4.8.2"
   },
   "scripts": {
+    "build":"tsc",
+    "start": "tsc --watch",
+    "docker:build":"docker build --no-cache -t test-build:latest -f build_setup/Dockerfile .",
+    "docker:start":"docker run -it -p 3001:3001 -v ${PWD}/src:/code/src -v ${PWD}/sample:/code/sample -v ${PWD}/__tests__:/code/__tests__ -v ${PWD}/dist:/code/dist test-build:latest",
     "test": "jest --no-cache ",
     "test:go": "npm test -- --watch --coverage",
     "test:update": "npm test -- --updateSnapshot",

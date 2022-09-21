@@ -10,6 +10,10 @@
   "author": "Brian Shannon <brian@firetail.io>",
   "license": "LGPL-3.0",
   "dependencies": {
-    "express": "^4.18.1"
+    "express": "^4.18.1",
+    "scribbles": "^1.2.0"
+  },
+  "scribbles": {
+    "format": "{time} <{logLevel}> {fileName}:{lineNumber} {message} {value} {stackTrace}"
   }
 }
