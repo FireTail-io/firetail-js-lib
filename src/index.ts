@@ -67,14 +67,14 @@ function middleware(req, res, next) {
 
 let errorHandlerCalled = false
   const errorHandler = err => {
-    console.warn(err)
+
     if(errorHandlerCalled){
       console.error("errorHandler was already called")
       return
     }
     errorHandlerCalled = true;
     const errContent = "function" === typeof overRideError ? overRideError(err) : err
-console.info({stashFnCalls,err})
+
     res.status(err.status)
     stashFnCalls["object" === typeof errContent ? "json" : "send"](errContent)
     stashFnCalls.end()
@@ -121,13 +121,25 @@ console.info({stashFnCalls,err})
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
 
   apiSpecPr.then(paths => {
-    specificScama = before(paths[data.url] || null, data)
-    console.log("specificScama",specificScama)
-  /*
-    if(apiSpecPr(url) && apiSpecPr(url).operationId && apiSpecPr(url).operationId){
+    const scamaForEndPoint = paths[data.url]
 
-    }*/
+    specificScama = before(scamaForEndPoint || null, data)
 
+    if(scamaForEndPoint){
+        const { verb } = data
+        const scamaVerb = scamaForEndPoint[verb]
+        console.log("scamaVerb",scamaVerb)
+        if(scamaVerb){
+          const { operationId } = scamaVerb
+          if(operationId){
+            if(operationsFn[operationId]){
+              next = ()=>operationsFn[operationId](req, res, next)
+            } else {
+              console.log(`No operationId match for ${operationId}`)
+            }
+          }
+        }
+    }
     next()
   }) // END apiSpecPr.then
   .catch(err=> {
@@ -200,8 +212,8 @@ function before(scamaForEndPoint,data){
 
 function after(specificScama, data){
 
-    const { statusCode, headers: { accept } , resBody } = data
-console.log(data)
+const { statusCode, headers: { accept } , resBody } = data
+
 // check return Content-Type is in callers accept type
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
 

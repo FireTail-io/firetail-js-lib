@@ -52,14 +52,12 @@ function middleware(req, res, next) {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
     var errorHandlerCalled = false;
     var errorHandler = function (err) {
-        console.warn(err);
         if (errorHandlerCalled) {
             console.error("errorHandler was already called");
             return;
         }
         errorHandlerCalled = true;
         var errContent = "function" === typeof overRideError ? overRideError(err) : err;
-        console.info({ stashFnCalls: stashFnCalls, err: err });
         res.status(err.status);
         stashFnCalls["object" === typeof errContent ? "json" : "send"](errContent);
         stashFnCalls.end();
@@ -102,12 +100,24 @@ function middleware(req, res, next) {
     //++++++++++++++++++++++++++++++++++ get ref for scama
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
     apiSpecPr.then(function (paths) {
-        specificScama = before(paths[data.url] || null, data);
-        console.log("specificScama", specificScama);
-        /*
-          if(apiSpecPr(url) && apiSpecPr(url).operationId && apiSpecPr(url).operationId){
-      
-          }*/
+        var scamaForEndPoint = paths[data.url];
+        specificScama = before(scamaForEndPoint || null, data);
+        if (scamaForEndPoint) {
+            var verb = data.verb;
+            var scamaVerb = scamaForEndPoint[verb];
+            console.log("scamaVerb", scamaVerb);
+            if (scamaVerb) {
+                var operationId_1 = scamaVerb.operationId;
+                if (operationId_1) {
+                    if (operationsFn[operationId_1]) {
+                        next = function () { return operationsFn[operationId_1](req, res, next); };
+                    }
+                    else {
+                        console.log("No operationId match for ".concat(operationId_1));
+                    }
+                }
+            }
+        }
         next();
     }) // END apiSpecPr.then
         .catch(function (err) {
@@ -161,7 +171,6 @@ function before(scamaForEndPoint, data) {
 //=====================================================
 function after(specificScama, data) {
     var statusCode = data.statusCode, accept = data.headers.accept, resBody = data.resBody;
-    console.log(data);
     // check return Content-Type is in callers accept type
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
     //+++++++++++++++ check return data is the right shape
