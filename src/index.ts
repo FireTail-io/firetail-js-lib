@@ -4,10 +4,12 @@ const SwaggerParser = require("@apidevtools/swagger-parser");
 const defaultOpts = require("../config.json");
 const flattenObj = require("./utils/flattenObj");
 const args2Arr = require("./utils/args2Arr");
+const matchUrl = require("./utils/match");
 
 interface Options {
     yamlPath: String | Function;
     overRideError: Function;
+    operations: Object;
 }
 
 //=====================================================
@@ -121,6 +123,9 @@ let errorHandlerCalled = false
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
 
   apiSpecPr.then(paths => {
+
+//console.log(data.url,Object.keys(paths))
+
     const scamaForEndPoint = paths[data.url]
 
     specificScama = before(scamaForEndPoint || null, data)
@@ -128,7 +133,7 @@ let errorHandlerCalled = false
     if(scamaForEndPoint){
         const { verb } = data
         const scamaVerb = scamaForEndPoint[verb]
-        console.log("scamaVerb",scamaVerb)
+        //console.log("scamaVerb",scamaVerb)
         if(scamaVerb){
           const { operationId } = scamaVerb
           if(operationId){

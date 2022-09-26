@@ -46,6 +46,13 @@ app.get('/bar2', (req, res) => {
   res.json(["a","b","c"])
 })
 
+app.get('/bar/:tab', (req, res) => {
+  console.log(req.params.tab)
+  //res.set('content-type','application/json')
+  res.contentType('application/json');
+  res.json(["a","b","c"])
+})
+
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
 })
