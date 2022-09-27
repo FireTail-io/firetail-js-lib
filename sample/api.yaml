@@ -47,7 +47,7 @@ paths:
                 type: array
                 items:
                   type: string
-  /cat/id: # /cat/{id}
+  /cat/{id}:
     get:
       operationId: app.cat_id
       parameters:

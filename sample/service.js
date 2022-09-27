@@ -11,6 +11,7 @@ function foo(req, res){
   res.send('FOO')
 }
 function cat(req, res){
+  console.log(req.params)
   res.send('CAT')
 }
 

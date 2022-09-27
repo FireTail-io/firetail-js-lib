@@ -1,8 +1,30 @@
+let TEN_MINUTES = 600000;
+
+cache = {}
+
+setInterval(()=>{
+
+	const now = Date.now()
+
+	Object.keys(cache)
+				.forEach(url => {
+					const { result, lastReqNu } = cache[url]
+					if(result
+					&& ((lastReqNu + TEN_MINUTES) < now)){
+						delete cache[url]
+					}
+				})
+}, TEN_MINUTES);
+
 //=====================================================
 //=========================================== match Url
 //=====================================================
 
 function matchUrl(url : string, apiPaths : string[]) {
+//console.log(url, apiPaths, cache)
+	if(cache[url]){
+		return cache[url].result
+	}
 
 //++++++++++++++++++++++++++++ check each path in yaml
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -13,7 +35,7 @@ function matchUrl(url : string, apiPaths : string[]) {
   				pathIndex < apiPaths.length;
           pathIndex++){
     const apiPath = apiPaths[pathIndex]
-
+//console.log(apiPath, pathIndex)
 //+++++++++++++++++++++ dones this path have fragments
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -103,14 +125,16 @@ function matchUrl(url : string, apiPaths : string[]) {
     }
 
   } // END for apiPaths in YAML
-  //debugger
+
   const topScore = Object.keys(scores)
   											  .map(score => +score)
 
   if(topScore.length){
-  	return scores[Math.max.apply(null,topScore)]
+		const result = scores[Math.max.apply(null,topScore)]
+		cache[url] = { result, lastReqNu: Date.now() }
+  	return result
   }
-
+	cache[url] = { result:null, lastReqNu: Date.now() }
   return null
 } // END matchUrl
 

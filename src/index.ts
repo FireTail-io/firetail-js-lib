@@ -74,6 +74,7 @@ let errorHandlerCalled = false
       console.error("errorHandler was already called")
       return
     }
+    console.error(err)
     errorHandlerCalled = true;
     const errContent = "function" === typeof overRideError ? overRideError(err) : err
 
@@ -124,27 +125,29 @@ let errorHandlerCalled = false
 
   apiSpecPr.then(paths => {
 
-//console.log(data.url,Object.keys(paths))
+      const matchFound = matchUrl(data.url,Object.keys(paths))
 
-    const scamaForEndPoint = paths[data.url]
+      const scamaForEndPoint = matchFound ? paths[matchFound.path] : null
+// specificScama = before(scamaForEndPoint ? paths[scamaForEndPoint.path] : null, data)
+      specificScama = before(scamaForEndPoint, data)
 
-    specificScama = before(scamaForEndPoint || null, data)
-
-    if(scamaForEndPoint){
-        const { verb } = data
-        const scamaVerb = scamaForEndPoint[verb]
-        //console.log("scamaVerb",scamaVerb)
-        if(scamaVerb){
-          const { operationId } = scamaVerb
-          if(operationId){
-            if(operationsFn[operationId]){
-              next = ()=>operationsFn[operationId](req, res, next)
-            } else {
-              console.log(`No operationId match for ${operationId}`)
-            }
-          }
-        }
-    }
+      if(scamaForEndPoint){
+          const { verb } = data
+          const scamaVerb = scamaForEndPoint[verb]
+          //console.log("scamaVerb",scamaVerb)
+          if(scamaVerb){
+            const { operationId } = scamaVerb
+            if(operationId){
+              if(operationsFn[operationId]){
+                req.params = req.params || {}
+                Object.assign(req.params,matchFound.params)
+                next = ()=>operationsFn[operationId](req, res, next)
+              } else {
+                console.log(`No operationId match for ${operationId}`)
+              }
+            } // END if operationId
+          } // END if scamaVerb
+      } // END if scamaForEndPoint
     next()
   }) // END apiSpecPr.then
   .catch(err=> {
@@ -154,7 +157,7 @@ let errorHandlerCalled = false
       throw err
     }
     errorHandler(err)
-  })
+  }) // END catch
 
 } // END middleware
 
@@ -173,21 +176,23 @@ function before(scamaForEndPoint,data){
         throw {
             status:400,
             message:`${url} was NOT in ${data.yamlPathSt}`
-        }
-    }
+        } // END throw
+    } // END if
 
 //+++++++++++++++++++++++++++++++++++++++++ check verb
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
 
     const { verb } = data
+
+    //console.logo(Object.keys(scamaForEndPoint))
     const scamaVerb = scamaForEndPoint[verb]
 
     if ( ! scamaVerb) {
         throw {
             status:400,
-            message:`${url} ${verb} was not found. Only "${Object.keys(scamaForEndPoint).join(",").toUpperCase()}" should be used`
-        }
-    }
+            message:`${url} ${verb.toUpperCase()} was not found. Only "${Object.keys(scamaForEndPoint).join(",").toUpperCase()}" should be used`
+        } // END throw
+    } // END if
 
 //++++++++ check caller has the right security headers
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -231,21 +236,25 @@ const { statusCode, headers: { accept } , resBody } = data
   const response = specificScama.responses[statusCode]
 
   if (response){
-    const contentKey = findAcceptContentKey(acceptTypes(accept),Object.keys(response.content))
-    if (contentKey){
-      console.log(resBody, response.content[contentKey], "IS validate?")
+    if(response.content){
+      const contentKey = findAcceptContentKey(acceptTypes(accept),Object.keys(response.content))
+      if (contentKey){
+        console.log(resBody, response.content[contentKey], "IS validate?")
+      } else {
+          throw {
+              status:400,
+              message:`Could not find a matching type. Available types are ${Object.keys(response.content)}`
+          } // END throw
+      } // END inner else
     } else {
-        throw {
-            status:400,
-            message:`Could not find a matching type. Available types are ${Object.keys(response.content)}`
-        }
+      console.warn("No 'content' entry in Yaml")
     }
   } else {
      throw {
          status:400,
          message:`StatusCode ${statusCode} was not found. Available codes are ${Object.keys(specificScama.responses)}`
-     }
-  }
+     } // END throw
+  } // END outter else
 
 } // END after
 
@@ -257,7 +266,8 @@ const { statusCode, headers: { accept } , resBody } = data
 
 function acceptTypes(acceptSt) {
 
-  return acceptSt.split(",").map(type=>type.split(";")[0])
+  return acceptSt.split(",")
+                 .map(type=>type.split(";")[0])
 
   // TODO: Add support for "relative quality factor"
   /* The example

@@ -3,6 +3,7 @@ var SwaggerParser = require("@apidevtools/swagger-parser");
 var defaultOpts = require("../config.json");
 var flattenObj = require("./utils/flattenObj");
 var args2Arr = require("./utils/args2Arr");
+var matchUrl = require("./utils/match");
 //=====================================================
 //==================================== file Taile Setup
 //=====================================================
@@ -56,6 +57,7 @@ function middleware(req, res, next) {
             console.error("errorHandler was already called");
             return;
         }
+        console.error(err);
         errorHandlerCalled = true;
         var errContent = "function" === typeof overRideError ? overRideError(err) : err;
         res.status(err.status);
@@ -100,24 +102,28 @@ function middleware(req, res, next) {
     //++++++++++++++++++++++++++++++++++ get ref for scama
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
     apiSpecPr.then(function (paths) {
-        var scamaForEndPoint = paths[data.url];
-        specificScama = before(scamaForEndPoint || null, data);
+        var matchFound = matchUrl(data.url, Object.keys(paths));
+        var scamaForEndPoint = matchFound ? paths[matchFound.path] : null;
+        // specificScama = before(scamaForEndPoint ? paths[scamaForEndPoint.path] : null, data)
+        specificScama = before(scamaForEndPoint, data);
         if (scamaForEndPoint) {
             var verb = data.verb;
             var scamaVerb = scamaForEndPoint[verb];
-            console.log("scamaVerb", scamaVerb);
+            //console.log("scamaVerb",scamaVerb)
             if (scamaVerb) {
                 var operationId_1 = scamaVerb.operationId;
                 if (operationId_1) {
                     if (operationsFn[operationId_1]) {
+                        req.params = req.params || {};
+                        Object.assign(req.params, matchFound.params);
                         next = function () { return operationsFn[operationId_1](req, res, next); };
                     }
                     else {
                         console.log("No operationId match for ".concat(operationId_1));
                     }
-                }
-            }
-        }
+                } // END if operationId
+            } // END if scamaVerb
+        } // END if scamaForEndPoint
         next();
     }) // END apiSpecPr.then
         .catch(function (err) {
@@ -127,7 +133,7 @@ function middleware(req, res, next) {
             throw err;
         }
         errorHandler(err);
-    });
+    }); // END catch
 } // END middleware
 //=====================================================
 //========================== validate BEFORE controller
@@ -140,18 +146,19 @@ function before(scamaForEndPoint, data) {
         throw {
             status: 400,
             message: "".concat(url, " was NOT in ").concat(data.yamlPathSt)
-        };
-    }
+        }; // END throw
+    } // END if
     //+++++++++++++++++++++++++++++++++++++++++ check verb
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
     var verb = data.verb;
+    //console.logo(Object.keys(scamaForEndPoint))
     var scamaVerb = scamaForEndPoint[verb];
     if (!scamaVerb) {
         throw {
             status: 400,
-            message: "".concat(url, " ").concat(verb, " was not found. Only \"").concat(Object.keys(scamaForEndPoint).join(",").toUpperCase(), "\" should be used")
-        };
-    }
+            message: "".concat(url, " ").concat(verb.toUpperCase(), " was not found. Only \"").concat(Object.keys(scamaForEndPoint).join(",").toUpperCase(), "\" should be used")
+        }; // END throw
+    } // END if
     //++++++++ check caller has the right security headers
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
     //+++++++++++++++++++++ check Content-Type if has body
@@ -179,23 +186,28 @@ function after(specificScama, data) {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
     var response = specificScama.responses[statusCode];
     if (response) {
-        var contentKey = findAcceptContentKey(acceptTypes(accept), Object.keys(response.content));
-        if (contentKey) {
-            console.log(resBody, response.content[contentKey], "IS validate?");
+        if (response.content) {
+            var contentKey = findAcceptContentKey(acceptTypes(accept), Object.keys(response.content));
+            if (contentKey) {
+                console.log(resBody, response.content[contentKey], "IS validate?");
+            }
+            else {
+                throw {
+                    status: 400,
+                    message: "Could not find a matching type. Available types are ".concat(Object.keys(response.content))
+                }; // END throw
+            } // END inner else
         }
         else {
-            throw {
-                status: 400,
-                message: "Could not find a matching type. Available types are ".concat(Object.keys(response.content))
-            };
+            console.warn("No 'content' entry in Yaml");
         }
     }
     else {
         throw {
             status: 400,
             message: "StatusCode ".concat(statusCode, " was not found. Available codes are ").concat(Object.keys(specificScama.responses))
-        };
-    }
+        }; // END throw
+    } // END outter else
 } // END after
 //=====================================================
 //============================================= HELPERS
@@ -203,7 +215,8 @@ function after(specificScama, data) {
 //======================================== accept Types
 //=====================================================
 function acceptTypes(acceptSt) {
-    return acceptSt.split(",").map(function (type) { return type.split(";")[0]; });
+    return acceptSt.split(",")
+        .map(function (type) { return type.split(";")[0]; });
     // TODO: Add support for "relative quality factor"
     /* The example
     ' Accept: audio/*; q=0.2, audio/basic '
