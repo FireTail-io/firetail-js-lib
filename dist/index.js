@@ -46,7 +46,8 @@ function middleware(req, res, next) {
         finishedAt: false,
         statusCode: res.statusCode,
         headers: req.headers,
-        params: req.params
+        params: req.params,
+        query: req.query
     };
     var specificScama;
     //++++++++++++++++++++++++++++++++++++++ error handler
@@ -103,8 +104,12 @@ function middleware(req, res, next) {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
     apiSpecPr.then(function (paths) {
         var matchFound = matchUrl(data.url, Object.keys(paths));
-        var scamaForEndPoint = matchFound ? paths[matchFound.path] : null;
-        // specificScama = before(scamaForEndPoint ? paths[scamaForEndPoint.path] : null, data)
+        var scamaForEndPoint = null;
+        if (matchFound) {
+            scamaForEndPoint = paths[matchFound.path];
+            Object.assign(data.params, matchFound.params);
+        }
+        // Store specificScama as its needed in the "äfter" fn
         specificScama = before(scamaForEndPoint, data);
         if (scamaForEndPoint) {
             var verb = data.verb;
@@ -115,7 +120,7 @@ function middleware(req, res, next) {
                 if (operationId_1) {
                     if (operationsFn[operationId_1]) {
                         req.params = req.params || {};
-                        Object.assign(req.params, matchFound.params);
+                        Object.assign(req.params, data.params);
                         next = function () { return operationsFn[operationId_1](req, res, next); };
                     }
                     else {
@@ -165,6 +170,13 @@ function before(scamaForEndPoint, data) {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
     var headers = data.headers;
     var contentType = headers["Content-Type"];
+    //+++++++++++++++++++++++++++++ check params are right
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++
+    var params = data.params;
+    console.log(scamaVerb);
+    //+++++++++++++++++++++++++++++ query params are right
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++
+    var query = data.query;
     //++++++++++++++++++++++ check body is the right shape
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
     var reqBody = data.reqBody;

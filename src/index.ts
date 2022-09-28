@@ -59,7 +59,8 @@ function middleware(req, res, next) {
       finishedAt:false,
       statusCode: res.statusCode,
       headers:req.headers,
-      params: req.params
+      params: req.params,
+      query:req.query
     }
 
   let specificScama;
@@ -127,27 +128,35 @@ let errorHandlerCalled = false
 
       const matchFound = matchUrl(data.url,Object.keys(paths))
 
-      const scamaForEndPoint = matchFound ? paths[matchFound.path] : null
-// specificScama = before(scamaForEndPoint ? paths[scamaForEndPoint.path] : null, data)
+      let scamaForEndPoint = null
+      if(matchFound){
+        scamaForEndPoint = paths[matchFound.path]
+        // We need to set the URL params as Express only adds them later
+        Object.assign(data.params,matchFound.params)
+      }
+
+      // Store specificScama as its needed in the "äfter" fn
       specificScama = before(scamaForEndPoint, data)
 
-      if(scamaForEndPoint){
+  /*    if(scamaForEndPoint){
           const { verb } = data
           const scamaVerb = scamaForEndPoint[verb]
           //console.log("scamaVerb",scamaVerb)
-          if(scamaVerb){
-            const { operationId } = scamaVerb
+          if(scamaVerb){*/
+            const { operationId } = scamaForEndPoint[data.verb]//scamaVerb
             if(operationId){
               if(operationsFn[operationId]){
                 req.params = req.params || {}
-                Object.assign(req.params,matchFound.params)
+                // TODO: should this type conversion be extended to all the non-operationsFn ?
+                Object.assign(req.params,data.params)
+                Object.assign(req.query,data.query)
                 next = ()=>operationsFn[operationId](req, res, next)
               } else {
                 console.log(`No operationId match for ${operationId}`)
               }
             } // END if operationId
-          } // END if scamaVerb
-      } // END if scamaForEndPoint
+      /*    } // END if scamaVerb
+      } */// END if scamaForEndPoint
     next()
   }) // END apiSpecPr.then
   .catch(err=> {
@@ -192,7 +201,7 @@ function before(scamaForEndPoint,data){
             status:400,
             message:`${url} ${verb.toUpperCase()} was not found. Only "${Object.keys(scamaForEndPoint).join(",").toUpperCase()}" should be used`
         } // END throw
-    } // END if
+    } // END if ! scamaVerb
 
 //++++++++ check caller has the right security headers
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -202,6 +211,57 @@ function before(scamaForEndPoint,data){
 
     const { headers } = data
     const contentType = headers["Content-Type"]
+
+
+//++++++++++++++++++++++++++++ check reqest parameters
+//++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    if(scamaVerb.parameters){
+
+//+++++++++++++++++++++++++++++ check params are right
+//++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+     const { params } = data
+     const pathNametoCheck = scamaVerb.parameters
+                                      .filter(({in})=>"path" === in);
+
+      pathNametoCheck.forEach(({name, schema}) => {
+        if(schema){
+          data.params[name] = checkParameters(data.params[name],schema)
+        }
+      })
+
+//+++++++++++++++++++++++++++++ query params are right
+//++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+      const queryNametoCheck = scamaVerb.parameters
+                                        .filter(({in})=>"query" === in)
+      /*
+      if(queryNamesRecived.length !== queryNametoCheck.length){
+        throw new Error(`Mismatch in number of query arguments. You sent too ${
+                          queryNamesRecived.length > queryNametoCheck.length ? "many" : "few"}`)
+      }*/
+      const { query } = data
+
+      let queryNamesRecived = Object.keys(query)
+      queryNametoCheck.forEach(({required,name, schema}) => {
+        if(required && ! queryNamesRecived.includes(name)){
+          console.warn(name +" was not found as a named query ")
+          throw new Error("Missing required query argument.")
+        }
+        queryNamesRecived = queryNamesRecived.filter( queryName => queryName !== name)
+        if(schema){
+          data.query[name] = checkParameters(data.query[name],schema)
+        } else {
+          console.warn(`No schema for query: "${name}" ~ ${url}`)
+        }
+      }) // END foreach
+      if(queryNamesRecived.length){
+        console.warn(queryNamesRecived.join() +" where pass")
+        throw new Error("unknowen query argument.")
+      }
+    } // END if scamaVerb.parameters
+
 
 //++++++++++++++++++++++ check body is the right shape
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -215,6 +275,117 @@ function before(scamaForEndPoint,data){
     return scamaVerb
 
 } // END before
+
+function checkParameters(val: string,schema){
+
+  let isErr = ""
+
+  /*
+
+
+  Common Name	type	format	Comments
+  integer	integer	int32	signed 32 bits
+  long	integer	int64	signed 64 bits
+  float	number	float
+  double	number	double
+  string	string
+  byte	string	byte	base64 encoded characters
+  binary	string	binary	any sequence of octets
+  boolean	boolean
+  date	string	date	As defined by full-date - RFC3339
+  dateTime	string	date-time	As defined by date-time - RFC3339
+  password	string	password	Used to hint UIs the input needs to be obscured.
+
+  */
+  switch(schema.type) {
+    case "number":
+    case "integer":
+      let isok = true
+      //format: int64
+      const parcedVal = +val
+      if(`${parcedVal}`!== val){
+        isErr = `${val} is not a value number`
+      }
+
+      if( ! isErr
+      && "minimum" in schema
+      && schema.minimum > parcedVal){
+        isErr = `${val} is below the minimum value`
+      }
+
+      if( ! isErr
+      && "maximum" in schema
+      && schema.maximum < parcedVal){
+        isErr = `${val} is above the maximum value`
+      }
+
+      if( ! isErr
+      && "integer" === schema.type
+      && 0 < parcedVal % 1){
+        isErr = `${val} is not a whole number`
+      }
+
+      if( ! isErr){
+        return parcedVal
+      }
+      break;
+    case "string":
+
+      if( ! val){
+        isErr = "No a valid string:"+JSON.stringify(val)
+      }
+
+      if( ! isErr
+      &&   schema.enum
+      && ! schema.enum.includes(val)){
+        isErr = `"${val"} in the in the range of ${schema.enum.join()}`
+      }
+
+      if( ! isErr
+      && schema.pattern){
+        const patternRg = new RegExp(schema.pattern);
+        if( ! patternRg.text(val)){
+          isErr = `"${val}" didn't match ${schema.pattern}`
+        }
+      } // END pattern
+
+      if(isok
+      && schema.minLength
+      && schema.minLength > val.length){
+        isErr = `"${val}" is to shot.`
+      }
+
+      if(isok
+      && schema.maxLength
+      && schema.maxLength < val.length){
+        isErr = `"${val}" is to long.`
+      }
+
+      // TODO: check schema.format //i.e. email, uuid ...
+
+      if(! isErr){
+        return val
+      }
+
+      break;
+    case "boolean"
+      if("string" === typeof val
+      && ["false","true"].includes(val.toLowerCase()))
+        return "true" === val.toLowerCase()
+      break;
+    case "object"
+
+  //    break;
+    case "array"
+    // schema.items.type: string
+  //    break;
+    default:
+      isErr = "Unknowen type: "+schema.type
+      // code block
+  }// END switch
+
+  throw new Error(isErr)
+}
 
 //=====================================================
 //=========================== validate AFTER controller
