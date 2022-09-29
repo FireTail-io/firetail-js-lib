@@ -1,0 +1,27 @@
+openapi: 3.0.1
+info:
+  title: dev-pointsec-corp-api-1
+  version: '0.1'
+servers:
+- url: https://api.eu-west-1.dev.platform.pointsec.io/
+paths:
+  /check_operationId_fn:
+    get:
+      operationId: optId.basic
+      responses:
+        200:
+          description: 200 response
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Credentials:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+          content: {}

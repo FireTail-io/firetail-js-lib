@@ -51,11 +51,16 @@ paths:
     get:
       operationId: app.cat_id
       parameters:
-      - name: org_uuid
+      - name: id
         in: path
         required: true
         schema:
-          type: string
+          type: integer
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: The number of items to skip before starting to collect the result set
       security:
       - jwt: []
       responses:

@@ -1,11 +1,13 @@
 const firetailSetup = require("../dist");
-const firetailOpts = {apiYaml:"../sample/api.yaml"}
+const firetailOpts = {yamlPath:"./cases.yaml"
+  //"../sample/api.yaml"
+}
 const firetailMiddleware = firetailSetup(firetailOpts)
 
-function req() {
-   return {
+function genReq(override) {
+   return Object.assign({
     method: 'GET',
-    originalUrl: '/bar',
+    originalUrl:"/",
     headers:{
      host: 'localhost:3001',
      connection: 'keep-alive',
@@ -23,29 +25,56 @@ function req() {
     get:(key)=>{
         //'Content-Type'
     }
-  } // END return
+  },override) // END return
 } // END req
 
-function res() {
-   return {
+function genRes(override) {
+   return Object.assign({
     statusCode:200,
+    status:()=>{},
     end:()=>{},
     send:()=>{},
     json:()=>{}
-  }
+  },override)
 }
 
-test('...', () => {
-  const next = ()=>{}
-  firetailMiddleware(req(), res(), next)
-  
-// check yaml path can be set
-   // via Env
-   // via opts args
-   // via package.json
+describe('test GET requests', () => {
+  test('should lookup "operationId"', (done) => {
 
-// check yaml exists
-  
-  
-  
+    let optId_called = false
+    let app_called = false
+    const next = ()=>{
+      app_called = true
+    }
+
+    const myFiretailOpts = Object.assign({},firetailOpts)
+    myFiretailOpts.operations = {
+      optId:{
+        basic:(req,res)=>{
+          optId_called = true
+          res.send()
+          res.end()
+        }
+      }
+    }
+
+    const firetailMiddleware = firetailSetup(myFiretailOpts)
+          firetailMiddleware(genReq({
+            originalUrl:"/check_operationId_fn",
+            end:()=>{
+              expect(optId_called).toBe(true);
+              expect(app_called).toBe(false);
+              done()
+            }
+          }), genRes({
+            end:()=>done()
+          }), next)
+
+  // check yaml path can be set
+     // via Env
+     // via opts args
+     // via package.json
+
+  // check yaml exists
+  });
 });

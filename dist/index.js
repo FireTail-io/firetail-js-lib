@@ -4,19 +4,34 @@ var defaultOpts = require("../config.json");
 var flattenObj = require("./utils/flattenObj");
 var args2Arr = require("./utils/args2Arr");
 var matchUrl = require("./utils/match");
+var path = require('path');
 //=====================================================
 //==================================== file Taile Setup
 //=====================================================
 module.exports = function fileTaileSetup(_a) {
     var yamlPath = _a.yamlPath, overRideError = _a.overRideError, operations = _a.operations;
+    var console = { log: function () { }, warn: function () { }, error: function () { } };
     var yamlPathSt = defaultOpts.yamlPath;
     //++++++++++++++++++++++++++++ check user set yamlPath
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
-    if ("string" === typeof yamlPath) {
-        yamlPathSt = yamlPath;
-    }
-    else if ("function" === typeof yamlPath) {
-        yamlPathSt = yamlPath();
+    if (yamlPath) {
+        if ("function" === typeof yamlPath) {
+            yamlPathSt = yamlPath();
+        }
+        else if ("string" === typeof yamlPath) {
+            yamlPathSt = yamlPath;
+        }
+        if ("string" !== typeof yamlPathSt) {
+            throw new Error("yamlPath is not validate: " + JSON.stringify(yamlPath));
+        }
+        if (yamlPathSt.startsWith(".")) {
+            var callerFile = new Error("").stack
+                .split("\n")[2]
+                .split("(").pop()
+                .split(":")[0];
+            var callerDir = path.dirname(callerFile);
+            yamlPathSt = path.resolve(callerDir, yamlPathSt);
+        }
     }
     else if (process.env && process.env.API_YAML) {
         yamlPathSt = process.env.API_YAML;
@@ -107,28 +122,31 @@ function middleware(req, res, next) {
         var scamaForEndPoint = null;
         if (matchFound) {
             scamaForEndPoint = paths[matchFound.path];
+            // We need to set the URL params as Express only adds them later
             Object.assign(data.params, matchFound.params);
         }
         // Store specificScama as its needed in the "äfter" fn
         specificScama = before(scamaForEndPoint, data);
-        if (scamaForEndPoint) {
-            var verb = data.verb;
-            var scamaVerb = scamaForEndPoint[verb];
-            //console.log("scamaVerb",scamaVerb)
-            if (scamaVerb) {
-                var operationId_1 = scamaVerb.operationId;
-                if (operationId_1) {
-                    if (operationsFn[operationId_1]) {
-                        req.params = req.params || {};
-                        Object.assign(req.params, data.params);
-                        next = function () { return operationsFn[operationId_1](req, res, next); };
-                    }
-                    else {
-                        console.log("No operationId match for ".concat(operationId_1));
-                    }
-                } // END if operationId
-            } // END if scamaVerb
-        } // END if scamaForEndPoint
+        /*    if(scamaForEndPoint){
+                const { verb } = data
+                const scamaVerb = scamaForEndPoint[verb]
+                //console.log("scamaVerb",scamaVerb)
+                if(scamaVerb){*/
+        var operationId = scamaForEndPoint[data.verb].operationId; //scamaVerb
+        if (operationId) {
+            if (operationsFn[operationId]) {
+                req.params = req.params || {};
+                // TODO: should this type conversion be extended to all the non-operationsFn ?
+                Object.assign(req.params, data.params);
+                Object.assign(req.query, data.query);
+                next = function () { return operationsFn[operationId](req, res, next); };
+            }
+            else {
+                console.log("No operationId match for ".concat(operationId));
+            }
+        } // END if operationId
+        /*    } // END if scamaVerb
+        } */ // END if scamaForEndPoint
         next();
     }) // END apiSpecPr.then
         .catch(function (err) {
@@ -163,20 +181,62 @@ function before(scamaForEndPoint, data) {
             status: 400,
             message: "".concat(url, " ").concat(verb.toUpperCase(), " was not found. Only \"").concat(Object.keys(scamaForEndPoint).join(",").toUpperCase(), "\" should be used")
         }; // END throw
-    } // END if
+    } // END if ! scamaVerb
     //++++++++ check caller has the right security headers
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
     //+++++++++++++++++++++ check Content-Type if has body
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
     var headers = data.headers;
     var contentType = headers["Content-Type"];
-    //+++++++++++++++++++++++++++++ check params are right
+    //++++++++++++++++++++++++++++ check reqest parameters
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
-    var params = data.params;
-    console.log(scamaVerb);
-    //+++++++++++++++++++++++++++++ query params are right
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++
-    var query = data.query;
+    if (scamaVerb.parameters) {
+        // We have to do this because of Babel or Typescript DUG!!
+        function filterParameter(parameter) {
+            return this.type === parameter.in;
+        }
+        //+++++++++++++++++++++++++++++ check params are right
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++
+        var params = data.params;
+        var pathNametoCheck = scamaVerb.parameters
+            //.filter(({in})=>"query" === in) // Is giving a build Error 'var  = _a.in;'
+            .filter(filterParameter.bind({ type: "path" }));
+        pathNametoCheck.forEach(function (_a) {
+            var name = _a.name, schema = _a.schema;
+            if (schema) {
+                data.params[name] = checkParameters(data.params[name], schema);
+            }
+        });
+        //+++++++++++++++++++++++++++++ query params are right
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++
+        var queryNametoCheck = scamaVerb.parameters
+            .filter(filterParameter.bind({ type: "query" }));
+        /*
+        if(queryNamesRecived.length !== queryNametoCheck.length){
+          throw new Error(`Mismatch in number of query arguments. You sent too ${
+                            queryNamesRecived.length > queryNametoCheck.length ? "many" : "few"}`)
+        }*/
+        var query = data.query;
+        var queryNamesRecived_1 = Object.keys(query);
+        queryNametoCheck.forEach(function (_a) {
+            var required = _a.required, name = _a.name, schema = _a.schema;
+            if (required && !queryNamesRecived_1.includes(name)) {
+                console.warn(name + " was not found as a named query ");
+                throw new Error("Missing required query argument.");
+            }
+            queryNamesRecived_1 = queryNamesRecived_1.filter(function (queryName) { return queryName !== name; });
+            if (schema) {
+                data.query[name] = checkParameters(data.query[name], schema);
+            }
+            else {
+                console.warn("No schema for query: \"".concat(name, "\" ~ ").concat(url));
+            }
+        }); // END foreach
+        if (queryNamesRecived_1.length) {
+            console.warn(queryNamesRecived_1.join() + " where pass");
+            throw new Error("unknowen query argument.");
+        }
+    } // END if scamaVerb.parameters
     //++++++++++++++++++++++ check body is the right shape
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
     var reqBody = data.reqBody;
@@ -185,6 +245,105 @@ function before(scamaForEndPoint, data) {
     //  const { accept } = headers
     return scamaVerb;
 } // END before
+function checkParameters(val, schema) {
+    var isErr = "";
+    /*
+  
+  
+    Common Name	type	format	Comments
+    integer	integer	int32	signed 32 bits
+    long	integer	int64	signed 64 bits
+    float	number	float
+    double	number	double
+    string	string
+    byte	string	byte	base64 encoded characters
+    binary	string	binary	any sequence of octets
+    boolean	boolean
+    date	string	date	As defined by full-date - RFC3339
+    dateTime	string	date-time	As defined by date-time - RFC3339
+    password	string	password	Used to hint UIs the input needs to be obscured.
+  
+    */
+    switch (schema.type) {
+        case "number":
+        case "integer":
+            var isok = true;
+            //format: int64
+            var parcedVal = +val;
+            if ("".concat(parcedVal) !== val) {
+                isErr = "".concat(val, " is not a value number");
+            }
+            if (!isErr
+                && "minimum" in schema
+                && schema.minimum > parcedVal) {
+                isErr = "".concat(val, " is below the minimum value");
+            }
+            if (!isErr
+                && "maximum" in schema
+                && schema.maximum < parcedVal) {
+                isErr = "".concat(val, " is above the maximum value");
+            }
+            if (!isErr
+                && "integer" === schema.type
+                && 0 < parcedVal % 1) {
+                isErr = "".concat(val, " is not a whole number");
+            }
+            if (!isErr) {
+                return parcedVal;
+            }
+            break;
+        case "string":
+            if (!val) {
+                isErr = "No a valid string:" + JSON.stringify(val);
+            }
+            if (!isErr
+                && schema.enum
+                && !schema.enum.includes(val)) {
+                isErr = "\"".concat(val, "\" in the in the range of ").concat(schema.enum.join());
+            }
+            if (!isErr
+                && schema.pattern) {
+                var patternRg = new RegExp(schema.pattern);
+                if (!patternRg.text(val)) {
+                    isErr = "\"".concat(val, "\" didn't match ").concat(schema.pattern);
+                }
+            } // END pattern
+            if (isok
+                && schema.minLength
+                && schema.minLength > val.length) {
+                isErr = "\"".concat(val, "\" is to shot.");
+            }
+            if (isok
+                && schema.maxLength
+                && schema.maxLength < val.length) {
+                isErr = "\"".concat(val, "\" is to long.");
+            }
+            // TODO: check schema.format //i.e. email, uuid ...
+            if (!isErr) {
+                return val;
+            }
+            break;
+        case "boolean":
+            if ("string" === typeof val
+                && ["false", "true"].includes(val.toLowerCase()))
+                return "true" === val.toLowerCase();
+            break;
+        case "object"
+        //    break;
+        :
+        //    break;
+        case "array"
+        // schema.items.type: string
+        //    break;
+        :
+        // schema.items.type: string
+        //    break;
+        default:
+            isErr = "Unknowen type: " + schema.type;
+        // code block
+    } // END switch
+    throw new Error(isErr);
+}
 //=====================================================
 //=========================== validate AFTER controller
 //=====================================================

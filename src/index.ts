@@ -5,7 +5,7 @@ const defaultOpts = require("../config.json");
 const flattenObj = require("./utils/flattenObj");
 const args2Arr = require("./utils/args2Arr");
 const matchUrl = require("./utils/match");
-
+const path = require('path');
 interface Options {
     yamlPath: String | Function;
     overRideError: Function;
@@ -17,16 +17,33 @@ interface Options {
 //=====================================================
 
 module.exports = function fileTaileSetup({yamlPath, overRideError, operations}: Options) : Function{
-
+  
+  const console = {log:()=>{},warn:()=>{},error:()=>{}}
   let yamlPathSt = defaultOpts.yamlPath
 
 //++++++++++++++++++++++++++++ check user set yamlPath
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
+  if(yamlPath){
+    if ("function" === typeof yamlPath) {
+        yamlPathSt = yamlPath()
+    } else if ("string" === typeof yamlPath) {
+        yamlPathSt = yamlPath
+    }
+    if ("string" !== typeof yamlPathSt) {
+      throw new Error("yamlPath is not validate: "+JSON.stringify(yamlPath))
+    }
+    if(yamlPathSt.startsWith(".")){
 
-  if ("string" === typeof yamlPath) {
-      yamlPathSt = yamlPath
-  } else if ("function" === typeof yamlPath) {
-      yamlPathSt = yamlPath()
+      const callerFile = new Error("").stack
+                                .split("\n")[2]
+                                .split("(").pop()
+                                .split(":")[0]
+
+      const callerDir = path.dirname(callerFile)
+
+      yamlPathSt = path.resolve(callerDir,yamlPathSt)
+    }
+
   } else if (process.env && process.env.API_YAML) {
     yamlPathSt = process.env.API_YAML
   }
@@ -218,12 +235,21 @@ function before(scamaForEndPoint,data){
 
     if(scamaVerb.parameters){
 
+      // We have to do this because of Babel or Typescript DUG!!
+      function filterParameter(parameter){
+         return this.type === parameter.in;
+      }
+
 //+++++++++++++++++++++++++++++ check params are right
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-     const { params } = data
+     const { params } = data;
+
+
+
      const pathNametoCheck = scamaVerb.parameters
-                                      .filter(({in})=>"path" === in);
+                                    //.filter(({in})=>"query" === in) // Is giving a build Error 'var  = _a.in;'
+                                      .filter(filterParameter.bind({type:"path"}));
 
       pathNametoCheck.forEach(({name, schema}) => {
         if(schema){
@@ -235,7 +261,7 @@ function before(scamaForEndPoint,data){
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
 
       const queryNametoCheck = scamaVerb.parameters
-                                        .filter(({in})=>"query" === in)
+                                        .filter(filterParameter.bind({type:"query"}))
       /*
       if(queryNamesRecived.length !== queryNametoCheck.length){
         throw new Error(`Mismatch in number of query arguments. You sent too ${
@@ -338,7 +364,7 @@ function checkParameters(val: string,schema){
       if( ! isErr
       &&   schema.enum
       && ! schema.enum.includes(val)){
-        isErr = `"${val"} in the in the range of ${schema.enum.join()}`
+        isErr = `"${val}" in the in the range of ${schema.enum.join()}`
       }
 
       if( ! isErr
