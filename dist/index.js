@@ -54,7 +54,7 @@ function middleware(req, res, next) {
     var data = {
         yamlPathSt: yamlPathSt,
         verb: req.method.toLowerCase(),
-        url: req.originalUrl,
+        url: req.originalUrl.split("?")[0],
         resBody: false,
         reqBody: req.body,
         startedAt: new Date(),
@@ -216,8 +216,9 @@ function before(scamaForEndPoint, data) {
           throw new Error(`Mismatch in number of query arguments. You sent too ${
                             queryNamesRecived.length > queryNametoCheck.length ? "many" : "few"}`)
         }*/
-        var query = data.query;
-        var queryNamesRecived_1 = Object.keys(query);
+        var query_1 = data.query;
+        var queryNamesRecived_1 = Object.keys(query_1);
+        //console.log(queryNamesRecived)
         queryNametoCheck.forEach(function (_a) {
             var required = _a.required, name = _a.name, schema = _a.schema;
             if (required && !queryNamesRecived_1.includes(name)) {
@@ -225,13 +226,14 @@ function before(scamaForEndPoint, data) {
                 throw new Error("Missing required query argument.");
             }
             queryNamesRecived_1 = queryNamesRecived_1.filter(function (queryName) { return queryName !== name; });
-            if (schema) {
-                data.query[name] = checkParameters(data.query[name], schema);
-            }
-            else {
+            if (!schema) {
                 console.warn("No schema for query: \"".concat(name, "\" ~ ").concat(url));
             }
+            else if (queryNamesRecived_1.includes(name)) {
+                data.query[name] = checkParameters(query_1[name], schema);
+            }
         }); // END foreach
+        //console.log(queryNamesRecived)
         if (queryNamesRecived_1.length) {
             console.warn(queryNamesRecived_1.join() + " where pass");
             throw new Error("unknowen query argument.");
@@ -365,7 +367,7 @@ function after(specificScama, data) {
             else {
                 throw {
                     status: 400,
-                    message: "Could not find a matching type. Available types are ".concat(Object.keys(response.content))
+                    message: "Could not find a matching type." // Available types are ${Object.keys(response.content)}`
                 }; // END throw
             } // END inner else
         }

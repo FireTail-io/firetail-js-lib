@@ -33,15 +33,5 @@
     "test:update": "npm test -- --updateSnapshot",
     "test:cover": "npm test -- --coverage --no-cache",
     "test:watch": "npm test -- --watch --runInBand"
-  },
-  "jest": {
-    "testPathIgnorePatterns": [
-      "/node_modules/"
-    ],
-    "coverageDirectory": "coverage",
-    "collectCoverageFrom": [
-      "src/**/*.js"
-    ],
-    "verbose": true
   }
 }

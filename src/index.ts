@@ -17,7 +17,7 @@ interface Options {
 //=====================================================
 
 module.exports = function fileTaileSetup({yamlPath, overRideError, operations}: Options) : Function{
-  
+
   const console = {log:()=>{},warn:()=>{},error:()=>{}}
   let yamlPathSt = defaultOpts.yamlPath
 
@@ -69,7 +69,7 @@ function middleware(req, res, next) {
   const data = {
       yamlPathSt,
       verb: req.method.toLowerCase(),
-      url: req.originalUrl,
+      url: req.originalUrl.split("?")[0],
       resBody:false,
       reqBody:req.body,
       startedAt:new Date(),
@@ -270,18 +270,20 @@ function before(scamaForEndPoint,data){
       const { query } = data
 
       let queryNamesRecived = Object.keys(query)
+      //console.log(queryNamesRecived)
       queryNametoCheck.forEach(({required,name, schema}) => {
         if(required && ! queryNamesRecived.includes(name)){
           console.warn(name +" was not found as a named query ")
           throw new Error("Missing required query argument.")
         }
         queryNamesRecived = queryNamesRecived.filter( queryName => queryName !== name)
-        if(schema){
-          data.query[name] = checkParameters(data.query[name],schema)
-        } else {
+        if(! schema){
           console.warn(`No schema for query: "${name}" ~ ${url}`)
+        } else if(queryNamesRecived.includes(name)){
+          data.query[name] = checkParameters(query[name],schema)
         }
       }) // END foreach
+      //console.log(queryNamesRecived)
       if(queryNamesRecived.length){
         console.warn(queryNamesRecived.join() +" where pass")
         throw new Error("unknowen query argument.")
@@ -440,7 +442,7 @@ const { statusCode, headers: { accept } , resBody } = data
       } else {
           throw {
               status:400,
-              message:`Could not find a matching type. Available types are ${Object.keys(response.content)}`
+              message:`Could not find a matching type.`// Available types are ${Object.keys(response.content)}`
           } // END throw
       } // END inner else
     } else {
