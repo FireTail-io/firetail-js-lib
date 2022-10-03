@@ -6,6 +6,7 @@ const flattenObj = require("./utils/flattenObj");
 const args2Arr = require("./utils/args2Arr");
 const matchUrl = require("./utils/match");
 const path = require('path');
+const fs = require('fs')
 interface Options {
     yamlPath: String | Function;
     overRideError: Function;
@@ -16,7 +17,7 @@ interface Options {
 //==================================== file Taile Setup
 //=====================================================
 
-module.exports = function fileTaileSetup({yamlPath, overRideError, operations}: Options) : Function{
+module.exports = function fileTaileSetup({yamlPath, overRideError, operations, dev}: Options) : Function{
 
   const console = {log:()=>{},warn:()=>{},error:()=>{}}
   let yamlPathSt = defaultOpts.yamlPath
@@ -55,7 +56,7 @@ module.exports = function fileTaileSetup({yamlPath, overRideError, operations}: 
   const apiSpecPr = SwaggerParser.validate(yamlPathSt)
                                  .then(({paths})=>paths);
 
-  return middleware.bind({yamlPathSt, apiSpecPr, operationsFn:flattenObj(operations || {})})
+  return middleware.bind({yamlPathSt, apiSpecPr, dev, operationsFn:flattenObj(operations || {})})
 } // END fileTaileSetup
 
 //=====================================================
@@ -64,7 +65,8 @@ module.exports = function fileTaileSetup({yamlPath, overRideError, operations}: 
 
 function middleware(req, res, next) {
 
-  const { yamlPathSt, apiSpecPr, operationsFn } = this
+  const { yamlPathSt, apiSpecPr, operationsFn, dev } = this
+
 
   const data = {
       yamlPathSt,
@@ -79,6 +81,41 @@ function middleware(req, res, next) {
       params: req.params,
       query:req.query
     }
+
+    if(dev){
+      if(data.url.startsWith("/firetail")){
+        if("/firetail/apis.json" === data.url){
+            apiSpecPr.then(data=>res.json(data))
+                     .catch(err=>{
+                       console.error(err)
+                       res.status(500).send(err.message||err)
+                     })
+            return;
+        }/*
+        let filePath = "index.html"
+        switch(data.url){
+          case "/firetail/client.js":
+            filePath = "client.js"
+            break;
+          case "/firetail/apis.json":
+            apiSpecPr.then(res.json())
+                     .catch(err=>res.status(500).json(err))
+            return;
+            break;
+        }*/
+        const filePath = "/firetail/client.js" === data.url ? "client.js"
+                                                            : "index.html"
+        fs.readFile( path.resolve(__dirname,"../src/ui/",filePath),"utf8",function(err,data){
+          if(err){
+            res.status(500).send(err)
+          }else{
+            res.send(data)
+          }
+        }) // END fs.readFile
+        return
+      }
+    } // END if dev
+
 
   let specificScama;
 

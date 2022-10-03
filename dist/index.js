@@ -5,11 +5,12 @@ var flattenObj = require("./utils/flattenObj");
 var args2Arr = require("./utils/args2Arr");
 var matchUrl = require("./utils/match");
 var path = require('path');
+var fs = require('fs');
 //=====================================================
 //==================================== file Taile Setup
 //=====================================================
 module.exports = function fileTaileSetup(_a) {
-    var yamlPath = _a.yamlPath, overRideError = _a.overRideError, operations = _a.operations;
+    var yamlPath = _a.yamlPath, overRideError = _a.overRideError, operations = _a.operations, dev = _a.dev;
     var console = { log: function () { }, warn: function () { }, error: function () { } };
     var yamlPathSt = defaultOpts.yamlPath;
     //++++++++++++++++++++++++++++ check user set yamlPath
@@ -44,13 +45,13 @@ module.exports = function fileTaileSetup(_a) {
         var paths = _a.paths;
         return paths;
     });
-    return middleware.bind({ yamlPathSt: yamlPathSt, apiSpecPr: apiSpecPr, operationsFn: flattenObj(operations || {}) });
+    return middleware.bind({ yamlPathSt: yamlPathSt, apiSpecPr: apiSpecPr, dev: dev, operationsFn: flattenObj(operations || {}) });
 }; // END fileTaileSetup
 //=====================================================
 //========================================== middleware
 //=====================================================
 function middleware(req, res, next) {
-    var _a = this, yamlPathSt = _a.yamlPathSt, apiSpecPr = _a.apiSpecPr, operationsFn = _a.operationsFn;
+    var _a = this, yamlPathSt = _a.yamlPathSt, apiSpecPr = _a.apiSpecPr, operationsFn = _a.operationsFn, dev = _a.dev;
     var data = {
         yamlPathSt: yamlPathSt,
         verb: req.method.toLowerCase(),
@@ -64,6 +65,40 @@ function middleware(req, res, next) {
         params: req.params,
         query: req.query
     };
+    if (dev) {
+        if (data.url.startsWith("/firetail")) {
+            if ("/firetail/apis.json" === data.url) {
+                apiSpecPr.then(function (data) { return res.json(data); })
+                    .catch(function (err) {
+                    console.error(err);
+                    res.status(500).send(err.message || err);
+                });
+                return;
+            } /*
+            let filePath = "index.html"
+            switch(data.url){
+              case "/firetail/client.js":
+                filePath = "client.js"
+                break;
+              case "/firetail/apis.json":
+                apiSpecPr.then(res.json())
+                         .catch(err=>res.status(500).json(err))
+                return;
+                break;
+            }*/
+            var filePath = "/firetail/client.js" === data.url ? "client.js"
+                : "index.html";
+            fs.readFile(path.resolve(__dirname, "../src/ui/", filePath), "utf8", function (err, data) {
+                if (err) {
+                    res.status(500).send(err);
+                }
+                else {
+                    res.send(data);
+                }
+            }); // END fs.readFile
+            return;
+        }
+    } // END if dev
     var specificScama;
     //++++++++++++++++++++++++++++++++++++++ error handler
     //++++++++++++++++++++++++++++++++++++++++++++++++++++

@@ -2,10 +2,10 @@
   "name": "sample",
   "version": "1.0.0",
   "description": "",
-  "main": "service.js",
+  "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node service"
+    "start": "node server"
   },
   "author": "Brian Shannon <brian@firetail.io>",
   "license": "LGPL-3.0",

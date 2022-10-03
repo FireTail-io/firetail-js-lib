@@ -9,6 +9,17 @@ servers:
   - url: http://staging-api.example.com
     description: Optional server description, e.g. Internal staging server for testing
 paths:
+  /:
+    get:
+      summary: Homepage.
+      description: Optional extended description in CommonMark or HTML.
+      responses:
+        '200':    # status code
+          description: A
+          content:
+            text/html:
+                schema:
+                  type: string
   /bar:
     get:
       summary: Returns a list of users.

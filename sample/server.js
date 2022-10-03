@@ -17,6 +17,7 @@ function cat(req, res){
 
 const firetailOpts = {
   apiYaml:"./api.yaml",
+  dev:true,
   operations:{
     "app.foo":foo,
     app : {
@@ -32,7 +33,7 @@ const firetailMiddleware = firetailSetup(firetailOpts)
 app.use(firetailMiddleware)
 
 app.get('/', (req, res) => {
-  res.send('Hello World!')
+  res.send("FireTail sample")
 })
 
 app.get('/bar', (req, res) => {
@@ -48,7 +49,8 @@ app.get('/bar2', (req, res) => {
 })
 
 app.get('/bar/:tab', (req, res) => {
-  console.log(req.params.tab)
+  console.log(req.params)
+  console.log(req.query)
   //res.set('content-type','application/json')
   res.contentType('application/json');
   res.json(["a","b","c"])
