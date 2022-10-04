@@ -124,16 +124,40 @@ function middleware(req, res, next) {
 
 let errorHandlerCalled = false
   const errorHandler = err => {
-
+    console.log()
+    console.log("---------------")
+    console.error(err.message)
+    console.log("---------------")
+    console.log()
     if(errorHandlerCalled){
       console.error("errorHandler was already called")
       return
     }
-    console.error(err)
-    errorHandlerCalled = true;
-    const errContent = "function" === typeof overRideError ? overRideError(err) : err
 
-    res.status(err.status)
+
+    errorHandlerCalled = true;
+
+    const isUI = (req.get('Referrer')||"").endsWith("/firetail")
+
+    let defaultErrorVal = {
+      status: err.status || 500,
+      message:"There was a problem with your request. Please check your API spec",
+      error:undefined
+    }
+
+    if(dev && isUI){
+      defaultErrorVal.error = {
+        message:err.message,
+        stack:err.stack
+      }
+    } else if(dev){
+      defaultErrorVal.message = err.message || err
+    }
+
+    const errContent = "function" === typeof overRideError ? overRideError(err) : defaultErrorVal
+
+    res.status(errContent.status || defaultErrorVal.status)
+
     stashFnCalls["object" === typeof errContent ? "json" : "send"](errContent)
     stashFnCalls.end()
   } // END errorHandler
@@ -216,9 +240,9 @@ let errorHandlerCalled = false
   .catch(err=> {
     // If specificScama is set then before was fine
     // and this error is coming from the app and not our problem
-    if (specificScama) {
+    /*if (specificScama) {
       throw err
-    }
+    }*/
     errorHandler(err)
   }) // END catch
 

@@ -12,7 +12,7 @@ function foo(req, res){
 }
 function cat(req, res){
   console.log(req.params)
-  res.send('CAT')
+  res.send('CAT '+ JSON.stringify(req.params))
 }
 
 const firetailOpts = {

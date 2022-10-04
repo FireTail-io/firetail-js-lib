@@ -104,14 +104,33 @@ function middleware(req, res, next) {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
     var errorHandlerCalled = false;
     var errorHandler = function (err) {
+        console.log();
+        console.log("---------------");
+        console.error(err.message);
+        console.log("---------------");
+        console.log();
         if (errorHandlerCalled) {
             console.error("errorHandler was already called");
             return;
         }
-        console.error(err);
         errorHandlerCalled = true;
-        var errContent = "function" === typeof overRideError ? overRideError(err) : err;
-        res.status(err.status);
+        var isUI = (req.get('Referrer') || "").endsWith("/firetail");
+        var defaultErrorVal = {
+            status: err.status || 500,
+            message: "There was a problem with your request. Please check your API spec",
+            error: undefined
+        };
+        if (dev && isUI) {
+            defaultErrorVal.error = {
+                message: err.message,
+                stack: err.stack
+            };
+        }
+        else if (dev) {
+            defaultErrorVal.message = err.message || err;
+        }
+        var errContent = "function" === typeof overRideError ? overRideError(err) : defaultErrorVal;
+        res.status(errContent.status || defaultErrorVal.status);
         stashFnCalls["object" === typeof errContent ? "json" : "send"](errContent);
         stashFnCalls.end();
     }; // END errorHandler
@@ -187,9 +206,9 @@ function middleware(req, res, next) {
         .catch(function (err) {
         // If specificScama is set then before was fine
         // and this error is coming from the app and not our problem
-        if (specificScama) {
-            throw err;
-        }
+        /*if (specificScama) {
+          throw err
+        }*/
         errorHandler(err);
     }); // END catch
 } // END middleware
