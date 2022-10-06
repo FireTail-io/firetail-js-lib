@@ -1,11 +1,18 @@
+
+//=====================================================
+//============================================= Imports
+//=====================================================
+
 const express = require('express')
 const scribbles = require('scribbles')
 global.console = scribbles
-const firetailSetup = require("../dist");
+const firetailSetup = require("../dist");//require("firetail")
 const app = express()
 const port = 3001
 
-//====== MOVE TO TEST
+//=====================================================
+//================================= Operation Functions
+//=====================================================
 
 function foo(req, res){
   res.send('FOO')
@@ -15,23 +22,42 @@ function cat(req, res){
   res.send('CAT '+ JSON.stringify(req.params))
 }
 
-const firetailOpts = {
-  apiYaml:"./api.yaml",
-  dev:true,
-  operations:{
-    "app.foo":foo,
-    app : {
-      cat_id:cat
-    }
-  }
-}
+//=====================================================
+//=================================== Firetail settings
+//=====================================================
 
-// ========
+const firetailOpts = {
+  // you can use absolute or relative path and I will work it out.
+  apiYaml:"./api.yaml",//"app-spec.yaml",//
+  // Api Doc UI + Development friendly messages
+  dev:true,
+  // override Express'es controller based on "operationId"
+  operations:{
+    // FLAT name
+    "app.foo":foo,
+    // Nested
+    app : {
+      cat_id:cat,
+      jwt_verifier:(x)=>console.log("jwt_verifier",x)
+    }
+  } // END operations
+} // END firetailOpts
+console.log(firetailOpts)
+//=====================================================
+//===================================== Create Firetail
+//=====================================================
 
 const firetailMiddleware = firetailSetup(firetailOpts)
 
+//=====================================================
+//======================================== Add Firetail
+//=====================================================
+
 app.use(firetailMiddleware)
 
+//=====================================================
+//========================================= Your server
+//=====================================================
 app.get('/', (req, res) => {
   res.send("FireTail sample")
 })
@@ -45,7 +71,7 @@ app.get('/bar', (req, res) => {
 app.get('/bar2', (req, res) => {
   //res.set('content-type','application/json')
   res.contentType('application/json');
-  res.json(["a","b","c"])
+  res.json(["1","2","3"])
 })
 
 app.get('/bar/:tab', (req, res) => {
@@ -55,6 +81,10 @@ app.get('/bar/:tab', (req, res) => {
   res.contentType('application/json');
   res.json(["a","b","c"])
 })
+
+//=====================================================
+//======================================== Server start
+//=====================================================
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)

@@ -90,3 +90,10 @@ paths:
             Access-Control-Allow-Headers:
               schema:
                 type: string
+components:
+  securitySchemes:
+    jwt:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      x-bearerInfoFunc: app.jwt_verifier

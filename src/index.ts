@@ -11,6 +11,7 @@ interface Options {
     yamlPath: String | Function;
     overRideError: Function;
     operations: Object;
+
 }
 
 //=====================================================
@@ -19,7 +20,7 @@ interface Options {
 
 module.exports = function fileTaileSetup({yamlPath, overRideError, operations, dev}: Options) : Function{
 
-  const console = {log:()=>{},warn:()=>{},error:()=>{}}
+  //const console = {log:()=>{},warn:()=>{},error:()=>{}}
   let yamlPathSt = defaultOpts.yamlPath
 
 //++++++++++++++++++++++++++++ check user set yamlPath
@@ -54,7 +55,7 @@ module.exports = function fileTaileSetup({yamlPath, overRideError, operations, d
 
   // TODO: Should we catch or crash if spce is not found?
   const apiSpecPr = SwaggerParser.validate(yamlPathSt)
-                                 .then(({paths})=>paths);
+                              // .then(({paths})=>paths);
 
   return middleware.bind({yamlPathSt, apiSpecPr, dev, operationsFn:flattenObj(operations || {})})
 } // END fileTaileSetup
@@ -65,8 +66,8 @@ module.exports = function fileTaileSetup({yamlPath, overRideError, operations, d
 
 function middleware(req, res, next) {
 
+//  console.log(` -- ${req.method}:${req.originalUrl}`)
   const { yamlPathSt, apiSpecPr, operationsFn, dev } = this
-
 
   const data = {
       yamlPathSt,
@@ -79,13 +80,14 @@ function middleware(req, res, next) {
       statusCode: res.statusCode,
       headers:req.headers,
       params: req.params,
-      query:req.query
+      query:req.query,
+      status:200
     }
 
     if(dev){
       if(data.url.startsWith("/firetail")){
         if("/firetail/apis.json" === data.url){
-            apiSpecPr.then(data=>res.json(data))
+            apiSpecPr.then(api=>res.json(api.paths))
                      .catch(err=>{
                        console.error(err)
                        res.status(500).send(err.message||err)
@@ -105,11 +107,12 @@ function middleware(req, res, next) {
         }*/
         const filePath = "/firetail/client.js" === data.url ? "client.js"
                                                             : "index.html"
-        fs.readFile( path.resolve(__dirname,"../src/ui/",filePath),"utf8",function(err,data){
+        fs.readFile( path.resolve(__dirname,"../src/ui/",filePath),"utf8",function(err,page){
           if(err){
+            data.status = 500
             res.status(500).send(err)
           }else{
-            res.send(data)
+            res.send(page)
           }
         }) // END fs.readFile
         return
@@ -124,11 +127,11 @@ function middleware(req, res, next) {
 
 let errorHandlerCalled = false
   const errorHandler = err => {
-    console.log()
+  /*  console.log()
     console.log("---------------")
     console.error(err.message)
     console.log("---------------")
-    console.log()
+    console.log()*/
     if(errorHandlerCalled){
       console.error("errorHandler was already called")
       return
@@ -156,6 +159,7 @@ let errorHandlerCalled = false
 
     const errContent = "function" === typeof overRideError ? overRideError(err) : defaultErrorVal
 
+      data.status = errContent.status || defaultErrorVal.status)
     res.status(errContent.status || defaultErrorVal.status)
 
     stashFnCalls["object" === typeof errContent ? "json" : "send"](errContent)
@@ -186,6 +190,16 @@ let errorHandlerCalled = false
   res.end = function() {
     const args = args2Arr(arguments)
     data.finishedAt = new Date()
+
+
+
+  // Convert both dates to milliseconds
+  var date1_ms = data.startedAt.getTime();
+  var date2_ms = data.finishedAt.getTime();
+
+  // Calculate the difference in milliseconds
+  var difference_ms = date2_ms - date1_ms;
+  console.log(`[${data.status}] ${req.method}:${req.originalUrl} - ${difference_ms/1000}sec`)
     try {
     // TODO: may need to buffer the responce..
     // as we can override the responce with out
@@ -202,7 +216,7 @@ let errorHandlerCalled = false
 //++++++++++++++++++++++++++++++++++ get ref for scama
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-  apiSpecPr.then(paths => {
+  apiSpecPr.then(({paths,components}) => {
 
       const matchFound = matchUrl(data.url,Object.keys(paths))
 
@@ -211,17 +225,19 @@ let errorHandlerCalled = false
         scamaForEndPoint = paths[matchFound.path]
         // We need to set the URL params as Express only adds them later
         Object.assign(data.params,matchFound.params)
-      }
+      }console.log()
+      console.log(paths)
+      console.log()
 
       // Store specificScama as its needed in the "äfter" fn
       specificScama = before(scamaForEndPoint, data)
-
+      security(specificScama, operationsFn, components.securitySchemes)
   /*    if(scamaForEndPoint){
           const { verb } = data
           const scamaVerb = scamaForEndPoint[verb]
           //console.log("scamaVerb",scamaVerb)
           if(scamaVerb){*/
-            const { operationId } = scamaForEndPoint[data.verb]//scamaVerb
+            const { operationId } = specificScama//scamaForEndPoint[data.verb]//scamaVerb
             if(operationId){
               if(operationsFn[operationId]){
                 req.params = req.params || {}
@@ -247,6 +263,42 @@ let errorHandlerCalled = false
   }) // END catch
 
 } // END middleware
+
+//=====================================================
+//======================== validate security controller
+//=====================================================
+
+function security(scamaVerb, operationsFn, securitySchemes){
+console.log("security",arguments)
+  //++++++++ check caller has the right security headers
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+  console.log("X check caller has the right security headers")
+  console.log(1)
+  console.log("->",operationsFn)
+  console.log(2)
+    if(scamaVerb.security){
+      scamaVerb.security.forEach(sec=> {
+
+                console.log(sec)
+        Object.keys(sec).forEach(secName=> {
+
+          console.log(secName,securitySchemes[secName])
+          if(securitySchemes[secName]){
+            const optName = securitySchemes[secName]["x-bearerInfoFunc"]
+            operationsFn[optName]()
+          //  "x-bearerInfoFunc"
+          }
+        })
+      })
+    }
+
+  console.log()
+  console.log(scamaVerb)
+  console.log()
+  console.log(securitySchemes)
+  console.log()
+}
 
 //=====================================================
 //========================== validate BEFORE controller
@@ -281,15 +333,11 @@ function before(scamaForEndPoint,data){
         } // END throw
     } // END if ! scamaVerb
 
-//++++++++ check caller has the right security headers
-//++++++++++++++++++++++++++++++++++++++++++++++++++++
-
 //+++++++++++++++++++++ check Content-Type if has body
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
 
     const { headers } = data
     const contentType = headers["Content-Type"]
-
 
 //++++++++++++++++++++++++++++ check reqest parameters
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -305,8 +353,6 @@ function before(scamaForEndPoint,data){
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
 
      const { params } = data;
-
-
 
      const pathNametoCheck = scamaVerb.parameters
                                     //.filter(({in})=>"query" === in) // Is giving a build Error 'var  = _a.in;'
@@ -499,7 +545,9 @@ const { statusCode, headers: { accept } , resBody } = data
     if(response.content){
       const contentKey = findAcceptContentKey(acceptTypes(accept),Object.keys(response.content))
       if (contentKey){
-        console.log(resBody, response.content[contentKey], "IS validate?")
+      /*  console.log(resBody)
+        console.log(response.content[contentKey])
+        console.log("IS validate?")*/
       } else {
           throw {
               status:400,

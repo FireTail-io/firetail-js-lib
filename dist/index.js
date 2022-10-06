@@ -11,7 +11,7 @@ var fs = require('fs');
 //=====================================================
 module.exports = function fileTaileSetup(_a) {
     var yamlPath = _a.yamlPath, overRideError = _a.overRideError, operations = _a.operations, dev = _a.dev;
-    var console = { log: function () { }, warn: function () { }, error: function () { } };
+    //const console = {log:()=>{},warn:()=>{},error:()=>{}}
     var yamlPathSt = defaultOpts.yamlPath;
     //++++++++++++++++++++++++++++ check user set yamlPath
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -40,17 +40,15 @@ module.exports = function fileTaileSetup(_a) {
     //++++++++++++++++++++++++++++++++++ read in yaml file
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
     // TODO: Should we catch or crash if spce is not found?
-    var apiSpecPr = SwaggerParser.validate(yamlPathSt)
-        .then(function (_a) {
-        var paths = _a.paths;
-        return paths;
-    });
+    var apiSpecPr = SwaggerParser.validate(yamlPathSt);
+    // .then(({paths})=>paths);
     return middleware.bind({ yamlPathSt: yamlPathSt, apiSpecPr: apiSpecPr, dev: dev, operationsFn: flattenObj(operations || {}) });
 }; // END fileTaileSetup
 //=====================================================
 //========================================== middleware
 //=====================================================
 function middleware(req, res, next) {
+    //  console.log(` -- ${req.method}:${req.originalUrl}`)
     var _a = this, yamlPathSt = _a.yamlPathSt, apiSpecPr = _a.apiSpecPr, operationsFn = _a.operationsFn, dev = _a.dev;
     var data = {
         yamlPathSt: yamlPathSt,
@@ -63,12 +61,13 @@ function middleware(req, res, next) {
         statusCode: res.statusCode,
         headers: req.headers,
         params: req.params,
-        query: req.query
+        query: req.query,
+        status: 200
     };
     if (dev) {
         if (data.url.startsWith("/firetail")) {
             if ("/firetail/apis.json" === data.url) {
-                apiSpecPr.then(function (data) { return res.json(data); })
+                apiSpecPr.then(function (api) { return res.json(api.paths); })
                     .catch(function (err) {
                     console.error(err);
                     res.status(500).send(err.message || err);
@@ -88,12 +87,13 @@ function middleware(req, res, next) {
             }*/
             var filePath = "/firetail/client.js" === data.url ? "client.js"
                 : "index.html";
-            fs.readFile(path.resolve(__dirname, "../src/ui/", filePath), "utf8", function (err, data) {
+            fs.readFile(path.resolve(__dirname, "../src/ui/", filePath), "utf8", function (err, page) {
                 if (err) {
+                    data.status = 500;
                     res.status(500).send(err);
                 }
                 else {
-                    res.send(data);
+                    res.send(page);
                 }
             }); // END fs.readFile
             return;
@@ -104,11 +104,11 @@ function middleware(req, res, next) {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
     var errorHandlerCalled = false;
     var errorHandler = function (err) {
-        console.log();
-        console.log("---------------");
-        console.error(err.message);
-        console.log("---------------");
-        console.log();
+        /*  console.log()
+          console.log("---------------")
+          console.error(err.message)
+          console.log("---------------")
+          console.log()*/
         if (errorHandlerCalled) {
             console.error("errorHandler was already called");
             return;
@@ -130,6 +130,7 @@ function middleware(req, res, next) {
             defaultErrorVal.message = err.message || err;
         }
         var errContent = "function" === typeof overRideError ? overRideError(err) : defaultErrorVal;
+        data.status = errContent.status || defaultErrorVal.status;
         res.status(errContent.status || defaultErrorVal.status);
         stashFnCalls["object" === typeof errContent ? "json" : "send"](errContent);
         stashFnCalls.end();
@@ -156,6 +157,12 @@ function middleware(req, res, next) {
     res.end = function () {
         var args = args2Arr(arguments);
         data.finishedAt = new Date();
+        // Convert both dates to milliseconds
+        var date1_ms = data.startedAt.getTime();
+        var date2_ms = data.finishedAt.getTime();
+        // Calculate the difference in milliseconds
+        var difference_ms = date2_ms - date1_ms;
+        console.log("[".concat(data.status, "] ").concat(req.method, ":").concat(req.originalUrl, " - ").concat(difference_ms / 1000, "sec"));
         try {
             // TODO: may need to buffer the responce..
             // as we can override the responce with out
@@ -171,7 +178,8 @@ function middleware(req, res, next) {
     }; // END res.end
     //++++++++++++++++++++++++++++++++++ get ref for scama
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
-    apiSpecPr.then(function (paths) {
+    apiSpecPr.then(function (_a) {
+        var paths = _a.paths, components = _a.components;
         var matchFound = matchUrl(data.url, Object.keys(paths));
         var scamaForEndPoint = null;
         if (matchFound) {
@@ -179,14 +187,18 @@ function middleware(req, res, next) {
             // We need to set the URL params as Express only adds them later
             Object.assign(data.params, matchFound.params);
         }
+        console.log();
+        console.log(paths);
+        console.log();
         // Store specificScama as its needed in the "äfter" fn
         specificScama = before(scamaForEndPoint, data);
+        security(specificScama, operationsFn, components.securitySchemes);
         /*    if(scamaForEndPoint){
                 const { verb } = data
                 const scamaVerb = scamaForEndPoint[verb]
                 //console.log("scamaVerb",scamaVerb)
                 if(scamaVerb){*/
-        var operationId = scamaForEndPoint[data.verb].operationId; //scamaVerb
+        var operationId = specificScama.operationId; //scamaForEndPoint[data.verb]//scamaVerb
         if (operationId) {
             if (operationsFn[operationId]) {
                 req.params = req.params || {};
@@ -213,6 +225,36 @@ function middleware(req, res, next) {
     }); // END catch
 } // END middleware
 //=====================================================
+//======================== validate security controller
+//=====================================================
+function security(scamaVerb, operationsFn, securitySchemes) {
+    console.log("security", arguments);
+    //++++++++ check caller has the right security headers
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++
+    console.log("X check caller has the right security headers");
+    console.log(1);
+    console.log("->", operationsFn);
+    console.log(2);
+    if (scamaVerb.security) {
+        scamaVerb.security.forEach(function (sec) {
+            console.log(sec);
+            Object.keys(sec).forEach(function (secName) {
+                console.log(secName, securitySchemes[secName]);
+                if (securitySchemes[secName]) {
+                    var optName = securitySchemes[secName]["x-bearerInfoFunc"];
+                    operationsFn[optName]();
+                    //  "x-bearerInfoFunc"
+                }
+            });
+        });
+    }
+    console.log();
+    console.log(scamaVerb);
+    console.log();
+    console.log(securitySchemes);
+    console.log();
+}
+//=====================================================
 //========================== validate BEFORE controller
 //=====================================================
 function before(scamaForEndPoint, data) {
@@ -236,8 +278,6 @@ function before(scamaForEndPoint, data) {
             message: "".concat(url, " ").concat(verb.toUpperCase(), " was not found. Only \"").concat(Object.keys(scamaForEndPoint).join(",").toUpperCase(), "\" should be used")
         }; // END throw
     } // END if ! scamaVerb
-    //++++++++ check caller has the right security headers
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++
     //+++++++++++++++++++++ check Content-Type if has body
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
     var headers = data.headers;
@@ -416,7 +456,9 @@ function after(specificScama, data) {
         if (response.content) {
             var contentKey = findAcceptContentKey(acceptTypes(accept), Object.keys(response.content));
             if (contentKey) {
-                console.log(resBody, response.content[contentKey], "IS validate?");
+                /*  console.log(resBody)
+                  console.log(response.content[contentKey])
+                  console.log("IS validate?")*/
             }
             else {
                 throw {
