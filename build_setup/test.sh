@@ -2,4 +2,4 @@
 ls
 npm run build
 npm install
-npm test
+npm run test:cover

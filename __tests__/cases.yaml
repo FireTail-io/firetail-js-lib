@@ -5,6 +5,28 @@ info:
 servers:
 - url: https://api.eu-west-1.dev.platform.pointsec.io/
 paths:
+  /:
+    get:
+      summary: Homepage.
+      description: Optional extended description in CommonMark or HTML.
+      responses:
+        '200':    # status code
+          description: A
+          content:
+            text/html:
+                schema:
+                  type: string
+  /public/client.js:
+    get:
+      summary: Client side JS.
+      description: Optional extended description in CommonMark or HTML.
+      responses:
+        '200':    # status code
+          description: A
+          content:
+            application/javascript:
+              schema:
+                  type: string
   /check_operationId_fn:
     get:
       operationId: optId.basic
@@ -89,3 +111,31 @@ paths:
               schema:
                 type: string
           content: {}
+  /check/security/jwt:
+    get:
+      operationId: app.jwt_basic
+      security:
+      - jwt: []
+      responses:
+        200:
+          description: 200 response
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Credentials:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+components:
+  securitySchemes:
+    jwt:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      x-bearerInfoFunc: app.jwt_verifier

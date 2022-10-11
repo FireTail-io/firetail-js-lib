@@ -7,21 +7,62 @@ const args2Arr = require("./utils/args2Arr");
 const matchUrl = require("./utils/match");
 const path = require('path');
 const fs = require('fs')
+const decodedJwt = true
 interface Options {
     yamlPath: String | Function;
     overRideError: Function;
     operations: Object;
-
 }
+
+const errMessages = {
+  dev:{
+    missingJWTtoken:"No authorization token provided",
+    notJWTBearer:"token dont not start with 'bearer: '",
+    urlNotInYaml:({url,yamlPathSt})=>`${url} was NOT in ${yamlPathSt}`,
+    badJWTFunctionOutput:`The JWT parce function did not return an oject`,
+    missingArgs:"Missing required query argument.",
+    unknowenArgs:"Unknowen query argument.",
+    missingJWTFunction:optId=>`No function with "${optId}" could be found for parcing JWTs`,
+    notFound:({url,verb,scamaForEndPoint})=>`${url} ${verb.toUpperCase()} was not found. Only "${Object.keys(scamaForEndPoint).join(",").toUpperCase()}" should be used`,
+    responseContentTypeMismatch:content=>`Could not find a matching type. Available types are ${Object.keys(content)}`,
+    statusCodeNotFound:({statusCode,codes})=>`StatusCode ${statusCode} was not found. Available codes are ${codes}`
+  },
+  prod:{
+    badOptionYamlPath:yamlPath=>"yamlPath is not validate: "+JSON.stringify(yamlPath),
+    default:"There was a problem with your request. Please check your API spec",
+    badJWTFunctionOutput:`Could not parce JWT`,
+    missingJWTFunction:`Could not parce JWT`,
+    responseContentTypeMismatch:`Could not find a matching type.`
+  }
+} // errMessages
 
 //=====================================================
 //==================================== file Taile Setup
 //=====================================================
 
-module.exports = function fileTaileSetup({yamlPath, overRideError, operations, dev}: Options) : Function{
+module.exports = function fileTaileSetup({yamlPath, overRideError, operations, dev, decodedJwt}: Options) : Function{
 
   //const console = {log:()=>{},warn:()=>{},error:()=>{}}
   let yamlPathSt = defaultOpts.yamlPath
+
+//+++++++++++++++++++++++++++++++++++++++++ genMessage
+//++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+  const genMessage = (key,data) =>{
+    // default
+    let mess = errMessages.prod[key]
+    // if dev.. then dev message
+    if(dev && errMessages.dev[key]){
+      mess = errMessages.dev[key]
+    }
+//console.log(`typeof mess = ${typeof mess}`,mess)
+    if("function" === typeof mess){
+//console.log(` >>> `,mess(data))
+      return mess(data)
+    }
+    return mess || errMessages.prod.default
+  } // END genMessage
+
 
 //++++++++++++++++++++++++++++ check user set yamlPath
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -32,7 +73,7 @@ module.exports = function fileTaileSetup({yamlPath, overRideError, operations, d
         yamlPathSt = yamlPath
     }
     if ("string" !== typeof yamlPathSt) {
-      throw new Error("yamlPath is not validate: "+JSON.stringify(yamlPath))
+      throw new Error(genMessage("badOptionYamlPath",yamlPath))//"yamlPath is not validate: "+JSON.stringify(yamlPath))
     }
     if(yamlPathSt.startsWith(".")){
 
@@ -48,16 +89,22 @@ module.exports = function fileTaileSetup({yamlPath, overRideError, operations, d
 
   } else if (process.env && process.env.API_YAML) {
     yamlPathSt = process.env.API_YAML
-  }
+  } // END else if
 
 //++++++++++++++++++++++++++++++++++ read in yaml file
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
 
   // TODO: Should we catch or crash if spce is not found?
   const apiSpecPr = SwaggerParser.validate(yamlPathSt)
-                              // .then(({paths})=>paths);
 
-  return middleware.bind({yamlPathSt, apiSpecPr, dev, operationsFn:flattenObj(operations || {})})
+  return middleware.bind({
+    genMessage,
+    decodedJwt,
+    yamlPathSt,
+    apiSpecPr,
+    dev,
+    operationsFn:flattenObj(operations || {})
+  }) // END middleware.bind
 } // END fileTaileSetup
 
 //=====================================================
@@ -66,8 +113,16 @@ module.exports = function fileTaileSetup({yamlPath, overRideError, operations, d
 
 function middleware(req, res, next) {
 
-//  console.log(` -- ${req.method}:${req.originalUrl}`)
-  const { yamlPathSt, apiSpecPr, operationsFn, dev } = this
+  //console.log(` -X- ${req.method}:${req.originalUrl}`)
+  const {
+    genMessage,
+    yamlPathSt,
+    apiSpecPr,
+    operationsFn,
+    dev,
+    decodedJwt
+  } = this
+  // .then(({paths})=>paths);
 
   const data = {
       yamlPathSt,
@@ -107,14 +162,17 @@ function middleware(req, res, next) {
         }*/
         const filePath = "/firetail/client.js" === data.url ? "client.js"
                                                             : "index.html"
-        fs.readFile( path.resolve(__dirname,"../src/ui/",filePath),"utf8",function(err,page){
-          if(err){
-            data.status = 500
-            res.status(500).send(err)
-          }else{
-            res.send(page)
-          }
-        }) // END fs.readFile
+        fs.readFile(
+          path.resolve(__dirname,"../src/ui/",filePath),
+          "utf8",
+          function(err,page){
+            if(err){
+              data.status = 500
+              res.status(500).send(err)
+            }else{
+              res.send(page)
+            }
+          }) // END fs.readFile
         return
       }
     } // END if dev
@@ -127,25 +185,27 @@ function middleware(req, res, next) {
 
 let errorHandlerCalled = false
   const errorHandler = err => {
-  /*  console.log()
-    console.log("---------------")
-    console.error(err.message)
-    console.log("---------------")
-    console.log()*/
+
+  //  console.error("-> "err, new Error().stack)
+
     if(errorHandlerCalled){
       console.error("errorHandler was already called")
       return
     }
-
 
     errorHandlerCalled = true;
 
     const isUI = (req.get('Referrer')||"").endsWith("/firetail")
 
     let defaultErrorVal = {
+      firetail:"default",
       status: err.status || 500,
-      message:"There was a problem with your request. Please check your API spec",
+      message:genMessage("default"),
       error:undefined
+    }
+
+    if(err.firetail && ! err.message){
+      err.message = genMessage(err.firetail,err.val)
     }
 
     if(dev && isUI){
@@ -157,12 +217,16 @@ let errorHandlerCalled = false
       defaultErrorVal.message = err.message || err
     }
 
-    const errContent = "function" === typeof overRideError ? overRideError(err) : defaultErrorVal
+    const errContent = "function" === typeof overRideError ? overRideError(err)
+                                                           : defaultErrorVal
 
       data.status = errContent.status || defaultErrorVal.status)
+    //  console.log(data)
+    //  console.log(errContent.status, defaultErrorVal.status)
     res.status(errContent.status || defaultErrorVal.status)
 
-    stashFnCalls["object" === typeof errContent ? "json" : "send"](errContent)
+    stashFnCalls["object" === typeof errContent ? "json"
+                                                : "send"](errContent)
     stashFnCalls.end()
   } // END errorHandler
 
@@ -199,13 +263,13 @@ let errorHandlerCalled = false
 
   // Calculate the difference in milliseconds
   var difference_ms = date2_ms - date1_ms;
-  console.log(`[${data.status}] ${req.method}:${req.originalUrl} - ${difference_ms/1000}sec`)
+  //console.log(`[${data.status}] ${req.method}:${req.originalUrl} - ${difference_ms/1000}sec`)
     try {
     // TODO: may need to buffer the responce..
     // as we can override the responce with out
     // warning about app sending data down the wire
         if (specificScama) {
-            after(specificScama, data)
+            after(specificScama, data, genMessage
         }
         return stashFnCalls.end.apply(res, args)
     } catch(err) {
@@ -225,13 +289,22 @@ let errorHandlerCalled = false
         scamaForEndPoint = paths[matchFound.path]
         // We need to set the URL params as Express only adds them later
         Object.assign(data.params,matchFound.params)
-      }console.log()
+      }/*console.log()
       console.log(paths)
-      console.log()
+      console.log()*/
 
       // Store specificScama as its needed in the "äfter" fn
-      specificScama = before(scamaForEndPoint, data)
-      security(specificScama, operationsFn, components.securitySchemes)
+      specificScama = before({scamaForEndPoint, data, genMessage})
+
+      security({
+        scamaVerb:specificScama,
+        operationsFn,
+        securitySchemes:components.securitySchemes,
+        headers:data.headers,
+        decodedJwt,
+        req,
+        genMessage
+      })
   /*    if(scamaForEndPoint){
           const { verb } = data
           const scamaVerb = scamaForEndPoint[verb]
@@ -268,43 +341,93 @@ let errorHandlerCalled = false
 //======================== validate security controller
 //=====================================================
 
-function security(scamaVerb, operationsFn, securitySchemes){
-console.log("security",arguments)
+function security({scamaVerb, operationsFn, securitySchemes,headers, decodedJwt, req, genMessage}){
+//console.log("security",arguments)
   //++++++++ check caller has the right security headers
   //++++++++++++++++++++++++++++++++++++++++++++++++++++
-
+/*
   console.log("X check caller has the right security headers")
   console.log(1)
   console.log("->",operationsFn)
-  console.log(2)
+  console.log(2)*/
+  try{
     if(scamaVerb.security){
+  //  console.log(3,scamaVerb.security)
       scamaVerb.security.forEach(sec=> {
 
-                console.log(sec)
+      //  console.log(4,sec)
         Object.keys(sec).forEach(secName=> {
 
-          console.log(secName,securitySchemes[secName])
+          //console.log(5,secName)
           if(securitySchemes[secName]){
+          //console.log(6,securitySchemes[secName])
             const optName = securitySchemes[secName]["x-bearerInfoFunc"]
-            operationsFn[optName]()
-          //  "x-bearerInfoFunc"
-          }
-        })
-      })
+            if( ! headers.authorization){
+          //  console.log(6.1,"")
+              throw {
+                  firetail:"missingJWTtoken",
+                  status:401
+              } // END throw
+            } // if ! headers.authorization
+            else if (! headers.authorization.toLowerCase().startsWith("bearer")){
+                throw {
+                    firetail:"notJWTBearer",
+                    status:401
+                } // END throw
+            }
+            //console.log(7,decodedJwt)
+            if("function" === typeof decodedJwt){
+              req.jwt = operationsFn[optName](decodedJwt(headers))
+            }else if(decodedJwt){
+                const token = headers.authorization.split(" ").pop().replace(/['"]+/g, '')
+                const tokenDecodablePart = token.split('.')[1];
+                const decoded = Buffer.from(tokenDecodablePart, 'base64').toString();
+                req.jwt = operationsFn[optName](JSON.parse(decoded),token)
+            }else if("function" === typeof operationsFn[optName]){
+              req.jwt = operationsFn[optName](headers)
+            } else {
+              //console.log("missingJWTFunction -> ",genMessage("missingJWTFunction",optName))
+              throw {
+                  firetail:"missingJWTFunction",
+                  status:401,
+                  val:optName
+              }
+            }
+            //console.log(typeof req.jwt, req.jwt,genMessage("badJWTFunctionOutput"))
+            if("object" !== typeof req.jwt){
+              throw {
+                  firetail:"badJWTFunctionOutput",
+                  status:401
+              }
+            }
+            //console.log(8,req.jwt)
+        } // END if securitySchemes[secName]
+        }) // END forEach Object.keys
+      }) // END forEach scamaVerb.security
+    } // END if scamaVerb.security
+  }catch(err){
+    if(err.firetail){
+      throw err
     }
-
+  //  console.error(err)
+    throw {
+      message:err.message || err,
+      status: 401
+    }
+  }
+/*
   console.log()
   console.log(scamaVerb)
   console.log()
   console.log(securitySchemes)
-  console.log()
+  console.log()*/
 }
 
 //=====================================================
 //========================== validate BEFORE controller
 //=====================================================
 
-function before(scamaForEndPoint,data){
+function before({scamaForEndPoint,data,genMessage}){
 
     const { url } = data
 
@@ -313,8 +436,9 @@ function before(scamaForEndPoint,data){
 
     if ( ! scamaForEndPoint) {
         throw {
+            firetail:"urlNotInYaml",
             status:400,
-            message:`${url} was NOT in ${data.yamlPathSt}`
+            val:data
         } // END throw
     } // END if
 
@@ -323,13 +447,14 @@ function before(scamaForEndPoint,data){
 
     const { verb } = data
 
-    //console.logo(Object.keys(scamaForEndPoint))
+    //console.log(Object.keys(scamaForEndPoint))
     const scamaVerb = scamaForEndPoint[verb]
 
     if ( ! scamaVerb) {
         throw {
-            status:400,
-            message:`${url} ${verb.toUpperCase()} was not found. Only "${Object.keys(scamaForEndPoint).join(",").toUpperCase()}" should be used`
+            firetail:"notFound",
+            status:404,
+            val:{url,verb,scamaForEndPoint}
         } // END throw
     } // END if ! scamaVerb
 
@@ -381,7 +506,11 @@ function before(scamaForEndPoint,data){
       queryNametoCheck.forEach(({required,name, schema}) => {
         if(required && ! queryNamesRecived.includes(name)){
           console.warn(name +" was not found as a named query ")
-          throw new Error("Missing required query argument.")
+          throw {
+              firetail:"missingArgs",
+              status:400
+            }
+          //new Error("Missing required query argument.")
         }
         queryNamesRecived = queryNamesRecived.filter( queryName => queryName !== name)
         if(! schema){
@@ -393,7 +522,11 @@ function before(scamaForEndPoint,data){
       //console.log(queryNamesRecived)
       if(queryNamesRecived.length){
         console.warn(queryNamesRecived.join() +" where pass")
-        throw new Error("unknowen query argument.")
+        throw {
+            firetail:"unknowenArgs",
+            status:400
+          }
+        // new Error("unknowen query argument.")
       }
     } // END if scamaVerb.parameters
 
@@ -550,8 +683,9 @@ const { statusCode, headers: { accept } , resBody } = data
         console.log("IS validate?")*/
       } else {
           throw {
+              firetail:"responseContentTypeMismatch",
               status:400,
-              message:`Could not find a matching type.`// Available types are ${Object.keys(response.content)}`
+              val:response.content
           } // END throw
       } // END inner else
     } else {
@@ -559,8 +693,12 @@ const { statusCode, headers: { accept } , resBody } = data
     }
   } else {
      throw {
+         firetail:"statusCodeNotFound",
          status:400,
-         message:`StatusCode ${statusCode} was not found. Available codes are ${Object.keys(specificScama.responses)}`
+         val:{
+           statusCode,
+           codes:Object.keys(specificScama.responses)
+         }
      } // END throw
   } // END outter else
 
