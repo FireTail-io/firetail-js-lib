@@ -1,5 +1,5 @@
 {
-  "name": "sample",
+  "name": "Firetail API integration",
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
@@ -15,5 +15,10 @@
   },
   "scribbles": {
     "format": "{time} <{logLevel}> {fileName}:{lineNumber} {message} {value} {stackTrace}"
+  },
+  "firetail":{
+      "addApi": "./api.yaml",
+      "specificationDir":"api",
+      "dev":true
   }
 }

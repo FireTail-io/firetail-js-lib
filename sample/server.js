@@ -19,7 +19,7 @@ function foo(req, res){
 }
 function cat(req, res){
   console.log(req.params)
-  res.send('CAT '+ JSON.stringify(req.params))
+  res.send('CAT '+ JSON.stringify(req.params)+ JSON.stringify(req.jwt))
 }
 
 //=====================================================
@@ -27,18 +27,36 @@ function cat(req, res){
 //=====================================================
 
 const firetailOpts = {
-  // you can use absolute or relative path and I will work it out.
-  apiYaml:"./api.yaml",//"app-spec.yaml",//
-  // Api Doc UI + Development friendly messages
-  dev:true,
+  overRideError:(err)=>{
+    console.error("overRideError");
+    return err
+  },
+  securities:{
+    jwt:({authorization})=>{
+      const token = authorization.split(" ").pop().replace(/['"]+/g, '')
+      const tokenDecodablePart = token.split('.')[1];
+      const decoded = Buffer.from(tokenDecodablePart, 'base64').toString();
+
+        // ... CHECK JWT
+      //  if( (Date.now()/1000) > decoded.exp){
+        //  throw new Error("You token is too old")
+      //  }
+
+
+
+        // throw
+
+
+      return JSON.parse(decoded)
+    }
+  },
   // override Express'es controller based on "operationId"
   operations:{
     // FLAT name
     "app.foo":foo,
     // Nested
     app : {
-      cat_id:cat,
-      jwt_verifier:(x)=>console.log("jwt_verifier",x)
+      cat_id:cat
     }
   } // END operations
 } // END firetailOpts

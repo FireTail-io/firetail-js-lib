@@ -96,4 +96,3 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      x-bearerInfoFunc: app.jwt_verifier
