@@ -1,4 +1,6 @@
 
+const data = require('./animals.json')
+
 //=====================================================
 //============================================= Imports
 //=====================================================
@@ -10,17 +12,22 @@ const firetailSetup = require("../dist");//require("firetail")
 const app = express()
 const port = 3001
 
+app.use((req, res, next) =>{
+  console.log(req.originalUrl);
+  next()
+})
+
 //=====================================================
 //================================= Operation Functions
 //=====================================================
 
-function foo(req, res){
-  res.send('FOO')
-}
-function cat(req, res){
-  console.log(req.params)
-  res.send('CAT '+ JSON.stringify(req.params)+ JSON.stringify(req.jwt))
-}
+function listPets(req, res){
+  if(req.query.limit){
+    res.json(data.slice(0, req.query.limit))
+  }else {
+    res.json(data)
+  }
+} // END listPets
 
 //=====================================================
 //=================================== Firetail settings
@@ -53,14 +60,14 @@ const firetailOpts = {
   // override Express'es controller based on "operationId"
   operations:{
     // FLAT name
-    "app.foo":foo,
+    listPets,
     // Nested
-    app : {
+  /*  app : {
       cat_id:cat
-    }
+    }*/
   } // END operations
 } // END firetailOpts
-console.log(firetailOpts)
+//console.log(firetailOpts)
 //=====================================================
 //===================================== Create Firetail
 //=====================================================
@@ -80,12 +87,12 @@ app.get('/', (req, res) => {
   res.send("FireTail sample")
 })
 
-app.get('/bar', (req, res) => {
+app.delete('/pets/{petId}', (req, res) => {
   //res.set('content-type','application/json')
   res.contentType('application/json');
   res.json(["a","b","c"])
 })
-
+/*
 app.get('/bar2', (req, res) => {
   //res.set('content-type','application/json')
   res.contentType('application/json');
@@ -98,7 +105,7 @@ app.get('/bar/:tab', (req, res) => {
   //res.set('content-type','application/json')
   res.contentType('application/json');
   res.json(["a","b","c"])
-})
+})*/
 
 //=====================================================
 //======================================== Server start

@@ -75,7 +75,7 @@ paths:
           content: {}
   /check/{fragmentVal2}/withquery:
     get:
-      operationId: check_frag
+      operationId: check_frag_query
       parameters:
         - name: fragmentVal2
           in: path
@@ -132,10 +132,34 @@ paths:
             Access-Control-Allow-Headers:
               schema:
                 type: string
+  /check/security/apikey:
+    get:
+      operationId: app.apikey_basic
+      security:
+      - {}
+      responses:
+        200:
+          description: 200 response
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Credentials:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
 components:
   securitySchemes:
     jwt:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      x-bearerInfoFunc: app.jwt_verifier
+    key:
+      type: apiKey
+      name: X-Auth
+      in: header

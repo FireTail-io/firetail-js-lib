@@ -14,7 +14,8 @@
   "homepage": "https://github.com/firetail-io/firetail-js-lib#readme",
   "author": "Brian Shannon <brian@firetail.io>",
   "dependencies": {
-    "swagger-parser": "^10.0.3"
+    "swagger-parser": "^10.0.3",
+    "pick-n-mix":"^0.3.2"
   },
   "devDependencies": {
     "@types/node": "^18.7.16",

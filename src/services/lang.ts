@@ -8,6 +8,7 @@ const errMessages = {
     missingArgs:"Missing required query argument.",
     unknowenArgs:"Unknowen query argument.",
     missingJWTFunction:optId=>`No function with "${optId}" could be found for parcing JWTs`,
+    missingJWTFunctions:`Missing security schemes functions`,
     notFound:({url,verb,scamaForEndPoint})=>`${url} ${verb.toUpperCase()} was not found. Only "${Object.keys(scamaForEndPoint).join(",").toUpperCase()}" should be used`,
     responseContentTypeMismatch:content=>`Could not find a matching type. Available types are ${Object.keys(content)}`,
     statusCodeNotFound:({statusCode,codes})=>`StatusCode ${statusCode} was not found. Available codes are ${codes}`

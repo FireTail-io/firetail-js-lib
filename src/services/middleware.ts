@@ -4,7 +4,8 @@ const matchUrl = require("../utils/match");
 const before = require("./before");
 const after = require("./after");
 const security = require("./security");
-const fs = require('fs')
+const fs = require('fs');
+const path = require('path');
 
 //=====================================================
 //========================================== middleware
@@ -17,6 +18,7 @@ module.exports = function middleware(req, res, next) {
     genMessage,
     yamlPathSt,
     apiSpecPr,
+    apiSpec,
     operationsFn,
     dev,
     decodedJwt,
@@ -37,7 +39,7 @@ module.exports = function middleware(req, res, next) {
       params: req.params,
       query:req.query,
       status:200
-    }
+    } // END data
 
     if(dev){
       if(data.url.startsWith("/firetail")){
@@ -46,7 +48,7 @@ module.exports = function middleware(req, res, next) {
                      .catch(err=>{
                        console.error(err)
                        res.status(500).send(err.message||err)
-                     })
+                     })// END catch
             return;
         }/*
         let filePath = "index.html"
@@ -63,7 +65,7 @@ module.exports = function middleware(req, res, next) {
         const filePath = "/firetail/client.js" === data.url ? "client.js"
                                                             : "index.html"
         fs.readFile(
-          path.resolve(__dirname,"../src/ui/",filePath),
+          path.resolve(__dirname,"../../src/ui/",filePath),
           "utf8",
           function(err,page){
             if(err){
@@ -76,7 +78,6 @@ module.exports = function middleware(req, res, next) {
         return
       }
     } // END if dev
-
 
   let specificScama;
 
@@ -120,7 +121,7 @@ let errorHandlerCalled = false
     const errContent = "function" === typeof overRideError ? overRideError(err)
                                                            : defaultErrorVal
 
-      data.status = errContent.status || defaultErrorVal.status)
+      data.status = errContent.status || defaultErrorVal.status
     //  console.log(data)
     //  console.log(errContent.status, defaultErrorVal.status)
     res.status(errContent.status || defaultErrorVal.status)
@@ -169,7 +170,7 @@ let errorHandlerCalled = false
     // as we can override the responce with out
     // warning about app sending data down the wire
         if (specificScama) {
-            after(specificScama, data, genMessage
+            after(specificScama, data, genMessage)
         }
         return stashFnCalls.end.apply(res, args)
     } catch(err) {
@@ -183,7 +184,9 @@ let errorHandlerCalled = false
   apiSpecPr.then(({paths,components}) => {
 
       const matchFound = matchUrl(data.url,Object.keys(paths))
-
+    //  console.log("matchFound",matchFound)
+//console.log("data.url",data.url)
+//console.log("Object.keys(paths)",Object.keys(paths))
       let scamaForEndPoint = null
       if(matchFound){
         scamaForEndPoint = paths[matchFound.path]
@@ -203,7 +206,8 @@ let errorHandlerCalled = false
         headers:data.headers,
         decodedJwt,
         req,
-        genMessage
+        genMessage,
+        securities
       })
   /*    if(scamaForEndPoint){
           const { verb } = data

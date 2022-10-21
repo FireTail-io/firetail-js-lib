@@ -37,8 +37,10 @@ function matchUrl(url, apiPaths) {
             // split yaml path - /a/{b}
             var pathFragments = apiPath.split(/\{|\}/gi)
                 .filter(function (x) { return x; });
+            //console.log(pathFragments)
             for (var fragmentIndex = 0; fragmentIndex < pathFragments.length; fragmentIndex++) {
                 var fragment = pathFragments[fragmentIndex];
+                //console.log("fragment",fragment)
                 //+++++++++++++++++++++++++++++++ Skip for placeholder
                 //++++++++++++++++++++++++++++++++++++++++++++++++++++
                 if (fragmentIndex % 2 == 1) {
@@ -86,6 +88,7 @@ function matchUrl(url, apiPaths) {
                 } // END else
                 lastStep = { start: start, end: end };
             } // END for
+            //console.log("lastStep",lastStep)
             if (lastStep) {
                 scores[totalLeng] = { path: apiPath, params: params };
             }

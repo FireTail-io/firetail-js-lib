@@ -14,15 +14,14 @@ module.exports = function security({securities,scamaVerb, operationsFn, security
   console.log(2)*/
   try{
     if(scamaVerb.security){
-  //  console.log(3,scamaVerb.security)
+    ///console.log(3,scamaVerb.security)
       scamaVerb.security.forEach(sec=> {
-
       //  console.log(4,sec)
         Object.keys(sec).forEach(secName=> {
 
-          //console.log(5,secName)
+        //  console.log(5,secName)
           if(securitySchemes[secName]){
-          //console.log(6,securitySchemes[secName])
+        //  console.log(6,securitySchemes[secName])
             const optName = secName//securitySchemes[secName]["x-bearerInfoFunc"]
 
 
@@ -39,26 +38,31 @@ module.exports = function security({securities,scamaVerb, operationsFn, security
                     status:401
                 } // END throw
             }
-            //console.log(7,decodedJwt)
+          //  console.log(72,decodedJwt,optName,req,securities)
+
             if("function" === typeof decodedJwt){
-              req.jwt = securities[optName](decodedJwt(headers))
+          //  console.log(8)
+              req[optName] = securities[optName](decodedJwt(headers))
             }else if(decodedJwt){
+          //  console.log(9)
                 const token = headers.authorization.split(" ").pop().replace(/['"]+/g, '')
                 const tokenDecodablePart = token.split('.')[1];
                 const decoded = Buffer.from(tokenDecodablePart, 'base64').toString();
-                req.jwt = securities[optName](JSON.parse(decoded),token)
+                req[optName] = securities[optName](JSON.parse(decoded),token)
             }else if("function" === typeof securities[optName]){
-              req.jwt = securities[optName](headers.authorization.split(" ").pop())
+            //  console.log(10)
+              req[optName] = securities[optName](headers.authorization.split(" ").pop())
             } else {
-              //console.log("missingJWTFunction -> ",genMessage("missingJWTFunction",optName))
+          //    console.log("missingJWTFunction -> ")//,genMessage("missingJWTFunction",optName))
               throw {
                   firetail:"missingJWTFunction",
                   status:401,
                   val:optName
               }
             }
-            //console.log(typeof req.jwt, req.jwt,genMessage("badJWTFunctionOutput"))
-            if("object" !== typeof req.jwt){
+          //  console.log(0)
+          //  console.log(typeof req[optName], req[optName])//,genMessage("badJWTFunctionOutput"))
+            if("object" !== typeof req[optName]){
               throw {
                   firetail:"badJWTFunctionOutput",
                   status:401
@@ -66,6 +70,9 @@ module.exports = function security({securities,scamaVerb, operationsFn, security
             }
             //console.log(8,req.jwt)
         } // END if securitySchemes[secName]
+      /*  else {
+          throw new Error("YAML is missing securitySchemes")
+        }*/
         }) // END forEach Object.keys
       }) // END forEach scamaVerb.security
     } // END if scamaVerb.security

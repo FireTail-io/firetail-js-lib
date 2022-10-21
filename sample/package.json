@@ -17,7 +17,7 @@
     "format": "{time} <{logLevel}> {fileName}:{lineNumber} {message} {value} {stackTrace}"
   },
   "firetail":{
-      "addApi": "./api.yaml",
+      "addApi": "./petstore.yaml",
       "specificationDir":"api",
       "dev":true
   }

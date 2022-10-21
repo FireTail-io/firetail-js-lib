@@ -91,15 +91,14 @@ module.exports = function checkParameters(val: string,schema){
       }
 
       break;
-    case "boolean"
-      if("string" === typeof val
-      && ["false","true"].includes(val.toLowerCase()))
+    case "boolean":
+      if("string" === typeof val && ["false","true"].includes(val.toLowerCase()))
         return "true" === val.toLowerCase()
       break;
-    case "object"
+    case "object":
 
   //    break;
-    case "array"
+    case "array":
     // schema.items.type: string
   //    break;
     default:

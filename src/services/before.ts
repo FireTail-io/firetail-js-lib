@@ -76,11 +76,16 @@ module.exports = function before({scamaForEndPoint,data,genMessage}){
         throw new Error(`Mismatch in number of query arguments. You sent too ${
                           queryNamesRecived.length > queryNametoCheck.length ? "many" : "few"}`)
       }*/
+      //console.log("data",data)
       const { query } = data
 
       let queryNamesRecived = Object.keys(query)
       //console.log(queryNamesRecived)
+      //console.log(1)
       queryNametoCheck.forEach(({required,name, schema}) => {
+
+      //  console.log("name",name)
+        //        console.log("queryNamesRecived",queryNamesRecived)
         if(required && ! queryNamesRecived.includes(name)){
           console.warn(name +" was not found as a named query ")
           throw {
@@ -89,10 +94,21 @@ module.exports = function before({scamaForEndPoint,data,genMessage}){
             }
           //new Error("Missing required query argument.")
         }
+
+        if( ! required // this is not required, so it can be undefined
+        &&  ! queryNamesRecived.includes(name)){
+          return;
+        }
+
+        //console.log("A queryNamesRecived",queryNamesRecived)
         queryNamesRecived = queryNamesRecived.filter( queryName => queryName !== name)
+        //console.log("B queryNamesRecived",queryNamesRecived)
         if(! schema){
           console.warn(`No schema for query: "${name}" ~ ${url}`)
-        } else if(queryNamesRecived.includes(name)){
+        } else {//if(queryNamesRecived.includes(name)){
+          //console.log(1,name)
+          //console.log(2,query[name])
+          //console.log(3,schema)
           data.query[name] = checkParameters(query[name],schema)
         }
       }) // END foreach

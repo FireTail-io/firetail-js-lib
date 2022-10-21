@@ -92,17 +92,17 @@ paths:
         required: true
         description: organisation name
         content:
-          application/json:
+          application/json: 
             schema:
               type: object
               properties:
                 name:
-                  type: string
+                  type: string 
                   maxLength: 128
                   format: ^[a-zA-Z0-9][a-zA-Z0-9-\s]+[a-zA-Z0-9]$
-                  example: Firetail
+                  example: Firetail 
 
-
+          
       responses:
         200:
           description: 200 response
@@ -216,12 +216,12 @@ paths:
           required: true
           description: New owner email
           content:
-            application/json:
+            application/json: 
               schema:
                 type: object
                 properties:
                   name:
-                    type: string
+                    type: string 
                     format: email
                     example: test@test.io
         responses:
@@ -284,16 +284,16 @@ paths:
         required: true
         description: integration name
         content:
-          application/json:
+          application/json: 
             schema:
               type: object
               properties:
                 name:
-                  type: string
+                  type: string 
                   example: Test integration
                 integration_uuid:
-                  type: string
-                  format: uuid
+                  type: string 
+                  format: uuid 
                 input_values:
                   type: object
       responses:
@@ -454,13 +454,13 @@ paths:
         required: true
         description: Integration name
         content:
-          application/json:
+          application/json: 
             schema:
               type: object
               properties:
                 name:
-                  type: string
-                  example: Test Integration
+                  type: string 
+                  example: Test Integration 
       responses:
         200:
           description: 200 response
@@ -589,15 +589,15 @@ paths:
         required: true
         description: app name
         content:
-          application/json:
+          application/json: 
             schema:
               type: object
               properties:
                 name:
-                  type: string
+                  type: string 
                   maxLength: 128
                   format: ^[a-zA-Z0-9][a-zA-Z0-9-\s]+[a-zA-Z0-9]$
-                  example: Firetail
+                  example: Firetail 
       security:
       - jwt: []
       responses:
@@ -782,7 +782,7 @@ paths:
         required: true
         description: api name
         content:
-          application/json:
+          application/json: 
             schema:
               type: object
               $ref: '#/components/schemas/Api'
@@ -953,12 +953,12 @@ paths:
         required: true
         description: api token
         content:
-          application/json:
+          application/json: 
             schema:
-              type: object
+              type: object 
               properties:
                 name:
-                  type: string
+                  type: string 
                   example: Test Token
       responses:
         200:
@@ -1197,10 +1197,10 @@ paths:
         required: true
         description: organisation members
         content:
-          application/json:
+          application/json: 
             schema:
               type: object
-              $ref: '#/components/schemas/Orgmembers'
+              $ref: '#/components/schemas/Orgmembers' 
       security:
       - jwt: []
       responses:
@@ -1232,13 +1232,13 @@ paths:
         required: true
         description: organisation members
         content:
-          application/json:
+          application/json: 
             schema:
               type: object
               properties:
                 email:
-                  type: string
-                  example: riley@firetail
+                  type: string 
+                  example: riley@firetail 
       security:
       - jwt: []
       responses:
@@ -1257,7 +1257,7 @@ paths:
             Access-Control-Allow-Headers:
               schema:
                 type: string
-          content: {}
+          content: {}   
   # /organisations/{org_uuid}/members/{member_uuid}:
   #   delete:
   #     parameters:
@@ -1338,7 +1338,7 @@ paths:
         required: true
         schema:
           type: string
-      security:
+      security: 
         - jwt: []
         - {}
       responses:
@@ -1366,7 +1366,7 @@ paths:
         required: true
         schema:
           type: string
-      security:
+      security: 
         - jwt: []
         - {}
       responses:
@@ -1435,41 +1435,41 @@ components:
       # however, some tools might require explicit settings:
       minLength: 36
       maxLength: 36
-    Api:
-      type: object
-      required:
-        - name
+    Api: 
+      type: object 
+      required: 
+        - name 
         - region_name
-      properties:
-        name:
-          type: string
+      properties: 
+        name: 
+          type: string 
           maxLength: 128
           format: ^[a-zA-Z0-9][a-zA-Z0-9-\s]+[a-zA-Z0-9]$
-          example: Riley
-        region_name:
-          type: string
+          example: Riley 
+        region_name: 
+          type: string 
           example: eu-west-1
-    Member:
-      type: object
-      required:
-        - roleID
-        - email
-      properties:
+    Member: 
+      type: object 
+      required: 
+        - roleID 
+        - email 
+      properties: 
         roleID:
           type: integer
           example: 100
-        email :
-          type: string
-          description: email
+        email : 
+          type: string 
+          description: email 
           example: test@firetail.io
-    Orgmembers:
-      type: object
-      required:
-        - members
+    Orgmembers: 
+      type: object 
+      required: 
+        - members 
       properties:
         members:
-          type: array
-          items:
+          type: array 
+          items: 
             $ref: '#/components/schemas/Member'
   securitySchemes:
     jwt:

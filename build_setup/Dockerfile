@@ -3,16 +3,15 @@ FROM node:18.7.0
 WORKDIR /code
 
 COPY . .
-
 RUN npm install
 
 COPY ./build_setup/enterpoint.sh /enterpoint.sh
 RUN chmod +x /enterpoint.sh
-# ENTRYPOINT ["/enterpoint.sh"]
+ENTRYPOINT ["/enterpoint.sh"]
 
 COPY ./build_setup/test.sh /test.sh
 RUN chmod +x /test.sh
-ENTRYPOINT ["/test.sh"]
+# ENTRYPOINT ["/test.sh"]
 
 # CMD ["/bin/bash"]
 

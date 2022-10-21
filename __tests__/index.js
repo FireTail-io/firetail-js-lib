@@ -1,5 +1,5 @@
 const firetailSetup = require("../dist");
-const firetailOpts = {yamlPath:"./cases.yaml"}
+const firetailOpts = {addApi:"./cases.yaml"}
 
 /*
 
@@ -291,7 +291,7 @@ describe('test GET requests', () => {
 
     const myFiretailOpts = Object.assign({},firetailOpts)
     myFiretailOpts.operations = {
-      "check_frag":(req,res)=>{
+      "check_frag_query":(req,res)=>{
           optId_called = true
           expect(req.params.fragmentVal2).toBe(vals.fVal2);
           expect(req.query.limit).toBe(vals.limit);
@@ -337,7 +337,7 @@ describe('test GET requests', () => {
     const myFiretailOpts = Object.assign({},firetailOpts)
 
     myFiretailOpts.operations = {
-      "check_frag":(req,res)=>{
+      "check_frag_query":(req,res)=>{
           optId_called = true
           expect(req.params.fragmentVal2).toBe(vals.fragmentVal2);
           expect(req.query.limit).toBe(vals.limit);
@@ -412,12 +412,17 @@ describe('test secure in requests', () => {
         const next = ()=>{ basic_called = true }
 
         const myFiretailOpts = Object.assign({dev:true},firetailOpts)
+
+        myFiretailOpts.securities = {
+          jwt:(authorization)=>{
+            verifier_called = true
+          }
+        }, // END securities
         myFiretailOpts.operations = {
           app:{
-            jwt_basic:next,
-            jwt_verifier:(header)=>{ verifier_called = true } // END app
-          } // END operations
-        } // END myFiretailOpts.operations
+            jwt_basic:next
+          }
+        } // END operations
 
         const res = genRes({
           end:()=>{
@@ -447,15 +452,16 @@ describe('test secure in requests', () => {
           const next = ()=>{ basic_called = true }
 
           const myFiretailOpts = Object.assign({dev:true},firetailOpts)
-          myFiretailOpts.operations = {
-            app:{
-              jwt_basic:next,
-              jwt_verifier:(header)=>{
-                expect(header.authorization).toBe("Bearer: ...");
-                throw new Error("bad value")
-              } // END app
-            } // END operations
-          } // END myFiretailOpts.operations
+                myFiretailOpts.operations = {
+                  jwt_basic:next
+                } // END myFiretailOpts.operations
+
+                myFiretailOpts.securities = {
+                  jwt:(authorization)=>{
+                    expect(authorization).toBe("...");
+                    throw new Error("bad value")
+                  }
+                } // END securities
 
           const res = genRes({
             end:()=>{
@@ -485,14 +491,16 @@ describe('test secure in requests', () => {
           const next = ()=>{ basic_called = true }
 
           const myFiretailOpts = Object.assign({dev:true},firetailOpts)
+
           myFiretailOpts.operations = {
-            app:{
-              jwt_basic:next,
-              jwt_verifier:(header)=>{
-                return 123
-              } // END app
-            } // END operations
+            app:{jwt_basic:next}
           } // END myFiretailOpts.operations
+
+          myFiretailOpts.securities = {
+            jwt:(authorization)=>{
+              return 123
+            }
+          } // END securities
 
           const res = genRes({
             end:()=>{
@@ -515,40 +523,14 @@ describe('test secure in requests', () => {
                   originalUrl:"/check/security/jwt"
                 }),res , next)
     })
-    test('should throwing if clients JWT function is missing', (done) => {
-
-          let verifier_called = false
-          let basic_called = false
-          const next = ()=>{ basic_called = true }
-
+    test.skip('should throwing if clients JWT function is missing', () => {
           const myFiretailOpts = Object.assign({dev:true},firetailOpts)
-          myFiretailOpts.operations = {
-            app:{
-              jwt_basic:next
-            } // END operations
-          } // END myFiretailOpts.operations
-
-          const res = genRes({
-            end:()=>{
-              // check status code is 401
-              expect(res.statusCode).toBe(401);
-              //check message
-            //  console.log(res.__data)
-              expect(res.__data.message).toBe(`No function with "app.jwt_verifier" could be found for parcing JWTs`);
-
-              expect(verifier_called).toBe(false);
-              expect(   basic_called).toBe(false);
-              done()
-            } // END end
-          }) // END genRes
-
-          const firetailMiddleware = firetailSetup(myFiretailOpts)
-                firetailMiddleware(genReq({
-                  headers:{
-                    authorization:"Bearer: ..."
-                  },
-                  originalUrl:"/check/security/jwt"
-                }),res , next)
+                myFiretailOpts.operations = {
+                  app:{
+                    jwt_basic:()=>{}
+                  } // END operations
+                } // END myFiretailOpts.operations
+            const firetailMiddleware = firetailSetup(myFiretailOpts)
     })
     test('should return decoded object from clients JWT function', (done) => {
       let verifier_called = false
@@ -562,20 +544,73 @@ describe('test secure in requests', () => {
       }
 
       const myFiretailOpts = Object.assign({},firetailOpts)
+            myFiretailOpts.operations = {
+              app:{
+                jwt_basic:next
+              } // END operations
+            } // END myFiretailOpts.operations
+
+            myFiretailOpts.securities = {
+              jwt:(header)=>{
+                verifier_called = true
+                return {
+                    sub : "1234567890",
+                   name : "John Doe",
+                  admin : true
+                }
+              }
+            }
+
+      const res = genRes({
+        end:()=>{
+          // check status code is 401
+          expect(res.statusCode).toBe(200);
+
+          expect(jwt.sub).toBe("1234567890");
+          expect(jwt.name).toBe("John Doe");
+          expect(jwt.admin).toBe(true);
+          expect(verifier_called).toBe(true);
+          expect(   basic_called).toBe(true);
+          done()
+        } // END end
+      }) // END genRes
+
+      const firetailMiddleware = firetailSetup(myFiretailOpts)
+            firetailMiddleware(genReq({
+              headers:{
+                authorization:"Bearer: ..."
+              },
+              originalUrl:"/check/security/jwt"
+            }),res , next)
+    })
+    test('should return decoded object from clients ApiKey function', (done) => {
+      let verifier_called = false
+      let basic_called = false
+      let jwt;
+      const next = (req,res)=>{
+        jwt = req.jwt
+        basic_called = true
+        res.send("ok")
+           .end()
+      }
+
+      const myFiretailOpts = Object.assign({},firetailOpts)
       myFiretailOpts.operations = {
         app:{
-          jwt_basic:next,
-          jwt_verifier:(header)=>{
-            verifier_called = true
-            return {
-                sub : "1234567890",
-               name : "John Doe",
-              admin : true
-            }
-          } // END app
+          jwt_basic:next
         } // END operations
       } // END myFiretailOpts.operations
 
+      myFiretailOpts.securities = {
+        jwt:(token, required_scopes)=>{
+          verifier_called = true
+          return {
+              sub : "1234567890",
+             name : "John Doe",
+            admin : true
+          }
+        } // END app
+      }
       const res = genRes({
         end:()=>{
           // check status code is 401
