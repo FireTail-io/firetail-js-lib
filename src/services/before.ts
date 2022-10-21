@@ -4,7 +4,7 @@ const checkParameters = require("./checkParameters");
 //========================== validate BEFORE controller
 //=====================================================
 
-module.exports = function before({scamaForEndPoint,data,genMessage}){
+module.exports = function before({scamaForEndPoint,data,genMessage},bodyText){
 
     const { url } = data
 
@@ -126,7 +126,27 @@ module.exports = function before({scamaForEndPoint,data,genMessage}){
 
 //++++++++++++++++++++++ check body is the right shape
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
-    const { reqBody } = data
+    const { reqBody,headers } = data
+    const contentType = headers["content-type"]
+//console.log("reqBody",reqBody)
+
+    if(scamaVerb.requestBody
+    && scamaVerb.requestBody.content[contentType]){
+        // console.log(contentType, scamaVerb.requestBody.content[contentType])
+      if(contentType.endsWith("json")){
+        data.reqBody = JSON.parse(reqBody)
+      } else {
+        console.error(contentType+" NOT SUPPORTED YET")
+      }
+    } else {
+      try{
+      //  console.log(reqBody)
+        if(reqBody)
+          data.reqBody = JSON.parse(reqBody)
+      } catch(err) {
+          console.error(err)
+      }
+    }
 
 //++++++++++++++++++ check accept type can be returned
 //++++++++++++++++++++++++++++++++++++++++++++++++++++

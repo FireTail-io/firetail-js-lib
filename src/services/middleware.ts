@@ -1,9 +1,9 @@
 
 const args2Arr = require("../utils/args2Arr");
 const matchUrl = require("../utils/match");
+const security = require("./security");
 const before = require("./before");
 const after = require("./after");
-const security = require("./security");
 const fs = require('fs');
 const path = require('path');
 
@@ -31,7 +31,7 @@ module.exports = function middleware(req, res, next) {
       verb: req.method.toLowerCase(),
       url: req.originalUrl.split("?")[0],
       resBody:false,
-      reqBody:req.body,
+      reqBody:"Buffer" === req.body.type ? req.body.toString('utf8'):null,
       startedAt:new Date(),
       finishedAt:false,
       statusCode: res.statusCode,
@@ -40,7 +40,7 @@ module.exports = function middleware(req, res, next) {
       query:req.query,
       status:200
     } // END data
-
+console.log(req.body)
     if(dev){
       if(data.url.startsWith("/firetail")){
         if("/firetail/apis.json" === data.url){
@@ -159,12 +159,12 @@ let errorHandlerCalled = false
 
 
   // Convert both dates to milliseconds
-  var date1_ms = data.startedAt.getTime();
-  var date2_ms = data.finishedAt.getTime();
+  const date1_ms = data.startedAt.getTime();
+  const date2_ms = data.finishedAt.getTime();
 
   // Calculate the difference in milliseconds
-  var difference_ms = date2_ms - date1_ms;
-  //console.log(`[${data.status}] ${req.method}:${req.originalUrl} - ${difference_ms/1000}sec`)
+  const difference_ms = date2_ms - date1_ms;
+  console.log(`[${data.status}] ${req.method}:${req.originalUrl} - ${difference_ms/1000}sec`)
     try {
     // TODO: may need to buffer the responce..
     // as we can override the responce with out
@@ -192,12 +192,14 @@ let errorHandlerCalled = false
         scamaForEndPoint = paths[matchFound.path]
         // We need to set the URL params as Express only adds them later
         Object.assign(data.params,matchFound.params)
-      }/*console.log()
-      console.log(paths)
-      console.log()*/
+      }
 
       // Store specificScama as its needed in the "äfter" fn
       specificScama = before({scamaForEndPoint, data, genMessage})
+
+      if(data.reqBody){
+        req.body = data.reqBody
+      }
 
       security({
         scamaVerb:specificScama,

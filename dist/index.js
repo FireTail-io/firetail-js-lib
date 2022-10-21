@@ -55,6 +55,8 @@ function deepRequire(dirname, selector) {
         return packages;
     }, {});
 }
+function bodyParse() {
+}
 var defaultOpts = {};
 try {
     var packageJsonPath = path.resolve(path.dirname(require.main.filename), "./package.json");

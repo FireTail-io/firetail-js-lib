@@ -11,12 +11,19 @@ global.console = scribbles
 const firetailSetup = require("../dist");//require("firetail")
 const app = express()
 const port = 3001
-
+/*
 app.use((req, res, next) =>{
   console.log(req.originalUrl);
   next()
-})
+})*/
 
+app.use(
+  express.raw({
+    inflate: true,
+    limit: '50mb',
+    type: () => true, // this matches all content types
+  })
+);
 //=====================================================
 //================================= Operation Functions
 //=====================================================

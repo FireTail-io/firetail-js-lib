@@ -68,7 +68,9 @@ function deepRequire(dirname,selector){
 
 
 
+function bodyParse(){
 
+}
 
 
 
@@ -195,6 +197,7 @@ if( specificationDir ){
                                   }
                                   return apiSpec
                                 }).catch(err=>{throw err})*/
+
   return middleware.bind({
         genMessage,
         decodedJwt,
@@ -204,6 +207,7 @@ if( specificationDir ){
         securities,
         operationsFn:flattenObj(operations || {})
       })
+
 
 
 

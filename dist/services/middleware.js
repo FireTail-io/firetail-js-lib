@@ -1,8 +1,8 @@
 var args2Arr = require("../utils/args2Arr");
 var matchUrl = require("../utils/match");
+var security = require("./security");
 var before = require("./before");
 var after = require("./after");
-var security = require("./security");
 var fs = require('fs');
 var path = require('path');
 //=====================================================
@@ -17,7 +17,7 @@ module.exports = function middleware(req, res, next) {
         verb: req.method.toLowerCase(),
         url: req.originalUrl.split("?")[0],
         resBody: false,
-        reqBody: req.body,
+        reqBody: "Buffer" === req.body.type ? req.body.toString('utf8') : null,
         startedAt: new Date(),
         finishedAt: false,
         statusCode: res.statusCode,
@@ -26,6 +26,7 @@ module.exports = function middleware(req, res, next) {
         query: req.query,
         status: 200
     }; // END data
+    console.log(req.body);
     if (dev) {
         if (data.url.startsWith("/firetail")) {
             if ("/firetail/apis.json" === data.url) {
@@ -128,7 +129,7 @@ module.exports = function middleware(req, res, next) {
         var date2_ms = data.finishedAt.getTime();
         // Calculate the difference in milliseconds
         var difference_ms = date2_ms - date1_ms;
-        //console.log(`[${data.status}] ${req.method}:${req.originalUrl} - ${difference_ms/1000}sec`)
+        console.log("[".concat(data.status, "] ").concat(req.method, ":").concat(req.originalUrl, " - ").concat(difference_ms / 1000, "sec"));
         try {
             // TODO: may need to buffer the responce..
             // as we can override the responce with out
@@ -155,11 +156,12 @@ module.exports = function middleware(req, res, next) {
             scamaForEndPoint = paths[matchFound.path];
             // We need to set the URL params as Express only adds them later
             Object.assign(data.params, matchFound.params);
-        } /*console.log()
-        console.log(paths)
-        console.log()*/
+        }
         // Store specificScama as its needed in the "äfter" fn
         specificScama = before({ scamaForEndPoint: scamaForEndPoint, data: data, genMessage: genMessage });
+        if (data.reqBody) {
+            req.body = data.reqBody;
+        }
         security({
             scamaVerb: specificScama,
             operationsFn: operationsFn,
