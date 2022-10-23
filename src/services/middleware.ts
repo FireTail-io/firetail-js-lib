@@ -27,6 +27,7 @@ module.exports = function middleware(req, res, next) {
   // .then(({paths})=>paths);
 
   const data = {
+      dev,
       yamlPathSt,
       verb: req.method.toLowerCase(),
       url: req.originalUrl.split("?")[0],
@@ -151,22 +152,31 @@ let errorHandlerCalled = false
     const args = args2Arr(arguments)
     //  console.log("res.status",args)
     data.statusCode = args[0]
-    return stashFnCalls.status.apply(res, args)
+    return res//stashFnCalls.status.apply(res, args)
   }
   res.send = function() {
+    //if(data.resBody){  return;  }
     const args = args2Arr(arguments)
     //  console.log("res.send",args)
-    data.resBody = args[0]
+    data.resBody = data.resBody || args[0]
+    //end()
+  //  return res
     return stashFnCalls.send.apply(res, args)
   }
   res.json = function() {
     const args = args2Arr(arguments)
     //  console.log("res.json",args)
     data.resBody = args[0]
-    return stashFnCalls.json.apply(res, args)
-  }
+    end()
+    return res//stashFnCalls.json.apply(res, args)
+  }/*
   res.end = function() {
-    const args = args2Arr(arguments)
+
+  }*/
+
+  let end = function () {
+    end = ()=> console.log("END was already CALLeD")
+    //const args = args2Arr(arguments)
     //  console.log("res.end",args)
     data.finishedAt = new Date()
 
@@ -178,15 +188,33 @@ let errorHandlerCalled = false
 
   // Calculate the difference in milliseconds
   const difference_ms = date2_ms - date1_ms;
-  console.log(`[${data.statusCode}] ${req.method}:${req.originalUrl} - ${difference_ms/1000}sec`)
     try {
+
+      if(data.statusCode){
+        stashFnCalls.status.call(res,data.statusCode)
+      }
+      //res.send = stashFnCalls.send.bind(res)
+      if(data.resBody){
+        if("object" === typeof data.resBody){
+          if (specificScama) {
+      //    console.log(data.resBody)
+            const cleanedBody = after(specificScama, data)
+      //      console.log(cleanedBody)
+            stashFnCalls.json.call(res,cleanedBody)
+          }else {
+            stashFnCalls.json.call(res,data.resBody)
+          }
+        }else{
+          stashFnCalls.send.call(res,data.resBody)
+        }
+      } // END if data.resBody
+
     // TODO: may need to buffer the responce..
     // as we can override the responce with out
     // warning about app sending data down the wire
-        if (specificScama) {
-            after(specificScama, data, genMessage)
-        }
-        return stashFnCalls.end.apply(res, args)
+
+    console.log(`[${data.statusCode}] ${req.method}:${req.originalUrl} - ${difference_ms/1000}sec`)
+        return stashFnCalls.end.call(res)
     } catch(err) {
         errorHandler(err);
     }

@@ -13,6 +13,7 @@ module.exports = function middleware(req, res, next) {
     var _a = this, genMessage = _a.genMessage, yamlPathSt = _a.yamlPathSt, apiSpecPr = _a.apiSpecPr, apiSpec = _a.apiSpec, operationsFn = _a.operationsFn, dev = _a.dev, decodedJwt = _a.decodedJwt, securities = _a.securities;
     // .then(({paths})=>paths);
     var data = {
+        dev: dev,
         yamlPathSt: yamlPathSt,
         verb: req.method.toLowerCase(),
         url: req.originalUrl.split("?")[0],
@@ -120,22 +121,30 @@ module.exports = function middleware(req, res, next) {
         var args = args2Arr(arguments);
         //  console.log("res.status",args)
         data.statusCode = args[0];
-        return stashFnCalls.status.apply(res, args);
+        return res; //stashFnCalls.status.apply(res, args)
     };
     res.send = function () {
+        //if(data.resBody){  return;  }
         var args = args2Arr(arguments);
         //  console.log("res.send",args)
-        data.resBody = args[0];
+        data.resBody = data.resBody || args[0];
+        //end()
+        //  return res
         return stashFnCalls.send.apply(res, args);
     };
     res.json = function () {
         var args = args2Arr(arguments);
-        //  console.log("res.json",args)
+        console.log("res.json", args);
         data.resBody = args[0];
-        return stashFnCalls.json.apply(res, args);
-    };
-    res.end = function () {
-        var args = args2Arr(arguments);
+        end();
+        return res; //stashFnCalls.json.apply(res, args)
+    }; /*
+    res.end = function() {
+  
+    }*/
+    var end = function () {
+        end = function () { return console.log("END was already CALLeD"); };
+        //const args = args2Arr(arguments)
         //  console.log("res.end",args)
         data.finishedAt = new Date();
         // Convert both dates to milliseconds
@@ -143,15 +152,32 @@ module.exports = function middleware(req, res, next) {
         var date2_ms = data.finishedAt.getTime();
         // Calculate the difference in milliseconds
         var difference_ms = date2_ms - date1_ms;
-        console.log("[".concat(data.statusCode, "] ").concat(req.method, ":").concat(req.originalUrl, " - ").concat(difference_ms / 1000, "sec"));
         try {
+            if (data.statusCode) {
+                stashFnCalls.status.call(res, data.statusCode);
+            }
+            //res.send = stashFnCalls.send.bind(res)
+            if (data.resBody) {
+                if ("object" === typeof data.resBody) {
+                    if (specificScama) {
+                        //    console.log(data.resBody)
+                        var cleanedBody = after(specificScama, data);
+                        //      console.log(cleanedBody)
+                        stashFnCalls.json.call(res, cleanedBody);
+                    }
+                    else {
+                        stashFnCalls.json.call(res, data.resBody);
+                    }
+                }
+                else {
+                    stashFnCalls.send.call(res, data.resBody);
+                }
+            } // END if data.resBody
             // TODO: may need to buffer the responce..
             // as we can override the responce with out
             // warning about app sending data down the wire
-            if (specificScama) {
-                after(specificScama, data, genMessage);
-            }
-            return stashFnCalls.end.apply(res, args);
+            console.log("[".concat(data.statusCode, "] ").concat(req.method, ":").concat(req.originalUrl, " - ").concat(difference_ms / 1000, "sec"));
+            return stashFnCalls.end.call(res);
         }
         catch (err) {
             errorHandler(err);

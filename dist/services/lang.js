@@ -21,7 +21,11 @@ var errMessages = {
             return "StatusCode ".concat(statusCode, " was not found. Available codes are ").concat(codes);
         },
         forbidenReqBodyKey: function (key) { return "The key of \"".concat(key, "\" is not allowed in this call"); },
-        missingReqBodyKey: function (key) { return "The key of \"".concat(key, "\" is required for this call"); }
+        missingReqBodyKey: function (key) { return "The key of \"".concat(key, "\" is required for this call"); },
+        responseReqBodyType: function (_a) {
+            var expected = _a.expected, given = _a.given;
+            return "Response is of wrong type. Expected \"".concat(expected, "\" given \"").concat(given);
+        }
     },
     prod: {
         badOptionYamlPath: function (yamlPath) { return "yamlPath is not validate: " + JSON.stringify(yamlPath); },

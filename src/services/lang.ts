@@ -13,7 +13,8 @@ const errMessages = {
     responseContentTypeMismatch:content=>`Could not find a matching type. Available types are ${Object.keys(content)}`,
     statusCodeNotFound:({statusCode,codes})=>`StatusCode ${statusCode} was not found. Available codes are ${codes}`,
     forbidenReqBodyKey:(key)=>`The key of "${key}" is not allowed in this call`,
-    missingReqBodyKey:(key)=>`The key of "${key}" is required for this call`
+    missingReqBodyKey:(key)=>`The key of "${key}" is required for this call`,
+    responseReqBodyType:({expected, given})=>`Response is of wrong type. Expected "${expected}" given "${given}`
   },
   prod:{
     badOptionYamlPath:yamlPath=>"yamlPath is not validate: "+JSON.stringify(yamlPath),

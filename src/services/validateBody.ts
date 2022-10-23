@@ -1,7 +1,7 @@
 
 const checkParameters = require("./checkParameters");
 module.exports = function validateBody(schema,isIncoming,dev){
-
+//console.log(schema)
     const propertiesNames = Object.keys(schema.properties)
 
     const blocked = propertiesNames.reduce((all,key)=>{
@@ -26,7 +26,7 @@ module.exports = function validateBody(schema,isIncoming,dev){
 //============================================= body fn
 //=====================================================
   return body => {
-console.log(body)
+//console.log(body)
 //++++++++++++++++++++++++++ check for disallowed keys
 //+++++++++++++++++++++++++++++++++++++++ in its a req
 
@@ -43,14 +43,14 @@ console.log(body)
           delete body[block]
         }// END if
       }) // END forEach
-console.log(1)
+//console.log(1)
 //+++++++++++++++++++++++++++++++++++++ check required
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
 
     required.forEach(scrm=>{
-      console.log(typeof body,body)
-      console.log(scrm)
-      console.log(`undefined === body[${scrm.name}]`,undefined === body[scrm.name])
+  //    console.log(typeof body,body)
+  //    console.log(scrm)
+  //    console.log(`undefined === body[${scrm.name}]`,undefined === body[scrm.name])
       if(undefined === body[scrm.name]){
         throw {
           firetail:"missingReqBodyKey",
@@ -61,7 +61,7 @@ console.log(1)
       checkParameters(body[scrm.name],scrm)
     }) // END required.forEach
 
-    console.log(2)
+  //  console.log(2)
 //+++++++++++++++++++++++++++++++++++++ check optional
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -72,7 +72,7 @@ console.log(1)
     }) // END optional.forEach
 
 
-    console.log(3)
+  //  console.log(3)
     return propertiesNames.reduce((n,key)=>{
                               n[key] = body[key]
                               return n

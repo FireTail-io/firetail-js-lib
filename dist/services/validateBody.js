@@ -11,6 +11,7 @@ var __assign = (this && this.__assign) || function () {
 };
 var checkParameters = require("./checkParameters");
 module.exports = function validateBody(schema, isIncoming, dev) {
+    //console.log(schema)
     var propertiesNames = Object.keys(schema.properties);
     var blocked = propertiesNames.reduce(function (all, key) {
         if (schema.properties[key].readOnly) {
@@ -34,7 +35,7 @@ module.exports = function validateBody(schema, isIncoming, dev) {
     //============================================= body fn
     //=====================================================
     return function (body) {
-        console.log(body);
+        //console.log(body)
         //++++++++++++++++++++++++++ check for disallowed keys
         //+++++++++++++++++++++++++++++++++++++++ in its a req
         if (isIncoming)
@@ -50,13 +51,13 @@ module.exports = function validateBody(schema, isIncoming, dev) {
                     delete body[block];
                 } // END if
             }); // END forEach
-        console.log(1);
+        //console.log(1)
         //+++++++++++++++++++++++++++++++++++++ check required
         //++++++++++++++++++++++++++++++++++++++++++++++++++++
         required.forEach(function (scrm) {
-            console.log(typeof body, body);
-            console.log(scrm);
-            console.log("undefined === body[".concat(scrm.name, "]"), undefined === body[scrm.name]);
+            //    console.log(typeof body,body)
+            //    console.log(scrm)
+            //    console.log(`undefined === body[${scrm.name}]`,undefined === body[scrm.name])
             if (undefined === body[scrm.name]) {
                 throw {
                     firetail: "missingReqBodyKey",
@@ -66,7 +67,7 @@ module.exports = function validateBody(schema, isIncoming, dev) {
             }
             checkParameters(body[scrm.name], scrm);
         }); // END required.forEach
-        console.log(2);
+        //  console.log(2)
         //+++++++++++++++++++++++++++++++++++++ check optional
         //++++++++++++++++++++++++++++++++++++++++++++++++++++
         optional.forEach(function (scrm) {
@@ -74,7 +75,7 @@ module.exports = function validateBody(schema, isIncoming, dev) {
                 checkParameters(body[scrm.name], scrm);
             }
         }); // END optional.forEach
-        console.log(3);
+        //  console.log(3)
         return propertiesNames.reduce(function (n, key) {
             n[key] = body[key];
             return n;
