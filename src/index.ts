@@ -68,10 +68,6 @@ function deepRequire(dirname,selector){
 
 
 
-function bodyParse(){
-
-}
-
 
 
 
@@ -120,10 +116,10 @@ module.exports = function fileTaileSetup(opts: Options) : Function{
        mess = errMessages.dev[key]
     }
 //console.log(`typeof mess = ${typeof mess}`,mess)
-  /* TODO:  if("function" === typeof mess){
+  if("function" === typeof mess){
 //console.log(` >>> `,mess(data))
       return mess(data)
-    }*/
+    }
     return mess || errMessages.prod.default
   } // END genMessage
 

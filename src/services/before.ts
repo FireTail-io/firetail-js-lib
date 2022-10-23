@@ -1,10 +1,11 @@
 
 const checkParameters = require("./checkParameters");
+const validateBody    = require("./validateBody");
 //=====================================================
 //========================== validate BEFORE controller
 //=====================================================
 
-module.exports = function before({scamaForEndPoint,data,genMessage},bodyText){
+module.exports = function before({scamaForEndPoint,data,genMessage}){
 
     const { url } = data
 
@@ -56,16 +57,19 @@ module.exports = function before({scamaForEndPoint,data,genMessage},bodyText){
 
      const { params } = data;
 
+        //   console.log(" A ------- ",data.params)
      const pathNametoCheck = scamaVerb.parameters
                                     //.filter(({in})=>"query" === in) // Is giving a build Error 'var  = _a.in;'
                                       .filter(filterParameter.bind({type:"path"}));
 
       pathNametoCheck.forEach(({name, schema}) => {
+        console.log(name, schema)
         if(schema){
           data.params[name] = checkParameters(data.params[name],schema)
         }
       })
 
+    //  console.log(" B ------- ",data.params)
 //+++++++++++++++++++++++++++++ query params are right
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -126,27 +130,88 @@ module.exports = function before({scamaForEndPoint,data,genMessage},bodyText){
 
 //++++++++++++++++++++++ check body is the right shape
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
-    const { reqBody,headers } = data
+    const { reqBody, headers, dev } = data
     const contentType = headers["content-type"]
-//console.log("reqBody",reqBody)
+
+    let blocked = [],
+       required = [],
+       optional = [],
+       validater = ()=>{}
+
 
     if(scamaVerb.requestBody
     && scamaVerb.requestBody.content[contentType]){
-        // console.log(contentType, scamaVerb.requestBody.content[contentType])
+
+      const { schema } = scamaVerb.requestBody.content[contentType];
+/*
+      blocked = Object.keys(schema.properties)
+                            .reduce((all,key)=>{
+                              if(schema.properties[key].readOnly){
+                                all.push(key)
+                              }
+                              return all
+                            },[])
+
+      required = schema.required.filter(name=> ! blocked.includes(name))
+                                .map(name=>({...schema.properties[name],name}))
+
+      optional = Object.keys(schema.properties)
+                       .reduce((all,key)=>{
+                         if( ! blocked.includes(key)
+                         &&  ! required.find(({name})=>name === key)){
+                           all.push({...schema.properties[key],name:key})
+                         }
+                         return all
+                       },[])*/
+
+      validater = validateBody(schema,true, dev)
+
       if(contentType.endsWith("json")){
         data.reqBody = JSON.parse(reqBody)
       } else {
-        console.error(contentType+" NOT SUPPORTED YET")
-      }
+        console.error(contentType + " NOT SUPPORTED YET")
+      }// END else
     } else {
       try{
-      //  console.log(reqBody)
         if(reqBody)
           data.reqBody = JSON.parse(reqBody)
       } catch(err) {
           console.error(err)
-      }
-    }
+      } // END catch
+    }// END else
+
+    if("object" === typeof data.reqBody
+    ||       Array.isArray(data.reqBody)){
+
+      validater(data.reqBody)
+
+      /*
+        blocked.forEach(block=>{
+          if(data.reqBody[block]){
+            throw {
+              firetail:"forbidenReqBodyKey",
+              val:block,
+              status:401
+            }// END throw
+          }// END if
+        }) // END forEach
+      required.forEach(scrm=>{
+        if(undefined === data.reqBody[scrm.name]){
+          throw {
+            firetail:"missingReqBodyKey",
+            val:scrm.name,
+            status:404
+          }// END throw
+        }
+        checkParameters(data.reqBody[scrm.name],scrm)
+      }) // END required.forEach
+      optional.forEach(scrm=>{
+        if(undefined !== data.reqBody[scrm.name]){
+          checkParameters(data.reqBody[scrm.name],scrm)
+        }
+      }) // END optional.forEach
+      */
+    } // END if
 
 //++++++++++++++++++ check accept type can be returned
 //++++++++++++++++++++++++++++++++++++++++++++++++++++

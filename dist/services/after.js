@@ -10,7 +10,8 @@ module.exports = function after(specificScama, data) {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
     //++++++++++++++++++++++++ check stats code in in yaml
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
-    var response = specificScama.responses[statusCode];
+    var response = specificScama.responses[statusCode]
+        || specificScama.responses.default;
     if (response) {
         if (response.content) {
             var contentKey = findAcceptContentKey(acceptTypes(accept), Object.keys(response.content));

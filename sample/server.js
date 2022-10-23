@@ -94,10 +94,37 @@ app.get('/', (req, res) => {
   res.send("FireTail sample")
 })
 
-app.delete('/pets/{petId}', (req, res) => {
-  //res.set('content-type','application/json')
-  res.contentType('application/json');
-  res.json(["a","b","c"])
+app.delete('/pets/:petId', (req, res) => {
+
+  if(! data.map(({id})=>`${id}`)
+           .includes(req.params.petId)){
+    res.status(400)
+       .json({
+         message:`No pet with an ID of "${req.params.petId}" was found`
+       })
+    return;
+  }
+
+  const copy = [...data]
+  let removedItem = null
+
+  //empty
+  copy.forEach(()=>{
+    data.pop()
+  })
+
+  //rebuild
+  copy.forEach(item=>{
+    if(item.id !== +req.params.petId){
+      data.push(item)
+    } else {
+      removedItem = item
+    }
+  })
+
+  //console.log(res)
+//  console.log(Object.keys(res))
+  res.status(201).json(removedItem)
 })
 /*
 app.get('/bar2', (req, res) => {

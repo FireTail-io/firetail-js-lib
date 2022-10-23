@@ -31,16 +31,17 @@ module.exports = function middleware(req, res, next) {
       verb: req.method.toLowerCase(),
       url: req.originalUrl.split("?")[0],
       resBody:false,
-      reqBody:"Buffer" === req.body.type ? req.body.toString('utf8'):null,
+      reqBody:Buffer.isBuffer(req.body) ? req.body.toString('utf8')
+                                        : null,
       startedAt:new Date(),
       finishedAt:false,
-      statusCode: res.statusCode,
+      statusCode: 200,//res.statusCode,
       headers:req.headers,
       params: req.params,
       query:req.query,
-      status:200
+    //  status:200
     } // END data
-console.log(req.body)
+
     if(dev){
       if(data.url.startsWith("/firetail")){
         if("/firetail/apis.json" === data.url){
@@ -99,14 +100,17 @@ let errorHandlerCalled = false
     const isUI = (req.get('Referrer')||"").endsWith("/firetail")
 
     let defaultErrorVal = {
-      firetail:"default",
+    //  firetail:"default",
       status: err.status || 500,
       message:genMessage("default"),
       error:undefined
     }
 
-    if(err.firetail && ! err.message){
-      err.message = genMessage(err.firetail,err.val)
+    if(err.message){
+      defaultErrorVal.message = err.message
+    } else if(err.firetail){
+      defaultErrorVal.message = genMessage(err.firetail, err.val)
+      err.message = defaultErrorVal.message
     }
 
     if(dev && isUI){
@@ -134,6 +138,7 @@ let errorHandlerCalled = false
 //+++++++++++++++++++++++++++++++++++++++++++ stash fn
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
   const stashFnCalls = {
+   status : res.status.bind(res),
      end  : res.end.bind(res),
      send : res.send.bind(res),
      json : res.json.bind(res)
@@ -142,18 +147,27 @@ let errorHandlerCalled = false
 //+++++++++++++++++++++++++++++++++++++ hi-jack res fn
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+  res.status = function() {
+    const args = args2Arr(arguments)
+    //  console.log("res.status",args)
+    data.statusCode = args[0]
+    return stashFnCalls.status.apply(res, args)
+  }
   res.send = function() {
     const args = args2Arr(arguments)
+    //  console.log("res.send",args)
     data.resBody = args[0]
     return stashFnCalls.send.apply(res, args)
   }
   res.json = function() {
     const args = args2Arr(arguments)
+    //  console.log("res.json",args)
     data.resBody = args[0]
     return stashFnCalls.json.apply(res, args)
   }
   res.end = function() {
     const args = args2Arr(arguments)
+    //  console.log("res.end",args)
     data.finishedAt = new Date()
 
 
@@ -164,7 +178,7 @@ let errorHandlerCalled = false
 
   // Calculate the difference in milliseconds
   const difference_ms = date2_ms - date1_ms;
-  console.log(`[${data.status}] ${req.method}:${req.originalUrl} - ${difference_ms/1000}sec`)
+  console.log(`[${data.statusCode}] ${req.method}:${req.originalUrl} - ${difference_ms/1000}sec`)
     try {
     // TODO: may need to buffer the responce..
     // as we can override the responce with out
@@ -193,13 +207,16 @@ let errorHandlerCalled = false
         // We need to set the URL params as Express only adds them later
         Object.assign(data.params,matchFound.params)
       }
-
+//console.log(" ====== CALLING BEFORE !!")
       // Store specificScama as its needed in the "äfter" fn
       specificScama = before({scamaForEndPoint, data, genMessage})
 
       if(data.reqBody){
         req.body = data.reqBody
       }
+
+      //req.params = data.params
+    //  req.query  = data.query
 
       security({
         scamaVerb:specificScama,

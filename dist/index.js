@@ -55,8 +55,6 @@ function deepRequire(dirname, selector) {
         return packages;
     }, {});
 }
-function bodyParse() {
-}
 var defaultOpts = {};
 try {
     var packageJsonPath = path.resolve(path.dirname(require.main.filename), "./package.json");
@@ -87,10 +85,10 @@ module.exports = function fileTaileSetup(opts) {
             mess = errMessages.dev[key];
         }
         //console.log(`typeof mess = ${typeof mess}`,mess)
-        /* TODO:  if("function" === typeof mess){
-      //console.log(` >>> `,mess(data))
-            return mess(data)
-          }*/
+        if ("function" === typeof mess) {
+            //console.log(` >>> `,mess(data))
+            return mess(data);
+        }
         return mess || errMessages.prod.default;
     }; // END genMessage
     //  console.log(new Error("").stack)

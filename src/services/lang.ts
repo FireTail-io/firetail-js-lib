@@ -11,7 +11,9 @@ const errMessages = {
     missingJWTFunctions:`Missing security schemes functions`,
     notFound:({url,verb,scamaForEndPoint})=>`${url} ${verb.toUpperCase()} was not found. Only "${Object.keys(scamaForEndPoint).join(",").toUpperCase()}" should be used`,
     responseContentTypeMismatch:content=>`Could not find a matching type. Available types are ${Object.keys(content)}`,
-    statusCodeNotFound:({statusCode,codes})=>`StatusCode ${statusCode} was not found. Available codes are ${codes}`
+    statusCodeNotFound:({statusCode,codes})=>`StatusCode ${statusCode} was not found. Available codes are ${codes}`,
+    forbidenReqBodyKey:(key)=>`The key of "${key}" is not allowed in this call`,
+    missingReqBodyKey:(key)=>`The key of "${key}" is required for this call`
   },
   prod:{
     badOptionYamlPath:yamlPath=>"yamlPath is not validate: "+JSON.stringify(yamlPath),

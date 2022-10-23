@@ -1,0 +1,83 @@
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
+var checkParameters = require("./checkParameters");
+module.exports = function validateBody(schema, isIncoming, dev) {
+    var propertiesNames = Object.keys(schema.properties);
+    var blocked = propertiesNames.reduce(function (all, key) {
+        if (schema.properties[key].readOnly) {
+            all.push(key);
+        }
+        return all;
+    }, []);
+    var required = schema.required.filter(function (name) { return !blocked.includes(name); })
+        .map(function (name) { return (__assign(__assign({}, schema.properties[name]), { name: name })); });
+    var optional = propertiesNames.reduce(function (all, key) {
+        if (!blocked.includes(key)
+            && !required.find(function (_a) {
+                var name = _a.name;
+                return name === key;
+            })) {
+            all.push(__assign(__assign({}, schema.properties[key]), { name: key }));
+        }
+        return all;
+    }, []);
+    //=====================================================
+    //============================================= body fn
+    //=====================================================
+    return function (body) {
+        console.log(body);
+        //++++++++++++++++++++++++++ check for disallowed keys
+        //+++++++++++++++++++++++++++++++++++++++ in its a req
+        if (isIncoming)
+            blocked.forEach(function (block) {
+                if (body[block]) {
+                    if (dev)
+                        throw {
+                            firetail: "forbidenReqBodyKey",
+                            val: block,
+                            status: 401
+                        }; // END throw
+                    //TODO: Log that the client to send readonly key
+                    delete body[block];
+                } // END if
+            }); // END forEach
+        console.log(1);
+        //+++++++++++++++++++++++++++++++++++++ check required
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++
+        required.forEach(function (scrm) {
+            console.log(typeof body, body);
+            console.log(scrm);
+            console.log("undefined === body[".concat(scrm.name, "]"), undefined === body[scrm.name]);
+            if (undefined === body[scrm.name]) {
+                throw {
+                    firetail: "missingReqBodyKey",
+                    val: scrm.name,
+                    status: isIncoming ? 404 : 500
+                }; // END throw
+            }
+            checkParameters(body[scrm.name], scrm);
+        }); // END required.forEach
+        console.log(2);
+        //+++++++++++++++++++++++++++++++++++++ check optional
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++
+        optional.forEach(function (scrm) {
+            if (undefined !== body[scrm.name]) {
+                checkParameters(body[scrm.name], scrm);
+            }
+        }); // END optional.forEach
+        console.log(3);
+        return propertiesNames.reduce(function (n, key) {
+            n[key] = body[key];
+            return n;
+        }, {});
+    }; // END body
+}; // END validateBody

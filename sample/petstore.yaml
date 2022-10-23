@@ -108,10 +108,14 @@ paths:
           required: true
           description: The id of the pet to retrieve
           schema:
-            type: string
+            type: integer
       responses:
         '201':
           description: Null response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pets"
         default:
           description: unexpected error
           content:
@@ -145,10 +149,10 @@ components:
     Error:
       type: object
       required:
-        - code
+        - status
         - message
       properties:
-        code:
+        status:
           type: integer
           format: int32
         message:

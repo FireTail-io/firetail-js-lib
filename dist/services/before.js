@@ -1,8 +1,9 @@
 var checkParameters = require("./checkParameters");
+var validateBody = require("./validateBody");
 //=====================================================
 //========================== validate BEFORE controller
 //=====================================================
-module.exports = function before(_a, bodyText) {
+module.exports = function before(_a) {
     var scamaForEndPoint = _a.scamaForEndPoint, data = _a.data, genMessage = _a.genMessage;
     var url = data.url;
     //+++++++ check is there us a scama for that end-point
@@ -40,15 +41,18 @@ module.exports = function before(_a, bodyText) {
         //+++++++++++++++++++++++++++++ check params are right
         //++++++++++++++++++++++++++++++++++++++++++++++++++++
         var params = data.params;
+        //   console.log(" A ------- ",data.params)
         var pathNametoCheck = scamaVerb.parameters
             //.filter(({in})=>"query" === in) // Is giving a build Error 'var  = _a.in;'
             .filter(filterParameter.bind({ type: "path" }));
         pathNametoCheck.forEach(function (_a) {
             var name = _a.name, schema = _a.schema;
+            console.log(name, schema);
             if (schema) {
                 data.params[name] = checkParameters(data.params[name], schema);
             }
         });
+        //  console.log(" B ------- ",data.params)
         //+++++++++++++++++++++++++++++ query params are right
         //++++++++++++++++++++++++++++++++++++++++++++++++++++
         var queryNametoCheck = scamaVerb.parameters
@@ -104,29 +108,79 @@ module.exports = function before(_a, bodyText) {
     } // END if scamaVerb.parameters
     //++++++++++++++++++++++ check body is the right shape
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
-    var reqBody = data.reqBody, headers = data.headers;
+    var reqBody = data.reqBody, headers = data.headers, dev = data.dev;
     var contentType = headers["content-type"];
-    console.log("reqBody", reqBody);
+    var blocked = [], required = [], optional = [], validater = function () { };
     if (scamaVerb.requestBody
         && scamaVerb.requestBody.content[contentType]) {
-        console.log(contentType, scamaVerb.requestBody.content[contentType]);
+        var schema = scamaVerb.requestBody.content[contentType].schema;
+        /*
+              blocked = Object.keys(schema.properties)
+                                    .reduce((all,key)=>{
+                                      if(schema.properties[key].readOnly){
+                                        all.push(key)
+                                      }
+                                      return all
+                                    },[])
+        
+              required = schema.required.filter(name=> ! blocked.includes(name))
+                                        .map(name=>({...schema.properties[name],name}))
+        
+              optional = Object.keys(schema.properties)
+                               .reduce((all,key)=>{
+                                 if( ! blocked.includes(key)
+                                 &&  ! required.find(({name})=>name === key)){
+                                   all.push({...schema.properties[key],name:key})
+                                 }
+                                 return all
+                               },[])*/
+        validater = validateBody(schema, true, dev);
         if (contentType.endsWith("json")) {
             data.reqBody = JSON.parse(reqBody);
         }
         else {
             console.error(contentType + " NOT SUPPORTED YET");
-        }
+        } // END else
     }
     else {
         try {
-            console.log(reqBody);
             if (reqBody)
                 data.reqBody = JSON.parse(reqBody);
         }
         catch (err) {
             console.error(err);
-        }
-    }
+        } // END catch
+    } // END else
+    if ("object" === typeof data.reqBody
+        || Array.isArray(data.reqBody)) {
+        validater(data.reqBody);
+        /*
+          blocked.forEach(block=>{
+            if(data.reqBody[block]){
+              throw {
+                firetail:"forbidenReqBodyKey",
+                val:block,
+                status:401
+              }// END throw
+            }// END if
+          }) // END forEach
+        required.forEach(scrm=>{
+          if(undefined === data.reqBody[scrm.name]){
+            throw {
+              firetail:"missingReqBodyKey",
+              val:scrm.name,
+              status:404
+            }// END throw
+          }
+          checkParameters(data.reqBody[scrm.name],scrm)
+        }) // END required.forEach
+        optional.forEach(scrm=>{
+          if(undefined !== data.reqBody[scrm.name]){
+            checkParameters(data.reqBody[scrm.name],scrm)
+          }
+        }) // END optional.forEach
+        */
+    } // END if
     //++++++++++++++++++ check accept type can be returned
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
     //  const { accept } = headers

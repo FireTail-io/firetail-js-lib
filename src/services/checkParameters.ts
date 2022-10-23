@@ -92,6 +92,8 @@ module.exports = function checkParameters(val: string,schema){
 
       break;
     case "boolean":
+      if("boolean" === typeof val)
+        return val
       if("string" === typeof val && ["false","true"].includes(val.toLowerCase()))
         return "true" === val.toLowerCase()
       break;

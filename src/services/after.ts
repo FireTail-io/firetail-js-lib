@@ -19,6 +19,7 @@ const { statusCode, headers: { accept } , resBody } = data
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
 
   const response = specificScama.responses[statusCode]
+                || specificScama.responses.default
 
   if (response){
     if(response.content){

@@ -1,6 +1,7 @@
 const data = require('../animals.json')
 module.exports = function (req, res){
-  console.log(typeof req.body, req.body)
-//  data.push()
-  res.json(req.body)
+  const id = data.reduce((max, curren) => max.id > curren.id ? max : curren).id +1
+  const newItem = {...req.body,id}
+  data.push(newItem)
+  res.json(newItem)
 }

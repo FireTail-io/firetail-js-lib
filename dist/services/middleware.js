@@ -17,16 +17,16 @@ module.exports = function middleware(req, res, next) {
         verb: req.method.toLowerCase(),
         url: req.originalUrl.split("?")[0],
         resBody: false,
-        reqBody: "Buffer" === req.body.type ? req.body.toString('utf8') : null,
+        reqBody: Buffer.isBuffer(req.body) ? req.body.toString('utf8')
+            : null,
         startedAt: new Date(),
         finishedAt: false,
-        statusCode: res.statusCode,
+        statusCode: 200,
         headers: req.headers,
         params: req.params,
         query: req.query,
-        status: 200
+        //  status:200
     }; // END data
-    console.log(req.body);
     if (dev) {
         if (data.url.startsWith("/firetail")) {
             if ("/firetail/apis.json" === data.url) {
@@ -75,13 +75,17 @@ module.exports = function middleware(req, res, next) {
         errorHandlerCalled = true;
         var isUI = (req.get('Referrer') || "").endsWith("/firetail");
         var defaultErrorVal = {
-            firetail: "default",
+            //  firetail:"default",
             status: err.status || 500,
             message: genMessage("default"),
             error: undefined
         };
-        if (err.firetail && !err.message) {
-            err.message = genMessage(err.firetail, err.val);
+        if (err.message) {
+            defaultErrorVal.message = err.message;
+        }
+        else if (err.firetail) {
+            defaultErrorVal.message = genMessage(err.firetail, err.val);
+            err.message = defaultErrorVal.message;
         }
         if (dev && isUI) {
             defaultErrorVal.error = {
@@ -105,31 +109,41 @@ module.exports = function middleware(req, res, next) {
     //+++++++++++++++++++++++++++++++++++++++++++ stash fn
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
     var stashFnCalls = {
+        status: res.status.bind(res),
         end: res.end.bind(res),
         send: res.send.bind(res),
         json: res.json.bind(res)
     }; // END stashFnCalls
     //+++++++++++++++++++++++++++++++++++++ hi-jack res fn
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
+    res.status = function () {
+        var args = args2Arr(arguments);
+        //  console.log("res.status",args)
+        data.statusCode = args[0];
+        return stashFnCalls.status.apply(res, args);
+    };
     res.send = function () {
         var args = args2Arr(arguments);
+        //  console.log("res.send",args)
         data.resBody = args[0];
         return stashFnCalls.send.apply(res, args);
     };
     res.json = function () {
         var args = args2Arr(arguments);
+        //  console.log("res.json",args)
         data.resBody = args[0];
         return stashFnCalls.json.apply(res, args);
     };
     res.end = function () {
         var args = args2Arr(arguments);
+        //  console.log("res.end",args)
         data.finishedAt = new Date();
         // Convert both dates to milliseconds
         var date1_ms = data.startedAt.getTime();
         var date2_ms = data.finishedAt.getTime();
         // Calculate the difference in milliseconds
         var difference_ms = date2_ms - date1_ms;
-        console.log("[".concat(data.status, "] ").concat(req.method, ":").concat(req.originalUrl, " - ").concat(difference_ms / 1000, "sec"));
+        console.log("[".concat(data.statusCode, "] ").concat(req.method, ":").concat(req.originalUrl, " - ").concat(difference_ms / 1000, "sec"));
         try {
             // TODO: may need to buffer the responce..
             // as we can override the responce with out
@@ -157,11 +171,14 @@ module.exports = function middleware(req, res, next) {
             // We need to set the URL params as Express only adds them later
             Object.assign(data.params, matchFound.params);
         }
+        //console.log(" ====== CALLING BEFORE !!")
         // Store specificScama as its needed in the "äfter" fn
         specificScama = before({ scamaForEndPoint: scamaForEndPoint, data: data, genMessage: genMessage });
         if (data.reqBody) {
             req.body = data.reqBody;
         }
+        //req.params = data.params
+        //  req.query  = data.query
         security({
             scamaVerb: specificScama,
             operationsFn: operationsFn,

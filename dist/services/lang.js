@@ -19,7 +19,9 @@ var errMessages = {
         statusCodeNotFound: function (_a) {
             var statusCode = _a.statusCode, codes = _a.codes;
             return "StatusCode ".concat(statusCode, " was not found. Available codes are ").concat(codes);
-        }
+        },
+        forbidenReqBodyKey: function (key) { return "The key of \"".concat(key, "\" is not allowed in this call"); },
+        missingReqBodyKey: function (key) { return "The key of \"".concat(key, "\" is required for this call"); }
     },
     prod: {
         badOptionYamlPath: function (yamlPath) { return "yamlPath is not validate: " + JSON.stringify(yamlPath); },
