@@ -9,6 +9,8 @@ var path = require('path');
 //========================================== middleware
 //=====================================================
 module.exports = function middleware(req, res, next) {
+    res.setHeader("Server", "firetail-API");
+    res.removeHeader("X-Powered-By");
     //console.log(` -X- ${req.method}:${req.originalUrl}`)
     var _a = this, genMessage = _a.genMessage, yamlPathSt = _a.yamlPathSt, apiSpecPr = _a.apiSpecPr, apiSpec = _a.apiSpec, operationsFn = _a.operationsFn, dev = _a.dev, decodedJwt = _a.decodedJwt, securities = _a.securities;
     // .then(({paths})=>paths);
@@ -134,7 +136,7 @@ module.exports = function middleware(req, res, next) {
     };
     res.json = function () {
         var args = args2Arr(arguments);
-        console.log("res.json", args);
+        //  console.log("res.json",args)
         data.resBody = args[0];
         end();
         return res; //stashFnCalls.json.apply(res, args)

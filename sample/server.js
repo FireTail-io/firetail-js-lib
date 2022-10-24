@@ -8,14 +8,8 @@ const data = require('./animals.json')
 const express = require('express')
 const scribbles = require('scribbles')
 global.console = scribbles
-const firetailSetup = require("../dist");//require("firetail")
 const app = express()
 const port = 3001
-/*
-app.use((req, res, next) =>{
-  console.log(req.originalUrl);
-  next()
-})*/
 
 app.use(
   express.raw({
@@ -40,6 +34,8 @@ function listPets(req, res){
 //=================================== Firetail settings
 //=====================================================
 
+const firetailSetup = require("../dist");//require("firetail")
+
 const firetailOpts = {
   overRideError:(err)=>{
     console.error("overRideError");
@@ -47,6 +43,7 @@ const firetailOpts = {
   },
   securities:{
     jwt:({authorization})=>{
+      console.log(" ------ JWT",authorization)
       const token = authorization.split(" ").pop().replace(/['"]+/g, '')
       const tokenDecodablePart = token.split('.')[1];
       const decoded = Buffer.from(tokenDecodablePart, 'base64').toString();
@@ -75,17 +72,12 @@ const firetailOpts = {
   } // END operations
 } // END firetailOpts
 //console.log(firetailOpts)
-//=====================================================
-//===================================== Create Firetail
-//=====================================================
-
-const firetailMiddleware = firetailSetup(firetailOpts)
 
 //=====================================================
 //======================================== Add Firetail
 //=====================================================
 
-app.use(firetailMiddleware)
+app.use(firetailSetup(firetailOpts))
 
 //=====================================================
 //========================================= Your server
@@ -126,20 +118,7 @@ app.delete('/pets/:petId', (req, res) => {
 //  console.log(Object.keys(res))
   res.status(201).json(removedItem)
 })
-/*
-app.get('/bar2', (req, res) => {
-  //res.set('content-type','application/json')
-  res.contentType('application/json');
-  res.json(["1","2","3"])
-})
 
-app.get('/bar/:tab', (req, res) => {
-  console.log(req.params)
-  console.log(req.query)
-  //res.set('content-type','application/json')
-  res.contentType('application/json');
-  res.json(["a","b","c"])
-})*/
 
 //=====================================================
 //======================================== Server start
