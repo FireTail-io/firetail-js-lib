@@ -13,6 +13,9 @@ const path = require('path');
 
 module.exports = function middleware(req, res, next) {
 
+    res.setHeader("Server", "firetail-API");
+    res.removeHeader("X-Powered-By");
+
   //console.log(` -X- ${req.method}:${req.originalUrl}`)
   const {
     genMessage,
