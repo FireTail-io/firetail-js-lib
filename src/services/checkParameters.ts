@@ -1,7 +1,7 @@
 
 module.exports = function checkParameters(val: string,schema){
 
-  let isErr = ""
+  let isErr = null
 
   /*
 
@@ -27,25 +27,25 @@ module.exports = function checkParameters(val: string,schema){
       //format: int64
       const parcedVal = +val
       if(`${parcedVal}`!== val){
-        isErr = `${val} is not a value number`
+        isErr = { firetail:"notANumber", val }
       }
 
       if( ! isErr
       && "minimum" in schema
       && schema.minimum > parcedVal){
-        isErr = `${val} is below the minimum value`
+        isErr = { firetail:"belowMinimum", val }
       }
 
       if( ! isErr
       && "maximum" in schema
       && schema.maximum < parcedVal){
-        isErr = `${val} is above the maximum value`
+        isErr = { firetail:"aboveMaximum", val }
       }
 
       if( ! isErr
       && "integer" === schema.type
       && 0 < parcedVal % 1){
-        isErr = `${val} is not a whole number`
+        isErr = { firetail:"notAWholeNumber", val }
       }
 
       if( ! isErr){
@@ -55,33 +55,45 @@ module.exports = function checkParameters(val: string,schema){
     case "string":
 
       if( ! val){
-        isErr = "No a valid string:"+JSON.stringify(val)
+        isErr = { firetail:"notValidString", val }
       }
 
       if( ! isErr
       &&   schema.enum
       && ! schema.enum.includes(val)){
-        isErr = `"${val}" in the in the range of ${schema.enum.join()}`
+        isErr = {
+          firetail:"enumNotFound",
+          val:{
+            val,
+            list:schema.enum.join()
+          }
+        }
       }
 
       if( ! isErr
       && schema.pattern){
         const patternRg = new RegExp(schema.pattern);
         if( ! patternRg.text(val)){
-          isErr = `"${val}" didn't match ${schema.pattern}`
+          isErr = {
+            firetail:"patternNotMatch",
+            val:{
+              val,
+              pattern:schema.pattern
+            }
+          }
         }
       } // END pattern
 
       if(isok
       && schema.minLength
       && schema.minLength > val.length){
-        isErr = `"${val}" is to shot.`
+        isErr = { firetail:"toShort", val }
       }
 
       if(isok
       && schema.maxLength
       && schema.maxLength < val.length){
-        isErr = `"${val}" is to long.`
+        isErr = { firetail:"toLong", val }
       }
 
       // TODO: check schema.format //i.e. email, uuid ...
@@ -104,9 +116,9 @@ module.exports = function checkParameters(val: string,schema){
     // schema.items.type: string
   //    break;
     default:
-      isErr = "Unknowen type: "+schema.type
+      isErr = { firetail:"unknownType", val:schema.type }
       // code block
   }// END switch
 
-  throw new Error(isErr)
+  throw { ...isErr, status:400 }
 }

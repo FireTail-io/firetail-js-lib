@@ -14,7 +14,17 @@ const errMessages = {
     statusCodeNotFound:({statusCode,codes})=>`StatusCode ${statusCode} was not found. Available codes are ${codes}`,
     forbidenReqBodyKey:(key)=>`The key of "${key}" is not allowed in this call`,
     missingReqBodyKey:(key)=>`The key of "${key}" is required for this call`,
-    responseReqBodyType:({expected, given})=>`Response is of wrong type. Expected "${expected}" given "${given}`
+    responseReqBodyType:({expected, given})=>`Response is of wrong type. Expected "${expected}" given "${given}`,
+    notANumber:val=>`${val} is not a value number`,
+    belowMinimum:val=>`${val} is below the minimum value`,
+    aboveMaximum:val=>`${val} is above the maximum value`,
+    notAWholeNumber:val=>`${val} is not a whole number`,
+    notValidString:val=>"Not a valid string:"+JSON.stringify(val),
+    enumNotFound:({val,list})=>`"${val}" in the in the range of ${list}`,
+    patternNotMatch:({val,pattern})=>`"${val}" didn't match ${pattern}`,
+    toShort:val=>`"${val}" is to shot.`,
+    toLong:val=>`"${val}" is to long.`,
+    unknownType:type=>"Unknown type: "+type
   },
   prod:{
     badOptionYamlPath:yamlPath=>"yamlPath is not validate: "+JSON.stringify(yamlPath),
