@@ -3,61 +3,6 @@ const ver = "1.1"
 
 const fireTailLogger = console.log;
 
-function input(reqIn,resIn){
-
-  const meta = {/*
-      path:  "/product/{pid}"//as in yaml
-      optId: "app.product.lookup"//as in yaml
-      associated : "riley@pointsec.io", //associated_user
-      processType : "api_log", //process-type
-      exeTime: 6453// total in millasec
-      recivedAt: "2022-09-09T08:43:32"
-      completedAt: "2022-09-09T08:43:34",
-    */}
-  const uuids = {/*
-      "org" : "9b563f11-062f-4d5d-996b-46c8e79d2f56",
-      "api" : "3cd009bd-401f-4882-b6f8-89342a7cd69f",
-      "app" : "ac889197-d3da-4271-9324-ccf98a6b1a8c",
-      "token" : "d017e001-d559-4cbf-88e6-a92489c24fd8",
-    */}
-  const oauth = {/*
-      "sub" : "123"
-  */}
-  const req = {/*
-        url:// = "http://127.0.0.1:8080/product/1234?color=@red"
-        endpoint: "/products/1234"
-        "method": , "get"// String/Enum
-        "headers": , // OBJ
-        "pathQuery": : {
-          color : "red"
-        }
-        'pathParams': {
-          pid : 1234
-        },
-        'body': null// post or form <--
-        "ip": "127.0.0.1"// String
-    */}
-  const res = {/*
-       "status": //status_code,
-       "length"://"content_len": response.content_length,
-       "encoding"://"content_enc": response.content_encoding,
-       "body": response.get_json() if response.is_json else response.response,
-       "headers": dict(response.headers),
-       "type"://"content_type": response.content_type
-    */}
-
-  meta.uuids = uuids
-
-  const eventData = {
-      ver,
-      meta,
-      oauth,
-      req,
-      res
-  }
-  return fireTailLogger(out(eventData))
-}
-
 function out(eventData){
   /*
   payload = {

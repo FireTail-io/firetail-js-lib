@@ -24,14 +24,20 @@ const errMessages = {
     patternNotMatch:({val,pattern})=>`"${val}" didn't match ${pattern}`,
     toShort:val=>`"${val}" is to shot.`,
     toLong:val=>`"${val}" is to long.`,
-    unknownType:type=>"Unknown type: "+type
+    unknownType:type=>"Unknown type: "+type,
+    clientCantAcceptThisContentType:replyContentType=>`Your request have an 'Accept' header that includes "${replyContentType}"`,
+    appContentTypeNotInYaml:replyContentType=>`no schema definition was found for "${replyContentType}"`,
+    noCustomBodyDecoder:replyContentType=>`no customBodyDecoder was found for "${replyContentType}"`,
+    problemWithCustomBodyDecoder:replyContentType=>`"${replyContentType}" decoder has failed`,
   },
   prod:{
-    badOptionYamlPath:yamlPath=>"yamlPath is not validate: "+JSON.stringify(yamlPath),
+    badOptionYamlPath:yamlPath=>"yamlPath is not validat:e: "+JSON.stringify(yamlPath),
     default:"There was a problem with your request. Please check your API spec",
     badJWTFunctionOutput:`Could not parce JWT`,
     missingJWTFunction:`Could not parce JWT`,
-    responseContentTypeMismatch:`Could not find a matching type.`
+    responseContentTypeMismatch:`Could not find a matching type.`,
+    unknownContentType:`invalid content-type for this end-point`,
+    clientCantAcceptThisContentType:"Not Acceptable"
   }
 } // errMessages
 

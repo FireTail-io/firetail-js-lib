@@ -2,19 +2,37 @@
 const { acceptTypes, findAcceptContentKey } = require("./help");
 const validateBody    = require("./validateBody");
 
+function intersection (a, b) {
+    const setA = new Set(a);
+    return b.filter(value => setA.has(value));
+}
+
 //=====================================================
 //=========================== validate AFTER controller
 //=====================================================
 
 module.exports = function after(specificScama, data){
 
-const { statusCode, headers: { accept } , resBody, dev } = data
-
-
-
+let { statusCode, headers: { accept }, resHeaders, resBody, dev, customBodyDecoders } = data
 
 // check return Content-Type is in callers accept type
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+  let replyContentType = resHeaders.reduce((found,{key,val})=>{
+                                      if("content-type" === key.toLowerCase())
+                                        return val
+                                      return found
+                                    },"")
+
+  if( ! replyContentType){
+    replyContentType = "application/json"
+  }
+
+  const wantedContentTypes = acceptTypes(accept)
+
+  const clientWillTakeANYtype = accept.includes("*/*")
+
+console.log({replyContentType,wantedContentTypes,clientWillTakeANYtype})
 
 //+++++++++++++++ check return data is the right shape
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -24,18 +42,67 @@ const { statusCode, headers: { accept } , resBody, dev } = data
 
   const response = specificScama.responses[statusCode]
                 || specificScama.responses.default
-
+console.log(response)
+// What Scamas can we use to check the response
   if (response){
+    console.log(accept)
+      console.log(response.content)
     if(response.content){
-      const contentKey = findAcceptContentKey(acceptTypes(accept),
-                                              Object.keys(response.content))
-      if (contentKey){
-      // console.log(resBody)
+
+      const availableContentTypes = Object.keys(response.content)
+
+
+
+  // CHECK the client can accept it
+  if( ! clientWillTakeANYtype
+  &&  ! wantedContentTypes.includes(replyContentType) ){
+    throw {
+        firetail:"clientCantAcceptThisContentType",
+        status:406,
+        val:replyContentType
+    }
+  }
+
+   console.log(resBody)
+   console.log(response.content)
+const  contentSchema =  response.content[replyContentType]
+
+   console.log(replyContentType,contentSchema)
+  // CHECK it is one of the formats in the Yaml
+  if( ! contentSchema){
+    throw {
+        firetail:"appContentTypeNotInYaml",
+        status:501,
+        val:replyContentType
+    }
+  }
+const { schema } = contentSchema
+
+if(customBodyDecoders[replyContentType]){
+  resBody = customBodyDecoders[replyContentType](resBody)
+  if(!resBody){
+      throw {
+          firetail:"problemWithCustomBodyDecoder",
+          status:500,
+          val:replyContentType
+      }
+  }
+} else if ("application/json" !== replyContentType){
+    throw {
+        firetail:"noCustomBodyDecoder",
+        status:500,
+        val:replyContentType
+    }
+}
+
+  //  console.log(contentKey)
+      //if (contentKey){
+       console.log(resBody)
       //  console.log(response.content[contentKey])
       //  console.log("IS validate?")
 
-        const { schema } = response.content[contentKey]
-
+    //    const { schema } = response.content[contentKey]
+console.log(schema)
 //++++++++++++++++++++++++++++++ check if its an Array
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
         if("array" === schema.type){
@@ -54,15 +121,20 @@ const { statusCode, headers: { accept } , resBody, dev } = data
 
         const validater = validateBody(schema,false, dev)
         return validater(resBody)
-      } else {
+      /*} else {
           throw {
               firetail:"responseContentTypeMismatch",
               status:400,
               val:response.content
           } // END throw
-      } // END inner else
+      }*/ // END inner else
     } else {
-      console.warn("No 'content' entry in Yaml")
+        throw {
+            firetail:"responseContentTypeMismatch",
+            status:400,
+            val:response.content
+        } // END throw
+    //  console.warn("No 'content' entry in Yaml")
     }
   } else {
      throw {

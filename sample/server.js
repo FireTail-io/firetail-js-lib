@@ -4,9 +4,35 @@ const data = require('./animals.json')
 //=====================================================
 //============================================= Imports
 //=====================================================
+/*
+const stream = new WritableStream({
+  start(controller) {
+
+  },
+  write(chunk, controller) {
+console.log(chunk+"")
+  },
+  close(controller) {
+
+  },
+  abort(reason) {
+
+  }
+}, {
+  highWaterMark: 3,
+  size: () => 1
+});
+
+//stream.stdout = stream
+const {Console} = console
+
+const con = new Console(stream)
+con.log({a:4});
+*/
 
 const express = require('express')
 const scribbles = require('scribbles')
+const parseXmlString = require('xml2json');
 global.console = scribbles
 const app = express()
 const port = 3001
@@ -37,6 +63,7 @@ function listPets(req, res){
 const firetailSetup = require("../dist");//require("firetail")
 
 const firetailOpts = {
+  dev:false,
   overRideError:(err)=>{
     console.error("overRideError");
     return err
@@ -69,7 +96,10 @@ const firetailOpts = {
   /*  app : {
       cat_id:cat
     }*/
-  } // END operations
+  }, // END operations
+  customBodyDecoders:{
+    'application/xml': body => parseXmlString.toJson(body,{object:true}).Pet
+  }
 } // END firetailOpts
 //console.log(firetailOpts)
 

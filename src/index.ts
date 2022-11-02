@@ -15,7 +15,9 @@ const errMessages = require('./services/lang');
 
 
 
-
+function areWeTestingWithJest() {
+    return process.env.JEST_WORKER_ID !== undefined;
+}
 
 
 
@@ -57,7 +59,7 @@ function deepRequire(dirname,selector){
     return packages;
   },{});
 
-}
+} // END deepRequire
 
 
 
@@ -82,15 +84,18 @@ interface Options {
     overRideError: Function;
     operations: Object;
 }
-try{
-  const packageJsonPath = path.resolve(path.dirname(require.main.filename),"./package.json")
-  const packageJson = require(packageJsonPath)
-  if(packageJson.firetail){
-    defaultOpts = packageJson.firetail
-  }
-} catch (err){
-  console.error(err)
+if( ! areWeTestingWithJest()){
+    try{
+      const packageJsonPath = path.resolve(path.dirname(require.main.filename),"./package.json")
+      const packageJson = require(packageJsonPath)
+      if(packageJson.firetail){
+        defaultOpts = packageJson.firetail
+      }
+    } catch (err){
+      console.error(err)
+    }
 }
+
 
 //=====================================================
 //==================================== file Taile Setup
@@ -100,7 +105,7 @@ module.exports = function fileTaileSetup(opts: Options) : Function{
 
   const myOpts = { ...defaultOpts, ...opts }
   //console.log(myOpts)
-  const { addApi, overRideError, operations, dev, decodedJwt, securities, specificationDir } = myOpts
+  const { addApi, overRideError, operations, dev, decodedJwt, securities, specificationDir, customBodyDecoders } = myOpts
 
   //const console = {log:()=>{},warn:()=>{},error:()=>{}}
   let addApiSt = defaultOpts.addApi
@@ -161,6 +166,9 @@ if( specificationDir ){
 
 //++++++++++++++++++++++++++++++++++ read in yaml file
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
+if("string" !== typeof addApiSt){
+  throw new Error("Missing path to YAML")
+}
 //console.log("addApiSt",addApiSt)
   // TODO: Should we catch or crash if spce is not found?
  const apiSpecPr = SwaggerParser.validate(addApiSt)
@@ -201,6 +209,7 @@ if( specificationDir ){
         apiSpecPr,
         dev,
         securities,
+        customBodyDecoders,
         operationsFn:flattenObj(operations || {})
       })
 

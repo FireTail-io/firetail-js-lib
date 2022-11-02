@@ -63,7 +63,7 @@ module.exports = function before({scamaForEndPoint,data,genMessage}){
                                       .filter(filterParameter.bind({type:"path"}));
 
       pathNametoCheck.forEach(({name, schema}) => {
-        console.log(name, schema)
+      //  console.log(name, schema)
         if(schema){
           data.params[name] = checkParameters(data.params[name],schema)
         }
@@ -165,19 +165,27 @@ module.exports = function before({scamaForEndPoint,data,genMessage}){
                        },[])*/
 
       validater = validateBody(schema,true, dev)
-
+    //  console.log()
+    //  console.log(contentType)
+//console.log()
       if(contentType.endsWith("json")){
         data.reqBody = JSON.parse(reqBody)
       } else {
-        console.error(contentType + " NOT SUPPORTED YET")
+        data.reqBody = reqBody
+      //  console.error(contentType + " NOT SUPPORTED YET")
       }// END else
     } else {
+      throw {
+        firetail:"unknownContentType",
+        status:415
+      }
+      /*
       try{
         if(reqBody)
           data.reqBody = JSON.parse(reqBody)
       } catch(err) {
           console.error(err)
-      } // END catch
+      }*/ // END catch
     }// END else
 
     if("object" === typeof data.reqBody

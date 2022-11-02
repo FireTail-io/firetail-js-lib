@@ -1,5 +1,5 @@
 const firetailSetup = require("../dist");
-const firetailOpts = {addApi:"./cases.yaml"}
+const firetailOpts = {addApi:"./cases.yaml", testing:true}
 
 /*
 
@@ -137,6 +137,8 @@ function genReq(override={}) {
 
 function genRes(override) {
   const res = {
+    setHeader:()=>{},
+    removeHeader:()=>{},
    __data:undefined,
    statusCode:200,
    status:(statusCode)=>{

@@ -5,15 +5,17 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server"
+    "start": "node --enable-source-maps server"
   },
   "author": "Brian Shannon <brian@firetail.io>",
   "license": "LGPL-3.0",
   "dependencies": {
     "express": "^4.18.1",
-    "scribbles": "^1.2.0"
+    "scribbles": "^1.3.0",
+    "xml2json":"^0.12.0"
   },
-  "scribbles": {
+  "_scribbles": {
+    "logLevel":"warn",
     "format": "{time} <{logLevel}> {fileName}:{lineNumber} {message} {value} {stackTrace}"
   },
   "firetail":{

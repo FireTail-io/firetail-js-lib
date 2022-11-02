@@ -2,5 +2,7 @@
 const data = require('../../animals.json')
 
 module.exports = function (req, res){
-  res.json(data.find(({id})=>id===req.params.petId))
+  const index = data.findIndex(({id})=>id===req.params.petId)
+  res.setHeader("x-next",`/pets${data[1+index] ? "/"+data[1+index].id : ""}`)
+  res.json(data[index])
 }

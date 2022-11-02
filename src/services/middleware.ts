@@ -7,6 +7,11 @@ const after = require("./after");
 const fs = require('fs');
 const path = require('path');
 
+
+function areWeTestingWithJest() {
+    return process.env.JEST_WORKER_ID !== undefined;
+}
+
 //=====================================================
 //========================================== middleware
 //=====================================================
@@ -16,7 +21,7 @@ module.exports = function middleware(req, res, next) {
     res.setHeader("Server", "firetail-API");
     res.removeHeader("X-Powered-By");
 
-  //console.log(` -X- ${req.method}:${req.originalUrl}`)
+  console.log(` -X- ${req.method}:${req.originalUrl}`,req.headers)
   const {
     genMessage,
     yamlPathSt,
@@ -24,6 +29,7 @@ module.exports = function middleware(req, res, next) {
     apiSpec,
     operationsFn,
     dev,
+    customBodyDecoders,
     decodedJwt,
     securities
   } = this
@@ -32,6 +38,7 @@ module.exports = function middleware(req, res, next) {
   const data = {
       dev,
       yamlPathSt,
+      customBodyDecoders,
       verb: req.method.toLowerCase(),
       url: req.originalUrl.split("?")[0],
       resBody:false,
@@ -92,6 +99,7 @@ module.exports = function middleware(req, res, next) {
 let errorHandlerCalled = false
   const errorHandler = err => {
 
+if(!areWeTestingWithJest())
     console.error(err)
 
     if(errorHandlerCalled){
@@ -132,7 +140,7 @@ let errorHandlerCalled = false
       data.status = errContent.status || defaultErrorVal.status
     //  console.log(data)
     //  console.log(errContent.status, defaultErrorVal.status)
-    res.status(errContent.status || defaultErrorVal.status)
+    stashFnCalls.status(data.status)
 
     stashFnCalls["object" === typeof errContent ? "json"
                                                 : "send"](errContent)
@@ -142,14 +150,28 @@ let errorHandlerCalled = false
 //+++++++++++++++++++++++++++++++++++++++++++ stash fn
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
   const stashFnCalls = {
-   status : res.status.bind(res),
-     end  : res.end.bind(res),
-     send : res.send.bind(res),
-     json : res.json.bind(res)
+           status : res.status.bind(res),
+        setHeader : res.setHeader.bind(res),
+     removeHeader : res.removeHeader.bind(res),
+             send : res.send.bind(res),
+             json : res.json.bind(res),
+              end : res.end.bind(res)
+
   } // END stashFnCalls
 
 //+++++++++++++++++++++++++++++++++++++ hi-jack res fn
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
+  const headers = [], removeFromHead = []
+  res.setHeader = (key,val)=>{
+//console.log("res.setHeader",{key,val})
+    headers.push({key,val})
+    return res
+  };
+  res.removeHeader = (key)=>{
+//console.log("res.removeHeader",key)
+    removeFromHead.push(key)
+    return res
+  };
 
   res.status = function() {
     const args = args2Arr(arguments)
@@ -162,9 +184,10 @@ let errorHandlerCalled = false
     const args = args2Arr(arguments)
     //  console.log("res.send",args)
     data.resBody = data.resBody || args[0]
-    //end()
-  //  return res
-    return stashFnCalls.send.apply(res, args)
+    if(!data.finishedAt)
+      end()
+    else
+      return stashFnCalls.send.apply(res, args)
   }
   res.json = function() {
     const args = args2Arr(arguments)
@@ -179,11 +202,19 @@ let errorHandlerCalled = false
 
   let end = function () {
     end = ()=> console.log("END was already CALLeD")
-    //const args = args2Arr(arguments)
-    //  console.log("res.end",args)
+    const args = args2Arr(arguments)
+      console.log("res.end",args)
     data.finishedAt = new Date()
 
 
+    removeFromHead.forEach(key=>{
+      stashFnCalls.removeHeader(key);
+    })
+    headers.forEach(({key,val})=>{
+      stashFnCalls.setHeader(key,val);
+    })
+
+    data.resHeaders = headers
 
   // Convert both dates to milliseconds
   const date1_ms = data.startedAt.getTime();
@@ -197,19 +228,20 @@ let errorHandlerCalled = false
         stashFnCalls.status.call(res,data.statusCode)
       }
       //res.send = stashFnCalls.send.bind(res)
+console.log(data.resBody)
       if(data.resBody){
-        if("object" === typeof data.resBody){
+        //if("object" === typeof data.resBody){
+        console.log(specificScama)
           if (specificScama) {
-      //    console.log(data.resBody)
             const cleanedBody = after(specificScama, data)
-      //      console.log(cleanedBody)
+console.log(cleanedBody)
             stashFnCalls.json.call(res,cleanedBody)
           }else {
             stashFnCalls.json.call(res,data.resBody)
           }
-        }else{
+    /*    }else{
           stashFnCalls.send.call(res,data.resBody)
-        }
+        }*/
       } // END if data.resBody
 
     // TODO: may need to buffer the responce..
