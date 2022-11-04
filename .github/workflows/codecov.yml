@@ -24,6 +24,8 @@ jobs:
       run: npm install
 
     - name: Run the tests
+      env:
+        JEST_WORKER_ID: 1234
       run: npm test -- --coverage
 
     - name: Upload coverage to Codecov
