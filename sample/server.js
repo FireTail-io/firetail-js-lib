@@ -33,7 +33,7 @@ con.log({a:4});
 const express = require('express')
 const scribbles = require('scribbles')
 const parseXmlString = require('xml2json');
-global.console = scribbles
+//global.console = scribbles
 const app = express()
 const port = 3001
 
@@ -64,6 +64,7 @@ const firetailSetup = require("../dist");//require("firetail")
 
 const firetailOpts = {
   dev:false,
+  addApi: "./petstore.yaml",
   overRideError:(err)=>{
     console.error("overRideError");
     return err

@@ -55,9 +55,9 @@ module.exports = function validateBody(schema, isIncoming, dev) {
         //+++++++++++++++++++++++++++++++++++++ check required
         //++++++++++++++++++++++++++++++++++++++++++++++++++++
         required.forEach(function (scrm) {
-            //    console.log(typeof body,body)
-            //    console.log(scrm)
-            //    console.log(`undefined === body[${scrm.name}]`,undefined === body[scrm.name])
+            //  console.log(typeof body,body)
+            //  console.log(scrm)
+            //  console.log(`undefined === body[${scrm.name}]`,undefined === body[scrm.name])
             if (undefined === body[scrm.name]) {
                 throw {
                     firetail: "missingReqBodyKey",
@@ -82,3 +82,4 @@ module.exports = function validateBody(schema, isIncoming, dev) {
         }, {});
     }; // END body
 }; // END validateBody
+//# sourceMappingURL=validateBody.js.map

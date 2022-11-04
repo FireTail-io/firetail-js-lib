@@ -92,3 +92,4 @@ module.exports = function security(_a) {
       console.log(securitySchemes)
       console.log()*/
 };
+//# sourceMappingURL=security.js.map

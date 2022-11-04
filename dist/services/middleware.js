@@ -5,23 +5,27 @@ var before = require("./before");
 var after = require("./after");
 var fs = require('fs');
 var path = require('path');
+function areWeTestingWithJest() {
+    return process.env.JEST_WORKER_ID !== undefined;
+}
 //=====================================================
 //========================================== middleware
 //=====================================================
 module.exports = function middleware(req, res, next) {
     res.setHeader("Server", "firetail-API");
     res.removeHeader("X-Powered-By");
-    //console.log(` -X- ${req.method}:${req.originalUrl}`)
-    var _a = this, genMessage = _a.genMessage, yamlPathSt = _a.yamlPathSt, apiSpecPr = _a.apiSpecPr, apiSpec = _a.apiSpec, operationsFn = _a.operationsFn, dev = _a.dev, decodedJwt = _a.decodedJwt, securities = _a.securities;
+    //console.log(` -X- ${req.method}:${req.originalUrl}`,req.headers)
+    var _a = this, genMessage = _a.genMessage, yamlPathSt = _a.yamlPathSt, apiSpecPr = _a.apiSpecPr, apiSpec = _a.apiSpec, operationsFn = _a.operationsFn, dev = _a.dev, customBodyDecoders = _a.customBodyDecoders, decodedJwt = _a.decodedJwt, securities = _a.securities;
     // .then(({paths})=>paths);
     var data = {
         dev: dev,
         yamlPathSt: yamlPathSt,
+        customBodyDecoders: customBodyDecoders,
         verb: req.method.toLowerCase(),
         url: req.originalUrl.split("?")[0],
         resBody: false,
         reqBody: Buffer.isBuffer(req.body) ? req.body.toString('utf8')
-            : null,
+            : "string" === typeof req.body ? req.body : null,
         startedAt: new Date(),
         finishedAt: false,
         statusCode: 200,
@@ -30,47 +34,50 @@ module.exports = function middleware(req, res, next) {
         query: req.query,
         //  status:200
     }; // END data
-    if (dev) {
-        if (data.url.startsWith("/firetail")) {
-            if ("/firetail/apis.json" === data.url) {
-                apiSpecPr.then(function (api) { return res.json(api.paths); })
-                    .catch(function (err) {
-                    console.error(err);
-                    res.status(500).send(err.message || err);
-                }); // END catch
-                return;
-            } /*
-            let filePath = "index.html"
-            switch(data.url){
-              case "/firetail/client.js":
-                filePath = "client.js"
-                break;
-              case "/firetail/apis.json":
-                apiSpecPr.then(res.json())
-                         .catch(err=>res.status(500).json(err))
-                return;
-                break;
-            }*/
-            var filePath = "/firetail/client.js" === data.url ? "client.js"
-                : "index.html";
-            fs.readFile(path.resolve(__dirname, "../../src/ui/", filePath), "utf8", function (err, page) {
-                if (err) {
-                    data.status = 500;
-                    res.status(500).send(err);
-                }
-                else {
-                    res.send(page);
-                }
-            }); // END fs.readFile
-            return;
-        }
-    } // END if dev
+    /*  if(dev){
+        if(data.url.startsWith("/firetail")){
+          if("/firetail/apis.json" === data.url){
+              apiSpecPr.then(api=>res.json(api.paths))
+                       .catch(err=>{
+                         console.error(err)
+                         res.status(500).send(err.message||err)
+                       })// END catch
+              return;
+          }*/ /*
+    let filePath = "index.html"
+    switch(data.url){
+      case "/firetail/client.js":
+        filePath = "client.js"
+        break;
+      case "/firetail/apis.json":
+        apiSpecPr.then(res.json())
+                 .catch(err=>res.status(500).json(err))
+        return;
+        break;
+    }*/
+    /*  const filePath = "/firetail/client.js" === data.url ? "client.js"
+                                                          : "index.html"
+      fs.readFile(
+        path.resolve(__dirname,"../../src/ui/",filePath),
+        "utf8",
+        function(err,page){
+          if(err){
+            data.status = 500
+            res.status(500).send(err)
+          }else{
+            res.send(page)
+          }
+        }) // END fs.readFile
+      return
+    }
+  }*/ // END if dev
     var specificScama;
     //++++++++++++++++++++++++++++++++++++++ error handler
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
     var errorHandlerCalled = false;
     var errorHandler = function (err) {
-        console.error(err);
+        if (!areWeTestingWithJest())
+            console.error(err);
         if (errorHandlerCalled) {
             console.error("errorHandler was already called");
             return;
@@ -104,7 +111,7 @@ module.exports = function middleware(req, res, next) {
         data.status = errContent.status || defaultErrorVal.status;
         //  console.log(data)
         //  console.log(errContent.status, defaultErrorVal.status)
-        res.status(errContent.status || defaultErrorVal.status);
+        stashFnCalls.status(data.status);
         stashFnCalls["object" === typeof errContent ? "json"
             : "send"](errContent);
         stashFnCalls.end();
@@ -113,12 +120,25 @@ module.exports = function middleware(req, res, next) {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
     var stashFnCalls = {
         status: res.status.bind(res),
-        end: res.end.bind(res),
+        setHeader: res.setHeader.bind(res),
+        removeHeader: res.removeHeader.bind(res),
         send: res.send.bind(res),
-        json: res.json.bind(res)
+        json: res.json.bind(res),
+        end: res.end.bind(res)
     }; // END stashFnCalls
     //+++++++++++++++++++++++++++++++++++++ hi-jack res fn
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
+    var headers = [], removeFromHead = [];
+    res.setHeader = function (key, val) {
+        //console.log("res.setHeader",{key,val})
+        headers.push({ key: key, val: val });
+        return res;
+    };
+    res.removeHeader = function (key) {
+        //console.log("res.removeHeader",key)
+        removeFromHead.push(key);
+        return res;
+    };
     res.status = function () {
         var args = args2Arr(arguments);
         //  console.log("res.status",args)
@@ -130,9 +150,12 @@ module.exports = function middleware(req, res, next) {
         var args = args2Arr(arguments);
         //  console.log("res.send",args)
         data.resBody = data.resBody || args[0];
-        //end()
-        //  return res
-        return stashFnCalls.send.apply(res, args);
+        if (!data.finishedAt) {
+            end();
+            return res;
+        }
+        else
+            return stashFnCalls.send.apply(res, args);
     };
     res.json = function () {
         var args = args2Arr(arguments);
@@ -146,9 +169,17 @@ module.exports = function middleware(req, res, next) {
     }*/
     var end = function () {
         end = function () { return console.log("END was already CALLeD"); };
-        //const args = args2Arr(arguments)
+        var args = args2Arr(arguments);
         //  console.log("res.end",args)
         data.finishedAt = new Date();
+        removeFromHead.forEach(function (key) {
+            stashFnCalls.removeHeader(key);
+        });
+        headers.forEach(function (_a) {
+            var key = _a.key, val = _a.val;
+            stashFnCalls.setHeader(key, val);
+        });
+        data.resHeaders = headers;
         // Convert both dates to milliseconds
         var date1_ms = data.startedAt.getTime();
         var date2_ms = data.finishedAt.getTime();
@@ -159,21 +190,21 @@ module.exports = function middleware(req, res, next) {
                 stashFnCalls.status.call(res, data.statusCode);
             }
             //res.send = stashFnCalls.send.bind(res)
+            //console.log(data.resBody)
             if (data.resBody) {
-                if ("object" === typeof data.resBody) {
-                    if (specificScama) {
-                        //    console.log(data.resBody)
-                        var cleanedBody = after(specificScama, data);
-                        //      console.log(cleanedBody)
-                        stashFnCalls.json.call(res, cleanedBody);
-                    }
-                    else {
-                        stashFnCalls.json.call(res, data.resBody);
-                    }
+                //if("object" === typeof data.resBody){
+                //    console.log(specificScama)
+                if (specificScama) {
+                    var cleanedBody = after(specificScama, data);
+                    //console.log(cleanedBody)
+                    stashFnCalls.json.call(res, cleanedBody);
                 }
                 else {
-                    stashFnCalls.send.call(res, data.resBody);
+                    stashFnCalls.json.call(res, data.resBody);
                 }
+                /*    }else{
+                      stashFnCalls.send.call(res,data.resBody)
+                    }*/
             } // END if data.resBody
             // TODO: may need to buffer the responce..
             // as we can override the responce with out
@@ -201,10 +232,16 @@ module.exports = function middleware(req, res, next) {
         }
         //console.log(" ====== CALLING BEFORE !!")
         // Store specificScama as its needed in the "äfter" fn
+        //try{
         specificScama = before({ scamaForEndPoint: scamaForEndPoint, data: data, genMessage: genMessage });
+        //  }catch(err){
+        //    console.error(err)
+        //  }
+        //console.log(1)
         if (data.reqBody) {
             req.body = data.reqBody;
         }
+        //console.log(2)
         //req.params = data.params
         //  req.query  = data.query
         security({
@@ -222,8 +259,10 @@ module.exports = function middleware(req, res, next) {
                 const scamaVerb = scamaForEndPoint[verb]
                 //console.log("scamaVerb",scamaVerb)
                 if(scamaVerb){*/
+        //  console.log(specificScama)
         var operationId = specificScama.operationId; //scamaForEndPoint[data.verb]//scamaVerb
         if (operationId) {
+            //    console.log(operationId,operationsFn[operationId])
             if (operationsFn[operationId]) {
                 req.params = req.params || {};
                 // TODO: should this type conversion be extended to all the non-operationsFn ?
@@ -245,6 +284,8 @@ module.exports = function middleware(req, res, next) {
         /*if (specificScama) {
           throw err
         }*/
+        //  console.error(err,new Error().stack)
         errorHandler(err);
     }); // END catch
 }; // END middleware
+//# sourceMappingURL=middleware.js.map

@@ -29,3 +29,4 @@ function isObject(object) {
 }
 ;
 module.exports = isDeepEqual;
+//# sourceMappingURL=isDeepEqual.js.map

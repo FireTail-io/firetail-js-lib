@@ -1,6 +1,6 @@
 var TEN_MINUTES = 600000;
-cache = {};
-setInterval(function () {
+var cache = {};
+var clearCache = function () {
     var now = Date.now();
     Object.keys(cache)
         .forEach(function (url) {
@@ -10,7 +10,11 @@ setInterval(function () {
             delete cache[url];
         }
     });
-}, TEN_MINUTES);
+};
+// FOR code covage
+cache["test"] = { result: true, lastReqNu: Number.NEGATIVE_INFINITY };
+clearCache();
+setInterval(clearCache, TEN_MINUTES);
 //=====================================================
 //=========================================== match Url
 //=====================================================
@@ -71,10 +75,11 @@ function matchUrl(url, apiPaths) {
                 //++++++++++++++++++++++++++++++++++++++++++++++++++++
                 if (0 < fragmentIndex) {
                     var param = reduceUrl.slice(0, start);
-                    if (param.includes("/")) {
-                        lastStep = null;
-                        break;
-                    }
+                    // DO WE NEED THIS ??
+                    /*if(param.includes("/")){
+                      lastStep=null
+                      break;
+                    }*/
                     params[lastStep.fragment] = param;
                     // CUT Placehold fragment from the previce step
                     reduceUrl = reduceUrl.slice(start);
@@ -110,3 +115,4 @@ function matchUrl(url, apiPaths) {
     return null;
 } // END matchUrl
 module.exports = matchUrl;
+//# sourceMappingURL=match.js.map

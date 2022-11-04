@@ -15,17 +15,20 @@ function acceptTypes(acceptSt) {
 //=====================================================
 //============================= find Accept Content Key
 //=====================================================
-function findAcceptContentKey(acceptTypes, acceptContent) {
-    // TODO: check for "something/*"
-    for (var _i = 0, acceptTypes_1 = acceptTypes; _i < acceptTypes_1.length; _i++) {
-        var acceptType = acceptTypes_1[_i];
-        if ("*/*" === acceptType) {
-            return acceptContent[0];
-        }
-        if (acceptContent.includes(acceptType)) {
-            return acceptType;
-        }
-    } // END for
-    return false;
-} // END findAcceptContentKey
-module.exports = { acceptTypes: acceptTypes, findAcceptContentKey: findAcceptContentKey };
+//function findAcceptContentKey(acceptTypes,acceptContent) {
+// TODO: check for "something/*"
+//    for (const acceptType of acceptTypes) {
+//      if ("*/*" === acceptType){
+//        return acceptContent[0]
+//      }
+//      if(acceptContent.includes(acceptType)) {
+//        return acceptType
+//      }
+//    } // END for
+//    return false
+//} // END findAcceptContentKey
+module.exports = {
+    acceptTypes: acceptTypes,
+    //  findAcceptContentKey
+};
+//# sourceMappingURL=help.js.map

@@ -11,7 +11,7 @@ module.exports = function before(_a) {
     if (!scamaForEndPoint) {
         throw {
             firetail: "urlNotInYaml",
-            status: 400,
+            status: 404,
             val: data
         }; // END throw
     } // END if
@@ -47,7 +47,7 @@ module.exports = function before(_a) {
             .filter(filterParameter.bind({ type: "path" }));
         pathNametoCheck.forEach(function (_a) {
             var name = _a.name, schema = _a.schema;
-            console.log(name, schema);
+            //  console.log(name, schema)
             if (schema) {
                 data.params[name] = checkParameters(data.params[name], schema);
             }
@@ -65,8 +65,8 @@ module.exports = function before(_a) {
         //console.log("data",data)
         var query_1 = data.query;
         var queryNamesRecived_1 = Object.keys(query_1);
-        //console.log(queryNamesRecived)
-        //console.log(1)
+        //console.log("queryNamesRecived",queryNamesRecived)
+        //console.log("queryNametoCheck",queryNametoCheck)
         queryNametoCheck.forEach(function (_a) {
             var required = _a.required, name = _a.name, schema = _a.schema;
             //  console.log("name",name)
@@ -86,32 +86,37 @@ module.exports = function before(_a) {
             //console.log("A queryNamesRecived",queryNamesRecived)
             queryNamesRecived_1 = queryNamesRecived_1.filter(function (queryName) { return queryName !== name; });
             //console.log("B queryNamesRecived",queryNamesRecived)
-            if (!schema) {
-                console.warn("No schema for query: \"".concat(name, "\" ~ ").concat(url));
-            }
-            else { //if(queryNamesRecived.includes(name)){
+            /*console.log(`"${name}" ~ ${url}`,schema)
+            if(! schema){
+              console.warn(`No schema for query: "${name}" ~ ${url}`)
+            } */ if (schema) { //if(queryNamesRecived.includes(name)){
                 //console.log(1,name)
                 //console.log(2,query[name])
                 //console.log(3,schema)
                 data.query[name] = checkParameters(query_1[name], schema);
             }
         }); // END foreach
-        //console.log(queryNamesRecived)
-        if (queryNamesRecived_1.length) {
-            console.warn(queryNamesRecived_1.join() + " where pass");
+        // HANDLED by 'missingArgs'
+        /*  console.log(queryNamesRecived)
+          if(queryNamesRecived.length){
+            console.warn(queryNamesRecived.join() +" where pass")
             throw {
-                firetail: "unknowenArgs",
-                status: 400
-            };
+                firetail:"unknowenArgs",
+                status:400,
+                val:queryNamesRecived
+              }
             // new Error("unknowen query argument.")
-        }
+          }*/
     } // END if scamaVerb.parameters
     //++++++++++++++++++++++ check body is the right shape
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
     var reqBody = data.reqBody, headers = data.headers, dev = data.dev;
     var contentType = headers["content-type"];
     var blocked = [], required = [], optional = [], validater = function () { };
-    if (scamaVerb.requestBody
+    if (!contentType) {
+        data.reqBody = undefined;
+    }
+    else if (scamaVerb.requestBody
         && scamaVerb.requestBody.content[contentType]) {
         var schema = scamaVerb.requestBody.content[contentType].schema;
         /*
@@ -135,21 +140,29 @@ module.exports = function before(_a) {
                                  return all
                                },[])*/
         validater = validateBody(schema, true, dev);
+        //  console.log()
+        //  console.log(contentType)
+        //console.log()
         if (contentType.endsWith("json")) {
             data.reqBody = JSON.parse(reqBody);
         }
         else {
-            console.error(contentType + " NOT SUPPORTED YET");
+            data.reqBody = reqBody;
+            //  console.error(contentType + " NOT SUPPORTED YET")
         } // END else
     }
     else {
-        try {
-            if (reqBody)
-                data.reqBody = JSON.parse(reqBody);
-        }
-        catch (err) {
-            console.error(err);
-        } // END catch
+        throw {
+            firetail: "unknownContentType",
+            status: 415
+        };
+        /*
+        try{
+          if(reqBody)
+            data.reqBody = JSON.parse(reqBody)
+        } catch(err) {
+            console.error(err)
+        }*/ // END catch
     } // END else
     if ("object" === typeof data.reqBody
         || Array.isArray(data.reqBody)) {
@@ -186,3 +199,4 @@ module.exports = function before(_a) {
     //  const { accept } = headers
     return scamaVerb;
 }; // END before
+//# sourceMappingURL=before.js.map

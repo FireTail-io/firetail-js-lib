@@ -5,3 +5,4 @@ module.exports = function combineTample(strings, vals) {
     });
     return result.join("");
 }; // END combine
+//# sourceMappingURL=combineTample.js.map

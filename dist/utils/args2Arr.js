@@ -5,3 +5,4 @@ module.exports = function args2Arr(argumentsIn) {
     }
     return args;
 };
+//# sourceMappingURL=args2Arr.js.map

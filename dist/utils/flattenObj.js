@@ -21,3 +21,4 @@ module.exports = function flattenObj(ob) {
     }
     return result;
 };
+//# sourceMappingURL=flattenObj.js.map

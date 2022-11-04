@@ -1,5 +1,16 @@
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 module.exports = function checkParameters(val, schema) {
-    var isErr = "";
+    var isErr = null;
     /*
   
   
@@ -24,22 +35,22 @@ module.exports = function checkParameters(val, schema) {
             //format: int64
             var parcedVal = +val;
             if ("".concat(parcedVal) !== val) {
-                isErr = "".concat(val, " is not a value number");
+                isErr = { firetail: "notANumber", val: val };
             }
             if (!isErr
                 && "minimum" in schema
                 && schema.minimum > parcedVal) {
-                isErr = "".concat(val, " is below the minimum value");
+                isErr = { firetail: "belowMinimum", val: val };
             }
             if (!isErr
                 && "maximum" in schema
                 && schema.maximum < parcedVal) {
-                isErr = "".concat(val, " is above the maximum value");
+                isErr = { firetail: "aboveMaximum", val: val };
             }
             if (!isErr
                 && "integer" === schema.type
                 && 0 < parcedVal % 1) {
-                isErr = "".concat(val, " is not a whole number");
+                isErr = { firetail: "notAWholeNumber", val: val };
             }
             if (!isErr) {
                 return parcedVal;
@@ -47,49 +58,64 @@ module.exports = function checkParameters(val, schema) {
             break;
         case "string":
             if (!val) {
-                isErr = "No a valid string:" + JSON.stringify(val);
+                isErr = { firetail: "notValidString", val: val };
             }
             if (!isErr
                 && schema.enum
                 && !schema.enum.includes(val)) {
-                isErr = "\"".concat(val, "\" in the in the range of ").concat(schema.enum.join());
+                isErr = {
+                    firetail: "enumNotFound",
+                    val: {
+                        val: val,
+                        list: schema.enum.join()
+                    }
+                };
             }
             if (!isErr
                 && schema.pattern) {
                 var patternRg = new RegExp(schema.pattern);
                 if (!patternRg.text(val)) {
-                    isErr = "\"".concat(val, "\" didn't match ").concat(schema.pattern);
+                    isErr = {
+                        firetail: "patternNotMatch",
+                        val: {
+                            val: val,
+                            pattern: schema.pattern
+                        }
+                    };
                 }
             } // END pattern
             if (isok
                 && schema.minLength
                 && schema.minLength > val.length) {
-                isErr = "\"".concat(val, "\" is to shot.");
+                isErr = { firetail: "toShort", val: val };
             }
             if (isok
                 && schema.maxLength
                 && schema.maxLength < val.length) {
-                isErr = "\"".concat(val, "\" is to long.");
+                isErr = { firetail: "toLong", val: val };
             }
             // TODO: check schema.format //i.e. email, uuid ...
             if (!isErr) {
                 return val;
             }
             break;
-        case "boolean":
-            if ("boolean" === typeof val)
-                return val;
-            if ("string" === typeof val && ["false", "true"].includes(val.toLowerCase()))
-                return "true" === val.toLowerCase();
+        /*  case "boolean":
+            if("boolean" === typeof val)
+              return val
+            if("string" === typeof val && ["false","true"].includes(val.toLowerCase()))
+              return "true" === val.toLowerCase()
             break;
-        case "object":
+          case "object":
+      
         //    break;
-        case "array":
-        // schema.items.type: string
+          case "array":
+          // schema.items.type: string
         //    break;
-        default:
-            isErr = "Unknowen type: " + schema.type;
+          default:
+            isErr = { firetail:"unknownType", val:schema.type }
+            */
         // code block
     } // END switch
-    throw new Error(isErr);
+    throw __assign(__assign({}, isErr), { status: 400 });
 };
+//# sourceMappingURL=checkParameters.js.map

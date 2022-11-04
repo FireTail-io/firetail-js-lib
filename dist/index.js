@@ -17,6 +17,9 @@ var middleware = require('./services/middleware');
 var errMessages = require('./services/lang');
 //const deepRequire = require('pick-n-mix/utils/deepRequire')
 //const decodedJwt = true
+function areWeTestingWithJest() {
+    return process.env.JEST_WORKER_ID !== undefined;
+}
 function getFilesFromDir(dir, fileTypes) {
     //  console.log({dir, fileTypes})
     var filesToReturn = [];
@@ -46,25 +49,28 @@ function deepRequire(dirname, selector) {
             return packages;
         //if(file[0] !== "/") file = "/"+file;
         var pathParts = file.replace(re.exec(file)[0], "").split("/").slice(1);
-        //  console.log("pathParts",pathParts)
-        if (pathParts[pathParts.length - 1] === "index")
-            pathParts.pop();
+        /*  console.log("pathParts",pathParts)
+        if(pathParts[pathParts.length-1] === "index")
+        pathParts.pop()*/
         //console.log("join(_)",pathParts.join("."))
         packages[pathParts.join(".")] = require(dirname + "/".concat(file));
         //console.log("packages",Object.keys(packages))
         return packages;
     }, {});
-}
+} // END deepRequire
 var defaultOpts = {};
-try {
-    var packageJsonPath = path.resolve(path.dirname(require.main.filename), "./package.json");
-    var packageJson = require(packageJsonPath);
-    if (packageJson.firetail) {
-        defaultOpts = packageJson.firetail;
+/* istanbul ignore next */
+if (!areWeTestingWithJest()) {
+    try {
+        var packageJsonPath = path.resolve(path.dirname(require.main.filename), "./package.json");
+        var packageJson = require(packageJsonPath);
+        if (packageJson.firetail) {
+            defaultOpts = packageJson.firetail;
+        }
     }
-}
-catch (err) {
-    console.error(err);
+    catch (err) {
+        console.error(err);
+    }
 }
 //=====================================================
 //==================================== file Taile Setup
@@ -72,7 +78,7 @@ catch (err) {
 module.exports = function fileTaileSetup(opts) {
     var myOpts = __assign(__assign({}, defaultOpts), opts);
     //console.log(myOpts)
-    var addApi = myOpts.addApi, overRideError = myOpts.overRideError, operations = myOpts.operations, dev = myOpts.dev, decodedJwt = myOpts.decodedJwt, securities = myOpts.securities, specificationDir = myOpts.specificationDir;
+    var addApi = myOpts.addApi, overRideError = myOpts.overRideError, operations = myOpts.operations, dev = myOpts.dev, decodedJwt = myOpts.decodedJwt, securities = myOpts.securities, specificationDir = myOpts.specificationDir, customBodyDecoders = myOpts.customBodyDecoders;
     //const console = {log:()=>{},warn:()=>{},error:()=>{}}
     var addApiSt = defaultOpts.addApi;
     //+++++++++++++++++++++++++++++++++++++++++ genMessage
@@ -106,6 +112,7 @@ module.exports = function fileTaileSetup(opts) {
         else if ("string" === typeof addApi) {
             addApiSt = addApi;
         }
+        //console.log("addApiSt",addApiSt,addApi)
         if ("string" !== typeof addApiSt) {
             throw new Error(genMessage("badOptionYamlPath", addApi)); //"addApi is not validate: "+JSON.stringify(addApi))
         }
@@ -115,8 +122,11 @@ module.exports = function fileTaileSetup(opts) {
     }
     else if (process.env
         && process.env.API_YAML) {
-        addApiSt = process.env.API_YAML;
+        addApiSt = path.resolve(callerDir, process.env.API_YAML);
     } // END else if
+    else {
+        throw new Error(genMessage("badOptionYamlPath", addApi));
+    }
     if (specificationDir) {
         var specificationPath = path.resolve(callerDir, specificationDir);
         var specificationFn = deepRequire(specificationPath, ["js", "ts"]);
@@ -124,6 +134,9 @@ module.exports = function fileTaileSetup(opts) {
     }
     //++++++++++++++++++++++++++++++++++ read in yaml file
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
+    /*if("string" !== typeof addApiSt){
+      throw new Error("Missing path to YAML")
+    }*/
     //console.log("addApiSt",addApiSt)
     // TODO: Should we catch or crash if spce is not found?
     var apiSpecPr = SwaggerParser.validate(addApiSt);
@@ -156,13 +169,18 @@ module.exports = function fileTaileSetup(opts) {
         }
         return apiSpec
       }).catch(err=>{throw err})*/
-    return middleware.bind({
+    var data = {
         genMessage: genMessage,
         decodedJwt: decodedJwt,
         addApiSt: addApiSt,
         apiSpecPr: apiSpecPr,
         dev: dev,
         securities: securities,
+        customBodyDecoders: customBodyDecoders,
         operationsFn: flattenObj(operations || {})
-    });
+    };
+    var myMiddleware = middleware.bind(data);
+    myMiddleware.firetailData = data;
+    return myMiddleware;
 }; // END fileTaileSetup
+//# sourceMappingURL=index.js.map
