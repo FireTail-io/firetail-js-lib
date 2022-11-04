@@ -1,0 +1,223 @@
+openapi: 3.0.1
+info:
+  title: dev-pointsec-corp-api-1
+  version: '0.1'
+servers:
+- url: https://api.eu-west-1.dev.platform.pointsec.io/
+paths:
+  /check_operationId_fn:
+    get:
+      operationId: optId.basic
+      responses:
+        200:
+          description: 200 response
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Credentials:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Users"
+
+
+  /check_quary:
+    get:
+      parameters:
+        - name: limit
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        200:
+          description: 200 response
+
+  /check_body:
+    get:
+      operationId: getUsers
+      responses:
+        200:
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Users"
+    post:
+      operationId: createUser
+      requestBody:
+        description: Optional description in *Markdown*
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - name
+              $ref: '#/components/schemas/User'
+      responses:
+        201:
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+  /check/{fragmentVal}:
+    get:
+      operationId: check_frag
+      parameters:
+      - name: fragmentVal
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: 200 response
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Credentials:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+          content: {}
+  /check/{fragmentVal2}/withquery:
+    get:
+      operationId: check_frag_query
+      parameters:
+        - name: fragmentVal2
+          in: path
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: limit
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+        - in: query
+          name: marker
+          required: false
+          schema:
+            type: string
+            example: None
+      responses:
+        200:
+          description: 200 response
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Credentials:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+          content: {}
+  /check/security/jwt:
+    get:
+      operationId: app.jwt_basic
+      security:
+      - jwt: []
+      responses:
+        200:
+          description: 200 response
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Credentials:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+  /check/security/apikey:
+    get:
+      operationId: app.apikey_basic
+      security:
+      - {}
+      responses:
+        200:
+          description: 200 response
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Credentials:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+components:
+  schemas:
+    User:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          readOnly: true
+          type: integer
+          format: int64
+        name:
+          type: string
+        role:
+          type: string
+          enum:
+            - admin
+            - power
+            - basic
+    Users:
+      type: array
+      items:
+        $ref: "#/components/schemas/User"
+    Error:
+      type: object
+      required:
+        - status
+        - message
+      properties:
+        status:
+          type: integer
+          format: int32
+        message:
+          type: string
+  securitySchemes:
+    jwt:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    key:
+      type: apiKey
+      name: X-Auth
+      in: header

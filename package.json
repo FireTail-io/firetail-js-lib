@@ -1,0 +1,42 @@
+{
+  "name": "firetail-js-lib",
+  "version": "0.0.0",
+  "description": "",
+  "main": "./dist/index.js",
+  "license": "LGPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/firetail-io/firetail-js-lib.git"
+  },
+  "bugs": {
+    "url": "https://github.com/firetail-io/firetail-js-lib/issues"
+  },
+  "homepage": "https://github.com/firetail-io/firetail-js-lib#readme",
+  "author": "Brian Shannon <brian@firetail.io>",
+  "dependencies": {
+    "swagger-parser": "^10.0.3",
+    "pick-n-mix":"^0.3.2",
+    "xml2js":"^0.4.23"
+  },
+  "devDependencies": {
+    "@types/node": "^18.7.16",
+    "jest": "^25.0.0",
+    "nodemon": "^2.0.19",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.8.2"
+  },
+  "jest": {
+    "testPathIgnorePatterns": ["specificationDir"]
+  },
+  "scripts": {
+    "build":"tsc",
+    "start": "tsc --watch",
+    "docker:build":"docker build --no-cache -t test-build:latest -f build_setup/Dockerfile .",
+    "docker:start":"docker run -it -p 3001:3001 -v ${PWD}/src:/code/src -v ${PWD}/sample:/code/sample -v ${PWD}/__tests__:/code/__tests__ -v ${PWD}/dist:/code/dist test-build:latest",
+    "test": "jest --no-cache ",
+    "test:go": "npm test -- --watch --coverage",
+    "test:update": "npm test -- --updateSnapshot",
+    "test:cover": "npm test -- --coverage --no-cache",
+    "test:watch": "npm test -- --watch --runInBand"
+  }
+}
