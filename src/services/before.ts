@@ -15,7 +15,7 @@ module.exports = function before({scamaForEndPoint,data,genMessage}){
     if ( ! scamaForEndPoint) {
         throw {
             firetail:"urlNotInYaml",
-            status:400,
+            status:404,
             val:data
         } // END throw
     } // END if
@@ -84,8 +84,8 @@ module.exports = function before({scamaForEndPoint,data,genMessage}){
       const { query } = data
 
       let queryNamesRecived = Object.keys(query)
-      //console.log(queryNamesRecived)
-      //console.log(1)
+      //console.log("queryNamesRecived",queryNamesRecived)
+      //console.log("queryNametoCheck",queryNametoCheck)
       queryNametoCheck.forEach(({required,name, schema}) => {
 
       //  console.log("name",name)
@@ -107,24 +107,27 @@ module.exports = function before({scamaForEndPoint,data,genMessage}){
         //console.log("A queryNamesRecived",queryNamesRecived)
         queryNamesRecived = queryNamesRecived.filter( queryName => queryName !== name)
         //console.log("B queryNamesRecived",queryNamesRecived)
+        /*console.log(`"${name}" ~ ${url}`,schema)
         if(! schema){
           console.warn(`No schema for query: "${name}" ~ ${url}`)
-        } else {//if(queryNamesRecived.includes(name)){
+        } */if(schema) {//if(queryNamesRecived.includes(name)){
           //console.log(1,name)
           //console.log(2,query[name])
           //console.log(3,schema)
           data.query[name] = checkParameters(query[name],schema)
         }
       }) // END foreach
-      //console.log(queryNamesRecived)
+      // HANDLED by 'missingArgs'
+    /*  console.log(queryNamesRecived)
       if(queryNamesRecived.length){
         console.warn(queryNamesRecived.join() +" where pass")
         throw {
             firetail:"unknowenArgs",
-            status:400
+            status:400,
+            val:queryNamesRecived
           }
         // new Error("unknowen query argument.")
-      }
+      }*/
     } // END if scamaVerb.parameters
 
 
@@ -138,9 +141,10 @@ module.exports = function before({scamaForEndPoint,data,genMessage}){
        optional = [],
        validater = ()=>{}
 
-
-    if(scamaVerb.requestBody
-    && scamaVerb.requestBody.content[contentType]){
+    if( ! contentType){
+      data.reqBody = undefined
+    } else if(scamaVerb.requestBody
+           && scamaVerb.requestBody.content[contentType]){
 
       const { schema } = scamaVerb.requestBody.content[contentType];
 /*

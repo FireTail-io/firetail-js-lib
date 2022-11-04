@@ -21,7 +21,7 @@ function areWeTestingWithJest() {
 
 
 
-function getFilesFromDir(dir, fileTypes) {
+function getFilesFromDir(dir:string, fileTypes:string[]) {
 //  console.log({dir, fileTypes})
   var filesToReturn = [];
   function walkDir(currentPath) {
@@ -50,9 +50,9 @@ function deepRequire(dirname,selector){
     //if(file[0] !== "/") file = "/"+file;
 
     const pathParts = file.replace(re.exec(file)[0],"").split("/").slice(1)
-    //  console.log("pathParts",pathParts)
+    /*  console.log("pathParts",pathParts)
     if(pathParts[pathParts.length-1] === "index")
-    pathParts.pop()
+    pathParts.pop()*/
 //console.log("join(_)",pathParts.join("."))
     packages[pathParts.join(".")] = require(dirname+`/${file}`)
 //console.log("packages",Object.keys(packages))
@@ -84,6 +84,7 @@ interface Options {
     overRideError: Function;
     operations: Object;
 }
+/* istanbul ignore next */
 if( ! areWeTestingWithJest()){
     try{
       const packageJsonPath = path.resolve(path.dirname(require.main.filename),"./package.json")
@@ -95,7 +96,6 @@ if( ! areWeTestingWithJest()){
       console.error(err)
     }
 }
-
 
 //=====================================================
 //==================================== file Taile Setup
@@ -141,23 +141,28 @@ module.exports = function fileTaileSetup(opts: Options) : Function{
 //++++++++++++++++++++++++++++ check user set addApi
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
   if(addApi){
+
     if ("function" === typeof addApi) {
         addApiSt = addApi()
     } else if ("string" === typeof addApi) {
         addApiSt = addApi
     }
+    //console.log("addApiSt",addApiSt,addApi)
     if ("string" !== typeof addApiSt) {
       throw new Error(genMessage("badOptionYamlPath",addApi))//"addApi is not validate: "+JSON.stringify(addApi))
     }
-    if(addApiSt.startsWith(".")){
 
+    if(addApiSt.startsWith(".")){
       addApiSt = path.resolve(callerDir,addApiSt)
     }
 
   } else if (process.env
          && process.env.API_YAML) {
-    addApiSt = process.env.API_YAML
+    addApiSt = path.resolve(callerDir,process.env.API_YAML)
   } // END else if
+  else{
+    throw new Error(genMessage("badOptionYamlPath",addApi))
+  }
 if( specificationDir ){
   const specificationPath = path.resolve(callerDir,specificationDir)
   const specificationFn   =  deepRequire(          specificationPath,["js","ts"])
@@ -166,9 +171,9 @@ if( specificationDir ){
 
 //++++++++++++++++++++++++++++++++++ read in yaml file
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
-if("string" !== typeof addApiSt){
+/*if("string" !== typeof addApiSt){
   throw new Error("Missing path to YAML")
-}
+}*/
 //console.log("addApiSt",addApiSt)
   // TODO: Should we catch or crash if spce is not found?
  const apiSpecPr = SwaggerParser.validate(addApiSt)
@@ -201,8 +206,7 @@ if("string" !== typeof addApiSt){
                                   }
                                   return apiSpec
                                 }).catch(err=>{throw err})*/
-
-  return middleware.bind({
+  const data = {
         genMessage,
         decodedJwt,
         addApiSt,
@@ -211,9 +215,10 @@ if("string" !== typeof addApiSt){
         securities,
         customBodyDecoders,
         operationsFn:flattenObj(operations || {})
-      })
-
-
+      }
+const  myMiddleware = middleware.bind(data)
+       myMiddleware.firetailData = data
+return myMiddleware
 
 
 } // END fileTaileSetup

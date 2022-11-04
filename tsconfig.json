@@ -6,5 +6,8 @@
         "rootDir": "src",
         "skipLibCheck": true,
         "sourceMap": true,
-    }
+    },
+    "exclude": [
+        "**/node_modules/*"
+    ]
 }

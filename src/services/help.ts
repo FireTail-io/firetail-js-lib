@@ -21,17 +21,20 @@ function acceptTypes(acceptSt) {
 //============================= find Accept Content Key
 //=====================================================
 
-function findAcceptContentKey(acceptTypes,acceptContent) {
+//function findAcceptContentKey(acceptTypes,acceptContent) {
     // TODO: check for "something/*"
-    for (const acceptType of acceptTypes) {
-      if ("*/*" === acceptType){
-        return acceptContent[0]
-      }
-      if(acceptContent.includes(acceptType)) {
-        return acceptType
-      }
-    } // END for
-    return false
-} // END findAcceptContentKey
+//    for (const acceptType of acceptTypes) {
+//      if ("*/*" === acceptType){
+//        return acceptContent[0]
+//      }
+//      if(acceptContent.includes(acceptType)) {
+//        return acceptType
+//      }
+//    } // END for
+//    return false
+//} // END findAcceptContentKey
 
-module.exports = { acceptTypes, findAcceptContentKey }
+module.exports = {
+  acceptTypes,
+//  findAcceptContentKey
+}

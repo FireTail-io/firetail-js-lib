@@ -5,28 +5,6 @@ info:
 servers:
 - url: https://api.eu-west-1.dev.platform.pointsec.io/
 paths:
-  /:
-    get:
-      summary: Homepage.
-      description: Optional extended description in CommonMark or HTML.
-      responses:
-        '200':    # status code
-          description: A
-          content:
-            text/html:
-                schema:
-                  type: string
-  /public/client.js:
-    get:
-      summary: Client side JS.
-      description: Optional extended description in CommonMark or HTML.
-      responses:
-        '200':    # status code
-          description: A
-          content:
-            application/javascript:
-              schema:
-                  type: string
   /check_operationId_fn:
     get:
       operationId: optId.basic
@@ -46,7 +24,53 @@ paths:
             Access-Control-Allow-Headers:
               schema:
                 type: string
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Users"
+
+
+  /check_quary:
+    get:
+      parameters:
+        - name: limit
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        200:
+          description: 200 response
+
+  /check_body:
+    get:
+      operationId: getUsers
+      responses:
+        200:
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Users"
+    post:
+      operationId: createUser
+      requestBody:
+        description: Optional description in *Markdown*
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - name
+              $ref: '#/components/schemas/User'
+      responses:
+        201:
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
   /check/{fragmentVal}:
     get:
       operationId: check_frag
@@ -154,6 +178,40 @@ paths:
               schema:
                 type: string
 components:
+  schemas:
+    User:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          readOnly: true
+          type: integer
+          format: int64
+        name:
+          type: string
+        role:
+          type: string
+          enum:
+            - admin
+            - power
+            - basic
+    Users:
+      type: array
+      items:
+        $ref: "#/components/schemas/User"
+    Error:
+      type: object
+      required:
+        - status
+        - message
+      properties:
+        status:
+          type: integer
+          format: int32
+        message:
+          type: string
   securitySchemes:
     jwt:
       type: http

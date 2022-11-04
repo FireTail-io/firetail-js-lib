@@ -103,7 +103,7 @@ module.exports = function checkParameters(val: string,schema){
       }
 
       break;
-    case "boolean":
+  /*  case "boolean":
       if("boolean" === typeof val)
         return val
       if("string" === typeof val && ["false","true"].includes(val.toLowerCase()))
@@ -117,6 +117,7 @@ module.exports = function checkParameters(val: string,schema){
   //    break;
     default:
       isErr = { firetail:"unknownType", val:schema.type }
+      */
       // code block
   }// END switch
 

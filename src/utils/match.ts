@@ -1,8 +1,7 @@
 let TEN_MINUTES = 600000;
 
-cache = {}
-
-setInterval(()=>{
+const cache = {}
+const clearCache = ()=>{
 
 	const now = Date.now()
 
@@ -14,7 +13,11 @@ setInterval(()=>{
 						delete cache[url]
 					}
 				})
-}, TEN_MINUTES);
+}
+// FOR code covage
+cache["test"] = {result:true,lastReqNu:Number.NEGATIVE_INFINITY}
+clearCache()
+setInterval(clearCache, TEN_MINUTES);
 
 //=====================================================
 //=========================================== match Url
@@ -91,10 +94,11 @@ function matchUrl(url : string, apiPaths : string[]) {
 
       if(0 < fragmentIndex){
         const param = reduceUrl.slice(0,start)
-        if(param.includes("/")){
+				// DO WE NEED THIS ??
+        /*if(param.includes("/")){
           lastStep=null
           break;
-        }
+        }*/
         params[lastStep.fragment] = param
 
        // CUT Placehold fragment from the previce step

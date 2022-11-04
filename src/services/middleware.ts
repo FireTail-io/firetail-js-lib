@@ -21,7 +21,7 @@ module.exports = function middleware(req, res, next) {
     res.setHeader("Server", "firetail-API");
     res.removeHeader("X-Powered-By");
 
-  console.log(` -X- ${req.method}:${req.originalUrl}`,req.headers)
+  //console.log(` -X- ${req.method}:${req.originalUrl}`,req.headers)
   const {
     genMessage,
     yamlPathSt,
@@ -43,7 +43,7 @@ module.exports = function middleware(req, res, next) {
       url: req.originalUrl.split("?")[0],
       resBody:false,
       reqBody:Buffer.isBuffer(req.body) ? req.body.toString('utf8')
-                                        : null,
+                                        : "string" === typeof req.body ? req.body : null,
       startedAt:new Date(),
       finishedAt:false,
       statusCode: 200,//res.statusCode,
@@ -53,7 +53,7 @@ module.exports = function middleware(req, res, next) {
     //  status:200
     } // END data
 
-    if(dev){
+  /*  if(dev){
       if(data.url.startsWith("/firetail")){
         if("/firetail/apis.json" === data.url){
             apiSpecPr.then(api=>res.json(api.paths))
@@ -62,7 +62,7 @@ module.exports = function middleware(req, res, next) {
                        res.status(500).send(err.message||err)
                      })// END catch
             return;
-        }/*
+        }*//*
         let filePath = "index.html"
         switch(data.url){
           case "/firetail/client.js":
@@ -74,7 +74,7 @@ module.exports = function middleware(req, res, next) {
             return;
             break;
         }*/
-        const filePath = "/firetail/client.js" === data.url ? "client.js"
+      /*  const filePath = "/firetail/client.js" === data.url ? "client.js"
                                                             : "index.html"
         fs.readFile(
           path.resolve(__dirname,"../../src/ui/",filePath),
@@ -89,7 +89,7 @@ module.exports = function middleware(req, res, next) {
           }) // END fs.readFile
         return
       }
-    } // END if dev
+    }*/ // END if dev
 
   let specificScama;
 
@@ -184,8 +184,10 @@ if(!areWeTestingWithJest())
     const args = args2Arr(arguments)
     //  console.log("res.send",args)
     data.resBody = data.resBody || args[0]
-    if(!data.finishedAt)
+    if(!data.finishedAt){
       end()
+      return res
+    }
     else
       return stashFnCalls.send.apply(res, args)
   }
@@ -203,7 +205,7 @@ if(!areWeTestingWithJest())
   let end = function () {
     end = ()=> console.log("END was already CALLeD")
     const args = args2Arr(arguments)
-      console.log("res.end",args)
+    //  console.log("res.end",args)
     data.finishedAt = new Date()
 
 
@@ -228,13 +230,13 @@ if(!areWeTestingWithJest())
         stashFnCalls.status.call(res,data.statusCode)
       }
       //res.send = stashFnCalls.send.bind(res)
-console.log(data.resBody)
+//console.log(data.resBody)
       if(data.resBody){
         //if("object" === typeof data.resBody){
-        console.log(specificScama)
+    //    console.log(specificScama)
           if (specificScama) {
             const cleanedBody = after(specificScama, data)
-console.log(cleanedBody)
+//console.log(cleanedBody)
             stashFnCalls.json.call(res,cleanedBody)
           }else {
             stashFnCalls.json.call(res,data.resBody)
@@ -272,12 +274,17 @@ console.log(cleanedBody)
       }
 //console.log(" ====== CALLING BEFORE !!")
       // Store specificScama as its needed in the "äfter" fn
-      specificScama = before({scamaForEndPoint, data, genMessage})
+      //try{
 
+        specificScama = before({scamaForEndPoint, data, genMessage})
+    //  }catch(err){
+    //    console.error(err)
+    //  }
+//console.log(1)
       if(data.reqBody){
         req.body = data.reqBody
       }
-
+//console.log(2)
       //req.params = data.params
     //  req.query  = data.query
 
@@ -291,13 +298,16 @@ console.log(cleanedBody)
         genMessage,
         securities
       })
+
   /*    if(scamaForEndPoint){
           const { verb } = data
           const scamaVerb = scamaForEndPoint[verb]
           //console.log("scamaVerb",scamaVerb)
           if(scamaVerb){*/
+          //  console.log(specificScama)
             const { operationId } = specificScama//scamaForEndPoint[data.verb]//scamaVerb
             if(operationId){
+          //    console.log(operationId,operationsFn[operationId])
               if(operationsFn[operationId]){
                 req.params = req.params || {}
                 // TODO: should this type conversion be extended to all the non-operationsFn ?
@@ -318,6 +328,7 @@ console.log(cleanedBody)
     /*if (specificScama) {
       throw err
     }*/
+  //  console.error(err,new Error().stack)
     errorHandler(err)
   }) // END catch
 

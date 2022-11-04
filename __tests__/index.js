@@ -1,5 +1,8 @@
 const firetailSetup = require("../dist");
-const firetailOpts = {addApi:"./cases.yaml", testing:true}
+const firetailOpts = {
+  addApi:"./cases.yaml",
+  testing:true
+}
 
 /*
 
@@ -119,7 +122,7 @@ function genReq(override={}) {
    'cache-control': 'max-age=0',
    'upgrade-insecure-requests': '1',
    'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.162 Safari/537.36',
-   accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+   accept: 'application/json',//'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
    dnt: '1',
    'accept-encoding': 'gzip, deflate, br',
    'accept-language': 'en-GB,en-US;q=0.9,en;q=0.8',
@@ -172,7 +175,195 @@ describe('test YAML file is ok', () => {
 //====================================== test GET calls
 //=====================================================
 
-describe('test GET requests', () => {
+describe('test Firetail', () => {
+
+//+++++++++++ should lookup "operationId" ~ nasted obj
+//++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+  test('should load operationId Fns from Dir', () => {
+    const myFiretailOpts = Object.assign({},firetailOpts)
+      myFiretailOpts.specificationDir = "./specificationDir"
+      myFiretailOpts.addApi = ()=>firetailOpts.addApi
+      firetailSetup(myFiretailOpts)
+      expect(true).toBe(true);
+  })
+
+//++++++++++ should error if YAML PATH is not a string
+//++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+  test('should error if YAML PATH is not a string', () => {
+
+    const myFiretailOpts = Object.assign({},firetailOpts)
+          myFiretailOpts.addApi = 123
+    expect(() =>{
+      firetailSetup(myFiretailOpts)
+    }).toThrowError();
+
+}); // END test 'should error if YAML PATH is not a string'
+
+//++++++++++++++++++ should error if missing YAML PATH
+//++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+  test('should error if missing YAML PATH', () => {
+
+    const myFiretailOpts = Object.assign({},firetailOpts)
+    delete myFiretailOpts.addApi
+    expect(() =>{
+      firetailSetup(myFiretailOpts)
+    }).toThrowError();
+
+}); // END test 'should error if missing YAML PATH'
+
+//+++++++++++++++++ should error if URL is not in YAML
+//++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+//++ should work with process.env.API_YAML = YAML PATH
+//++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+  test('should work with process.env.API_YAML = YAML PATH', () => {
+
+    const myFiretailOpts = Object.assign({},firetailOpts)
+    delete myFiretailOpts.addApi
+    Object.assign(process.env,{ API_YAML:firetailOpts.addApi })
+    firetailSetup(myFiretailOpts)
+    delete process.env.API_YAML
+    expect(true).toBe(true);
+
+}); // END test 'should work with process.env.API_YAML = YAML PATH'
+
+//+++++++++++++++++ should error if URL is not in YAML
+//++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+  test('should error if URL is not in YAML', (done) => {
+
+    let optId_called = false
+    let app_called   = false
+    const next = ()=>{ app_called = true }
+
+    const myFiretailOpts = Object.assign({},firetailOpts)
+          myFiretailOpts.dev = true
+    const res = genRes({
+      end:()=>{
+        expect(res.statusCode).toBe(404);
+        done()
+      }
+    })
+    const firetailMiddleware = firetailSetup(myFiretailOpts)
+          firetailMiddleware(genReq({
+            originalUrl:"/something"
+          }),res , next)
+
+}); // END test 'should error if URL is not in YAML'
+
+
+//++++++++++++++++ should error if Verb is not in YAML
+//++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+  test('should error if Verb is not in YAML', (done) => {
+
+    let optId_called = false
+    let app_called   = false
+    const next = ()=>{ app_called = true }
+
+    const myFiretailOpts = Object.assign({},firetailOpts)
+          myFiretailOpts.dev = true
+    const res = genRes({
+      end:()=>{
+        //console.log(res.__data)
+        expect(res.statusCode).toBe(404);
+        done()
+      }
+    })
+    const firetailMiddleware = firetailSetup(myFiretailOpts)
+          firetailMiddleware(genReq({
+            originalUrl:"/check_operationId_fn",
+            method:"post",
+          }),res , next)
+
+}); // END test 'should error if URL is not in YAML'
+
+
+//+++++++++++++++++++++++ should check url quary names
+//++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+  test('should check url quary names', (done) => {
+
+    let optId_called = false
+    let app_called   = false
+    const next = ()=>{ app_called = true }
+
+    const myFiretailOpts = Object.assign({},firetailOpts)
+          myFiretailOpts.dev = true
+    const res = genRes({
+      end:()=>{
+      //  console.log(res.__data)
+        expect(res.statusCode).toBe(400);
+        done()
+      }
+    })
+    const firetailMiddleware = firetailSetup(myFiretailOpts)
+          firetailMiddleware(genReq({
+            originalUrl:"/check_quary?limits=12",
+            query:{
+              limits:12
+            }
+          }),res , next)
+
+}); // END test 'should check url quary names'
+
+//+++++++++++++++++++++++++ should check url quary val
+//++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+  test('should check url quary val', (done) => {
+
+    let optId_called = false
+    let app_called   = false
+    const next = ()=>{ app_called = true }
+
+    const myFiretailOpts = Object.assign({},firetailOpts)
+          myFiretailOpts.dev = true
+    const res = genRes({
+      end:()=>{
+      //  console.log(res.__data)
+        expect(res.statusCode).toBe(400);
+        done()
+      }
+    })
+    const firetailMiddleware = firetailSetup(myFiretailOpts)
+          firetailMiddleware(genReq({
+            originalUrl:"/check_quary?limit=no",
+            query:{
+              limit:"no"
+            }
+          }),res , next)
+
+}); // END test 'should error if URL is not in YAML'
+
+//+++++++++++++++++++++++++ should check missing quary
+//++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+  test('should check missing quary', (done) => {
+
+    let optId_called = false
+    let app_called   = false
+    const next = ()=>{ app_called = true }
+
+    const myFiretailOpts = Object.assign({},firetailOpts)
+          myFiretailOpts.dev = true
+    const res = genRes({
+      end:()=>{
+      //  console.log(res.__data)
+        expect(res.statusCode).toBe(400);
+        done()
+      }
+    })
+    const firetailMiddleware = firetailSetup(myFiretailOpts)
+          firetailMiddleware(genReq({
+            originalUrl:"/check_quary"
+          }),res , next)
+
+}); // END test 'should check missing quary'
+
 
 //+++++++++++ should lookup "operationId" ~ nasted obj
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -180,30 +371,30 @@ describe('test GET requests', () => {
   test('should lookup "operationId" ~ nasted obj', (done) => {
 
     let optId_called = false
-    let app_called = false
+    let app_called   = false
     const next = ()=>{ app_called = true }
 
     const myFiretailOpts = Object.assign({},firetailOpts)
-    myFiretailOpts.operations = {
-      optId:{
-        basic:(req,res)=>{
-          optId_called = true
-          res.send()
-          res.end()
-        } // END basic
-      } // END optId
-    } // myFiretailOpts.operations
-
+          myFiretailOpts.operations = {
+            optId:{
+              basic:(req,res)=>{
+                optId_called = true
+                res.send()
+                res.end()
+              } // END basic
+            } // END optId
+          } // myFiretailOpts.operations
+    const res = genRes({
+      end:()=>{
+        expect(optId_called).toBe(true);
+        expect(app_called).toBe(false);
+        done()
+      }
+    })
     const firetailMiddleware = firetailSetup(myFiretailOpts)
           firetailMiddleware(genReq({
             originalUrl:"/check_operationId_fn"
-          }), genRes({
-            end:()=>{
-              expect(optId_called).toBe(true);
-              expect(app_called).toBe(false);
-              done()
-            }
-          }), next)
+          }),res , next)
 
   // check yaml path can be set
      // via Env
@@ -367,6 +558,71 @@ describe('test GET requests', () => {
           }), next)
 
   }); // END test 'should process fragments'
+
+//+++++++++++++++++++++++++ should check response body
+//++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    test('should check response body', (done) => {
+      let optId_called = false
+      let app_called   = false
+      const next = ()=>{ app_called = true }
+
+      const data = [{id:1,name:"bob",role:"admin"}]
+
+      const myFiretailOpts = Object.assign({},firetailOpts)
+            myFiretailOpts.operations = {
+              getUsers:(req,res)=>{
+                  res.setHeader("content-type","application/json")
+                     .json(data)
+                } // END getUsers
+            } // myFiretailOpts.operations
+      const res = genRes({
+        end:()=>{
+          expect(res.__data).toEqual(data);
+          done()
+        }
+      })
+      const firetailMiddleware = firetailSetup(myFiretailOpts)
+            firetailMiddleware(genReq({
+              originalUrl:"/check_body"
+            }),res , next)
+    })
+
+//+++++++++++++++++++++++++ should check response body
+//++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    test('should check post body', (done) => {
+
+        let optId_called = false
+        let app_called   = false
+        const next = ()=>{ app_called = true }
+
+        const data = {name:"ann",role:"basic"}
+
+        const myFiretailOpts = Object.assign({},firetailOpts)
+              myFiretailOpts.operations = {
+                dev:true,
+                createUser:(req,res)=>{
+                    res.status(201).json({...req.body,id:100})
+                  } // END getUsers
+              } // myFiretailOpts.operations
+        const res = genRes({
+          end:()=>{
+            expect(res.__data).toEqual({...data,id:100});
+            done()
+          }
+        })
+        const firetailMiddleware = firetailSetup(myFiretailOpts)
+              firetailMiddleware(genReq({
+                originalUrl:"/check_body",
+                method:"post",
+                headers:{
+                  "content-type":"application/json",
+                },
+                body:JSON.stringify(data)
+              }),res , next)
+    })
+
 
 
 }); // END describe 'test GET requests'

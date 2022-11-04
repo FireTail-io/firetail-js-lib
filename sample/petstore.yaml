@@ -86,12 +86,9 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        200:
           description: Expected response to a valid request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Pet"
+          content: {}
         default:
           description: unexpected error
           content:

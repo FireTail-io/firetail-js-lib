@@ -1,11 +1,11 @@
 
-const { acceptTypes, findAcceptContentKey } = require("./help");
+const { acceptTypes } = require("./help");
 const validateBody    = require("./validateBody");
-
+/*
 function intersection (a, b) {
     const setA = new Set(a);
     return b.filter(value => setA.has(value));
-}
+}*/
 
 //=====================================================
 //=========================== validate AFTER controller
@@ -17,7 +17,7 @@ let { statusCode, headers: { accept }, resHeaders, resBody, dev, customBodyDecod
 
 // check return Content-Type is in callers accept type
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
-
+//console.log("resHeaders",resHeaders)
   let replyContentType = resHeaders.reduce((found,{key,val})=>{
                                       if("content-type" === key.toLowerCase())
                                         return val
@@ -32,7 +32,7 @@ let { statusCode, headers: { accept }, resHeaders, resBody, dev, customBodyDecod
 
   const clientWillTakeANYtype = accept.includes("*/*")
 
-console.log({replyContentType,wantedContentTypes,clientWillTakeANYtype})
+//console.log({replyContentType,wantedContentTypes,clientWillTakeANYtype})
 
 //+++++++++++++++ check return data is the right shape
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -42,11 +42,11 @@ console.log({replyContentType,wantedContentTypes,clientWillTakeANYtype})
 
   const response = specificScama.responses[statusCode]
                 || specificScama.responses.default
-console.log(response)
+//console.log(response)
 // What Scamas can we use to check the response
   if (response){
-    console.log(accept)
-      console.log(response.content)
+//    console.log(accept)
+//      console.log(response.content)
     if(response.content){
 
       const availableContentTypes = Object.keys(response.content)
@@ -63,11 +63,11 @@ console.log(response)
     }
   }
 
-   console.log(resBody)
-   console.log(response.content)
+//   console.log(resBody)
+///   console.log(response.content)
 const  contentSchema =  response.content[replyContentType]
 
-   console.log(replyContentType,contentSchema)
+//   console.log(replyContentType,contentSchema)
   // CHECK it is one of the formats in the Yaml
   if( ! contentSchema){
     throw {
@@ -77,8 +77,11 @@ const  contentSchema =  response.content[replyContentType]
     }
   }
 const { schema } = contentSchema
-
-if(customBodyDecoders[replyContentType]){
+//.log(schema)
+//console.log(replyContentType)
+//console.log(customBodyDecoders)
+if("object" === typeof customBodyDecoders
+&& customBodyDecoders[replyContentType]){
   resBody = customBodyDecoders[replyContentType](resBody)
   if(!resBody){
       throw {
@@ -97,12 +100,12 @@ if(customBodyDecoders[replyContentType]){
 
   //  console.log(contentKey)
       //if (contentKey){
-       console.log(resBody)
+      // console.log(resBody)
       //  console.log(response.content[contentKey])
       //  console.log("IS validate?")
 
     //    const { schema } = response.content[contentKey]
-console.log(schema)
+//console.log(schema)
 //++++++++++++++++++++++++++++++ check if its an Array
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
         if("array" === schema.type){
@@ -129,11 +132,12 @@ console.log(schema)
           } // END throw
       }*/ // END inner else
     } else {
-        throw {
+      // content: {} !!!
+      /*  throw {
             firetail:"responseContentTypeMismatch",
             status:400,
             val:response.content
-        } // END throw
+        }*/ // END throw
     //  console.warn("No 'content' entry in Yaml")
     }
   } else {

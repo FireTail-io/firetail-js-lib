@@ -3,10 +3,10 @@ const errMessages = {
   dev:{
     missingJWTtoken:"No authorization token provided",
     notJWTBearer:"token dont not start with 'bearer: '",
-    urlNotInYaml:({url,yamlPathSt})=>`${url} was NOT in ${yamlPathSt}`,
+    urlNotInYaml:({url,addApiSt})=>`${url} was NOT in ${addApiSt}`,
     badJWTFunctionOutput:`The JWT parce function did not return an oject`,
     missingArgs:"Missing required query argument.",
-    unknowenArgs:"Unknowen query argument.",
+    //unknowenArgs:"Unknowen query argument.",
     missingJWTFunction:optId=>`No function with "${optId}" could be found for parcing JWTs`,
     missingJWTFunctions:`Missing security schemes functions`,
     notFound:({url,verb,scamaForEndPoint})=>`${url} ${verb.toUpperCase()} was not found. Only "${Object.keys(scamaForEndPoint).join(",").toUpperCase()}" should be used`,
