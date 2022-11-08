@@ -12,7 +12,7 @@ Firetail is a Middleware that intercept Http/Rest requests based on [OpenAPI Spe
  * Setup firetail configuration in your package.json or in your app at runtime
  * Helpful developer error messages
  * Automatically filter out sensitive values from responses based on your definitions
- * Can use Express **routes** or use dynamic functions with the `operation ID`
+ * Can use Express **routes** or use dynamic functions with the `operationId`
 
 # How to Use
 
@@ -63,12 +63,108 @@ app.listen(port, () => {
 })
 ```
 
-# Configuration options
-  * `addApi`[String], 
-  * `overRideError`[Function], 
-  * `operations`[Object], 
-  * `dev`[Boolean], 
-  * `decodedJwt`[Function], 
-  * `securities[Object]`, 
-  * `specificationDir`[String], 
-  * `customBodyDecoders`[Function]
+# Configuration options. Configuration can be loaded in one of three ways. 
+  1. Via environment variables
+  2. Inside the package.json under a "firetail" attribute
+  3. Pass to the middleware at runtime as a configuration object
+  
+*Note: 1 & 2 can only reference static values. Where as the 3rd option can handle static and dynamic*
+  
+⚠️ The `addApi` is the only mandatory option that must be passed!
+
+**Static values:**  
+
+  * `addApi`[String]: The path to your openAPI YAML - *_this can be a relative or absolute path_
+  * `specificationDir`[String]: The path to the directory where you will place controllers that map to the `operationId` for each endpoints referenced in your YAML
+  * `dev`[Boolean]: This indicates what are the middleware should run in developer mode. Dev mode will  ~ _Default `false`_
+    1) Give helpful error messages in your rest API as well as using the developer
+    2) Log event will be sent to  your terminal. Instead of the firetail SAAS platform.
+  
+**Dynamic values:**  
+  
+  * `overRideError`[Function] (err): a callback to replace the generated firetail error with a custom error you can generate specific to your platform/interfaces
+  * `operations`[Object]: an object, where the keys that will match with the `operationId`s and executed in the same way an Express route would be
+  * `decodedJwt`[Function] (headers), Encodes the JWT token from the header. Returning the JWT as JSON
+  * `securities[Object]` Each **key** in this object maps to a function, represents a security scheme that can be used in your end-points
+  * `customBodyDecoders[Object]` Each **key** in this object maps to a function. This is used to parse an unknown `content-type` into JSON so the middleware can apply the rules outlined in YAML file.
+
+## Examples: Dynamic Configuration 
+
+### overRideError
+```js
+  overRideError:(firetailErr)=>{
+    const { status, message } = firetailErr
+    if(404 === status){
+        return "Looks like your lost"
+    }
+    return "Something broke"
+  }
+```
+### operations
+When an End-point match is found in the YMAL file + it contains a reference to an `operationId` a corresponding function should be included in the options.
+
+Yaml file
+```yaml
+paths:
+  /mydata:
+    get:
+      operationId: app.dataLoader
+```
+Node file
+```js
+  operations:{
+    app:{
+        dataLoader: (req,res)=>{
+            //... end-point logic
+        }
+    }
+  }
+```
+### securities
+For each security schema used, you will need to provide a matching named function in the security object under options
+
+Yaml file
+```yaml
+components:
+  securitySchemes:
+    jwt:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+```
+Node file
+```js
+  securities:{
+    jwt:(decodedJwtAsJSON)=>{
+    const { authorization } = decodedJwtAsJSON
+       //... run securitie logic
+       // true if authenticated
+       return false // true
+    }
+  }
+```
+
+### customBodyDecoders
+The below example, shows how you would use an XML validation with the [xml2json](https://www.npmjs.com/package/xml2json) module
+
+Yaml file
+```yaml
+paths:
+  /my_pet:
+    get:
+      summary: read a pet
+      responses:
+        '200':
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Pet'
+```
+Node file
+```js
+  customBodyDecoders:{
+    'application/xml': stringBody => {
+        return parseXmlString.toJson(stringBody,{object:true})
+    }
+  }
+
