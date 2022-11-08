@@ -1,6 +1,6 @@
 # Firetail JS Library
 
-Frustrated with a lack of quality service level API tool? Firetail is here to help! firetail-JS is a middleware for **Express** and **Node** development. This document will cover setup and configuration. You can also find a complete working example, in the [sample](./sample) folder.
+Frustrated with a lack of quality service level API tool? Firetail is here to help! [![npm version](https://badge.fury.io/js/firetail-api.svg)](https://www.npmjs.com/package/firetail-api) is a middleware for **Express** and **Node** development. This document will cover setup and configuration. You can also find a complete working example, in the [sample](./sample) folder.
 
 [![Code Coverage](https://github.com/FireTail-io/firetail-js-lib/actions/workflows/codecov.yml/badge.svg)](https://github.com/FireTail-io/firetail-js-lib/actions/workflows/codecov.yml)
 [![codecov](https://codecov.io/gh/FireTail-io/firetail-js-lib/branch/main/graph/badge.svg?token=BN44NPKV8H)](https://codecov.io/gh/FireTail-io/firetail-js-lib)
@@ -44,7 +44,7 @@ const app = express()
 // ========== setup request Body stash
 app.use(
   express.raw({
-    inflate: true, limit: '50mb', type: () => true, 
+    inflate: true, limit: '50mb', type: () => true,
   }))
 
 // ========== firetail options
@@ -67,13 +67,13 @@ app.listen(port, () => {
 })
 ```
 
-# Configuration options. Configuration can be loaded in one of three ways. 
+# Configuration options. Configuration can be loaded in one of three ways.
   1. Via environment variables
   2. Inside the package.json under a "firetail" attribute
   3. Pass to the middleware at runtime as a configuration object
-  
+
 *Note: 1 & 2 can only reference static values. Where as the 3rd option can handle static and dynamic*
-  
+
 ⚠️ The `addApi` is the only mandatory option that must be passed!
 
 **Static values:**  
@@ -83,16 +83,16 @@ app.listen(port, () => {
   * `dev`[Boolean]: This indicates what are the middleware should run in developer mode. Dev mode will  ~ _Default `false`_
     1) Give helpful error messages in your rest API as well as using the developer
     2) Log event will be sent to  your terminal. Instead of the firetail SAAS platform.
-  
+
 **Dynamic values:**  
-  
+
   * `overRideError`[Function] (err): a callback to replace the generated firetail error with a custom error you can generate specific to your platform/interfaces
   * `operations`[Object]: an object, where the keys that will match with the `operationId`s and executed in the same way an Express route would be
   * `decodedJwt`[Function] (headers), Encodes the JWT token from the header. Returning the JWT as JSON
   * `securities[Object]` Each **key** in this object maps to a function, represents a security scheme that can be used in your end-points
   * `customBodyDecoders[Object]` Each **key** in this object maps to a function. This is used to parse an unknown `content-type` into JSON so the middleware can apply the rules outlined in YAML file.
 
-## Examples: Dynamic Configuration 
+## Examples: Dynamic Configuration
 
 ### overRideError
 ```js
@@ -171,4 +171,3 @@ Node file
         return parseXmlString.toJson(stringBody,{object:true})
     }
   }
-
