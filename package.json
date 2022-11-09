@@ -1,5 +1,5 @@
 {
-  "name": "firetail-api",
+  "name": "@public.firetail.io/firetail-api",
   "version": "0.1.0",
   "description": "",
   "main": "./dist/index.js",
@@ -38,5 +38,8 @@
     "test:update": "npm test -- --updateSnapshot",
     "test:cover": "npm test -- --coverage --no-cache",
     "test:watch": "npm test -- --watch --runInBand"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

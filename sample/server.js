@@ -33,7 +33,7 @@ con.log({a:4});
 const express = require('express')
 const scribbles = require('scribbles')
 const parseXmlString = require('xml2json');
-//global.console = scribbles
+global.console = scribbles
 const app = express()
 const port = 3001
 
