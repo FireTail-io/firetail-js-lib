@@ -386,9 +386,11 @@ describe('test Firetail', () => {
           } // myFiretailOpts.operations
     const res = genRes({
       end:()=>{
+        if(!done) return;
         expect(optId_called).toBe(true);
         expect(app_called).toBe(false);
         done()
+        done = 0
       }
     })
     const firetailMiddleware = firetailSetup(myFiretailOpts)
@@ -427,9 +429,11 @@ describe('test Firetail', () => {
             originalUrl:"/check_operationId_fn"
           }), genRes({
             end:()=>{
+              if(!done) return;
               expect(optId_called).toBe(true);
               expect(app_called).toBe(false);
               done()
+              done = 0
             }
           }), next)
   }); // END test 'should lookup "operationId" ~ named'
@@ -458,9 +462,11 @@ describe('test Firetail', () => {
             originalUrl:"/check/foo"
           }), genRes({
             end:()=>{
+              if(!done) return;
               expect(optId_called).toBe(true);
               expect(app_called).toBe(false);
               done()
+              done = 0
             }
           }), next)
 
@@ -762,6 +768,7 @@ describe('test secure in requests', () => {
 
           const res = genRes({
             end:()=>{
+              if(!done) return;
               // check status code is 401
               expect(res.statusCode).toBe(401);
               //check message
@@ -770,6 +777,7 @@ describe('test secure in requests', () => {
               expect(verifier_called).toBe(false);
               expect(   basic_called).toBe(false);
               done()
+              done = 0
             } // END end
           }) // END genRes
 
@@ -821,6 +829,7 @@ describe('test secure in requests', () => {
 
       const res = genRes({
         end:()=>{
+          if(!done) return;
           // check status code is 401
           expect(res.statusCode).toBe(200);
 
@@ -830,6 +839,7 @@ describe('test secure in requests', () => {
           expect(verifier_called).toBe(true);
           expect(   basic_called).toBe(true);
           done()
+          done = 0
         } // END end
       }) // END genRes
 
@@ -871,6 +881,7 @@ describe('test secure in requests', () => {
       }
       const res = genRes({
         end:()=>{
+          if(!done) return;
           // check status code is 401
           expect(res.statusCode).toBe(200);
 
@@ -880,6 +891,7 @@ describe('test secure in requests', () => {
           expect(verifier_called).toBe(true);
           expect(   basic_called).toBe(true);
           done()
+          done = 0
         } // END end
       }) // END genRes
 
