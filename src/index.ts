@@ -105,7 +105,7 @@ module.exports = function fileTaileSetup(opts: Options) : Function{
 
   const myOpts = { ...defaultOpts, ...opts }
   //console.log(myOpts)
-  const { addApi, overRideError, operations, dev, decodedJwt, securities, specificationDir, customBodyDecoders } = myOpts
+  const { addApi, overRideError, operations, dev, decodedJwt, securities, specificationDir, customBodyDecoders, apiKey } = myOpts
 
   //const console = {log:()=>{},warn:()=>{},error:()=>{}}
   let addApiSt = defaultOpts.addApi
@@ -209,12 +209,13 @@ if( specificationDir ){
   const data = {
         genMessage,
         decodedJwt,
-        addApiSt,
+        yamlPathSt:addApiSt,
         apiSpecPr,
         dev,
         securities,
         customBodyDecoders,
-        operationsFn:flattenObj(operations || {})
+        operationsFn:flattenObj(operations || {}),
+        apiKey
       }
 const  myMiddleware = middleware.bind(data)
        myMiddleware.firetailData = data

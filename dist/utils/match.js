@@ -1,3 +1,6 @@
+function areWeTestingWithJest() {
+    return process.env.JEST_WORKER_ID !== undefined;
+}
 var TEN_MINUTES = 600000;
 var cache = {};
 var clearCache = function () {
@@ -14,7 +17,8 @@ var clearCache = function () {
 // FOR code covage
 cache["test"] = { result: true, lastReqNu: Number.NEGATIVE_INFINITY };
 clearCache();
-setInterval(clearCache, TEN_MINUTES);
+if (!areWeTestingWithJest)
+    setInterval(clearCache, TEN_MINUTES);
 //=====================================================
 //=========================================== match Url
 //=====================================================

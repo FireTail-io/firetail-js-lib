@@ -78,7 +78,7 @@ if (!areWeTestingWithJest()) {
 module.exports = function fileTaileSetup(opts) {
     var myOpts = __assign(__assign({}, defaultOpts), opts);
     //console.log(myOpts)
-    var addApi = myOpts.addApi, overRideError = myOpts.overRideError, operations = myOpts.operations, dev = myOpts.dev, decodedJwt = myOpts.decodedJwt, securities = myOpts.securities, specificationDir = myOpts.specificationDir, customBodyDecoders = myOpts.customBodyDecoders;
+    var addApi = myOpts.addApi, overRideError = myOpts.overRideError, operations = myOpts.operations, dev = myOpts.dev, decodedJwt = myOpts.decodedJwt, securities = myOpts.securities, specificationDir = myOpts.specificationDir, customBodyDecoders = myOpts.customBodyDecoders, apiKey = myOpts.apiKey;
     //const console = {log:()=>{},warn:()=>{},error:()=>{}}
     var addApiSt = defaultOpts.addApi;
     //+++++++++++++++++++++++++++++++++++++++++ genMessage
@@ -172,12 +172,13 @@ module.exports = function fileTaileSetup(opts) {
     var data = {
         genMessage: genMessage,
         decodedJwt: decodedJwt,
-        addApiSt: addApiSt,
+        yamlPathSt: addApiSt,
         apiSpecPr: apiSpecPr,
         dev: dev,
         securities: securities,
         customBodyDecoders: customBodyDecoders,
-        operationsFn: flattenObj(operations || {})
+        operationsFn: flattenObj(operations || {}),
+        apiKey: apiKey
     };
     var myMiddleware = middleware.bind(data);
     myMiddleware.firetailData = data;

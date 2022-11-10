@@ -1,3 +1,14 @@
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var args2Arr = require("../utils/args2Arr");
 var matchUrl = require("../utils/match");
 var security = require("./security");
@@ -5,6 +16,7 @@ var before = require("./before");
 var after = require("./after");
 var fs = require('fs');
 var path = require('path');
+var logFT = require("./log");
 function areWeTestingWithJest() {
     return process.env.JEST_WORKER_ID !== undefined;
 }
@@ -15,9 +27,10 @@ module.exports = function middleware(req, res, next) {
     res.setHeader("Server", "firetail-API");
     res.removeHeader("X-Powered-By");
     //console.log(` -X- ${req.method}:${req.originalUrl}`,req.headers)
-    var _a = this, genMessage = _a.genMessage, yamlPathSt = _a.yamlPathSt, apiSpecPr = _a.apiSpecPr, apiSpec = _a.apiSpec, operationsFn = _a.operationsFn, dev = _a.dev, customBodyDecoders = _a.customBodyDecoders, decodedJwt = _a.decodedJwt, securities = _a.securities;
+    var _a = this, genMessage = _a.genMessage, yamlPathSt = _a.yamlPathSt, apiSpecPr = _a.apiSpecPr, apiSpec = _a.apiSpec, operationsFn = _a.operationsFn, dev = _a.dev, customBodyDecoders = _a.customBodyDecoders, decodedJwt = _a.decodedJwt, securities = _a.securities, apiKey = _a.apiKey;
     // .then(({paths})=>paths);
     var data = {
+        apiKey: apiKey,
         dev: dev,
         yamlPathSt: yamlPathSt,
         customBodyDecoders: customBodyDecoders,
@@ -34,6 +47,7 @@ module.exports = function middleware(req, res, next) {
         query: req.query,
         //  status:200
     }; // END data
+    data._reqBody = data.reqBody;
     /*  if(dev){
         if(data.url.startsWith("/firetail")){
           if("/firetail/apis.json" === data.url){
@@ -86,16 +100,17 @@ module.exports = function middleware(req, res, next) {
         var isUI = (req.get('Referrer') || "").endsWith("/firetail");
         var defaultErrorVal = {
             //  firetail:"default",
+            type: req.originalUrl,
             status: err.status || 500,
-            message: genMessage("default"),
+            title: genMessage("default"),
             error: undefined
         };
         if (err.message) {
-            defaultErrorVal.message = err.message;
+            defaultErrorVal.title = err.message;
         }
         else if (err.firetail) {
-            defaultErrorVal.message = genMessage(err.firetail, err.val);
-            err.message = defaultErrorVal.message;
+            defaultErrorVal.title = genMessage(err.firetail, err.val);
+            err.message = defaultErrorVal.title;
         }
         if (dev && isUI) {
             defaultErrorVal.error = {
@@ -104,17 +119,25 @@ module.exports = function middleware(req, res, next) {
             };
         }
         else if (dev) {
-            defaultErrorVal.message = err.message || err;
+            defaultErrorVal.title = err.message || err;
         }
         var errContent = "function" === typeof overRideError ? overRideError(err)
             : defaultErrorVal;
+        // Because overRideError may not have a status
         data.status = errContent.status || defaultErrorVal.status;
         //  console.log(data)
         //  console.log(errContent.status, defaultErrorVal.status)
         stashFnCalls.status(data.status);
+        /*if(){
+    
+        }
+        stashFnCalls.header('Content-Type', 'application/json');*/
         stashFnCalls["object" === typeof errContent ? "json"
             : "send"](errContent);
         stashFnCalls.end();
+        if (!areWeTestingWithJest()) {
+            logFT(req, res, __assign(__assign({}, data), { resBody: errContent, statusCode: data.status }), specificScama);
+        }
     }; // END errorHandler
     //+++++++++++++++++++++++++++++++++++++++++++ stash fn
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -152,10 +175,11 @@ module.exports = function middleware(req, res, next) {
         data.resBody = data.resBody || args[0];
         if (!data.finishedAt) {
             end();
-            return res;
         }
-        else
+        else {
             return stashFnCalls.send.apply(res, args);
+        }
+        return res;
     };
     res.json = function () {
         var args = args2Arr(arguments);
@@ -181,10 +205,10 @@ module.exports = function middleware(req, res, next) {
         });
         data.resHeaders = headers;
         // Convert both dates to milliseconds
-        var date1_ms = data.startedAt.getTime();
-        var date2_ms = data.finishedAt.getTime();
+        //const date1_ms = data.startedAt.getTime();
+        //const date2_ms = data.finishedAt.getTime();
         // Calculate the difference in milliseconds
-        var difference_ms = date2_ms - date1_ms;
+        //  const difference_ms = date2_ms - date1_ms;
         try {
             if (data.statusCode) {
                 stashFnCalls.status.call(res, data.statusCode);
@@ -195,9 +219,12 @@ module.exports = function middleware(req, res, next) {
                 //if("object" === typeof data.resBody){
                 //    console.log(specificScama)
                 if (specificScama) {
+                    //  console.log(data.resBody)
                     var cleanedBody = after(specificScama, data);
+                    data.resBody = cleanedBody || data.resBody;
+                    //  console.log(data.resBody)
                     //console.log(cleanedBody)
-                    stashFnCalls.json.call(res, cleanedBody);
+                    stashFnCalls.json.call(res, data.resBody);
                 }
                 else {
                     stashFnCalls.json.call(res, data.resBody);
@@ -209,7 +236,9 @@ module.exports = function middleware(req, res, next) {
             // TODO: may need to buffer the responce..
             // as we can override the responce with out
             // warning about app sending data down the wire
-            console.log("[".concat(data.statusCode, "] ").concat(req.method, ":").concat(req.originalUrl, " - ").concat(difference_ms / 1000, "sec"));
+            if (!areWeTestingWithJest()) {
+                logFT(req, res, data, specificScama);
+            }
             return stashFnCalls.end.call(res);
         }
         catch (err) {
@@ -233,7 +262,16 @@ module.exports = function middleware(req, res, next) {
         //console.log(" ====== CALLING BEFORE !!")
         // Store specificScama as its needed in the "äfter" fn
         //try{
+        //console.log({matchFound,scamaForEndPoint})
         specificScama = before({ scamaForEndPoint: scamaForEndPoint, data: data, genMessage: genMessage });
+        if (!specificScama) {
+            throw {
+                firetail: "urlNotInYaml",
+                status: 404,
+                val: data
+            };
+        }
+        specificScama.resource = matchFound ? matchFound.path : "";
         //  }catch(err){
         //    console.error(err)
         //  }

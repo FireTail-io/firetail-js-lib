@@ -270,7 +270,7 @@ describe('test Firetail', () => {
     const res = genRes({
       end:()=>{
         //console.log(res.__data)
-        expect(res.statusCode).toBe(404);
+        expect(res.statusCode).toBe(405);
         done()
       }
     })
@@ -655,7 +655,7 @@ describe('test secure in requests', () => {
             // check status code is 401
             expect(res.statusCode).toBe(401);
             //check message
-            expect(res.__data.message).toBe("No authorization token provided");
+            expect(res.__data.title).toBe("No authorization token provided");
 
             expect(verifier_called).toBe(false);
             expect(   basic_called).toBe(false);
@@ -693,7 +693,7 @@ describe('test secure in requests', () => {
             // check status code is 401
             expect(res.statusCode).toBe(401);
             //check message
-            expect(res.__data.message).toBe("token dont not start with 'bearer: '");
+            expect(res.__data.title).toBe("token dont not start with 'bearer: '");
 
             expect(verifier_called).toBe(false);
             expect(   basic_called).toBe(false);
@@ -732,7 +732,7 @@ describe('test secure in requests', () => {
               // check status code is 401
               expect(res.statusCode).toBe(401);
               //check message
-              expect(res.__data.message).toBe("bad value");
+              expect(res.__data.title).toBe("bad value");
 
               expect(verifier_called).toBe(false);
               expect(   basic_called).toBe(false);
@@ -772,7 +772,7 @@ describe('test secure in requests', () => {
               // check status code is 401
               expect(res.statusCode).toBe(401);
               //check message
-              expect(res.__data.message).toBe("The JWT parce function did not return an oject");
+              expect(res.__data.title).toBe("The JWT parce function did not return an oject");
 
               expect(verifier_called).toBe(false);
               expect(   basic_called).toBe(false);
