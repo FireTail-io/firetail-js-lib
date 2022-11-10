@@ -27,6 +27,7 @@ jobs:
       env:
         JEST_WORKER_ID: 1234
       run: npm test -- --coverage
+      timeout-minutes: 3
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
