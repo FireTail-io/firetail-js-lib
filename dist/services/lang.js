@@ -3,8 +3,8 @@ var errMessages = {
         missingJWTtoken: "No authorization token provided",
         notJWTBearer: "token dont not start with 'bearer: '",
         urlNotInYaml: function (_a) {
-            var url = _a.url, addApiSt = _a.addApiSt;
-            return "".concat(url, " was NOT in ").concat(addApiSt);
+            var url = _a.url, yamlPathSt = _a.yamlPathSt;
+            return "".concat(url, " was NOT in ").concat(yamlPathSt);
         },
         badJWTFunctionOutput: "The JWT parce function did not return an oject",
         missingArgs: "Missing required query argument.",

@@ -63,7 +63,6 @@ function listPets(req, res){
 const firetailSetup = require("../dist");//require("firetail")
 
 const firetailOpts = {
-  dev:false,
   addApi: "./petstore.yaml",
   overRideError:(err)=>{
     console.error("overRideError");

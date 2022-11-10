@@ -6,6 +6,7 @@ const before = require("./before");
 const after = require("./after");
 const fs = require('fs');
 const path = require('path');
+const logFT = require("./log");
 
 
 function areWeTestingWithJest() {
@@ -31,11 +32,13 @@ module.exports = function middleware(req, res, next) {
     dev,
     customBodyDecoders,
     decodedJwt,
-    securities
+    securities,
+    apiKey
   } = this
   // .then(({paths})=>paths);
 
   const data = {
+      apiKey,
       dev,
       yamlPathSt,
       customBodyDecoders,
@@ -52,6 +55,7 @@ module.exports = function middleware(req, res, next) {
       query:req.query,
     //  status:200
     } // END data
+    data._reqBody = data.reqBody
 
   /*  if(dev){
       if(data.url.startsWith("/firetail")){
@@ -113,16 +117,17 @@ if(!areWeTestingWithJest())
 
     let defaultErrorVal = {
     //  firetail:"default",
+      type:req.originalUrl,
       status: err.status || 500,
-      message:genMessage("default"),
+      title:genMessage("default"),
       error:undefined
     }
 
     if(err.message){
-      defaultErrorVal.message = err.message
+      defaultErrorVal.title = err.message
     } else if(err.firetail){
-      defaultErrorVal.message = genMessage(err.firetail, err.val)
-      err.message = defaultErrorVal.message
+      defaultErrorVal.title = genMessage(err.firetail, err.val)
+      err.message = defaultErrorVal.title
     }
 
     if(dev && isUI){
@@ -131,21 +136,28 @@ if(!areWeTestingWithJest())
         stack:err.stack
       }
     } else if(dev){
-      defaultErrorVal.message = err.message || err
+      defaultErrorVal.title = err.message || err
     }
 
     const errContent = "function" === typeof overRideError ? overRideError(err)
                                                            : defaultErrorVal
 
+                    // Because overRideError may not have a status
       data.status = errContent.status || defaultErrorVal.status
     //  console.log(data)
     //  console.log(errContent.status, defaultErrorVal.status)
     stashFnCalls.status(data.status)
+    /*if(){
 
+    }
+    stashFnCalls.header('Content-Type', 'application/json');*/
     stashFnCalls["object" === typeof errContent ? "json"
                                                 : "send"](errContent)
     stashFnCalls.end()
-  } // END errorHandler
+    if(!areWeTestingWithJest()){
+      logFT(req, res, { ...data, resBody:errContent, statusCode:data.status },specificScama)
+    }
+ } // END errorHandler
 
 //+++++++++++++++++++++++++++++++++++++++++++ stash fn
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -156,7 +168,6 @@ if(!areWeTestingWithJest())
              send : res.send.bind(res),
              json : res.json.bind(res),
               end : res.end.bind(res)
-
   } // END stashFnCalls
 
 //+++++++++++++++++++++++++++++++++++++ hi-jack res fn
@@ -186,10 +197,11 @@ if(!areWeTestingWithJest())
     data.resBody = data.resBody || args[0]
     if(!data.finishedAt){
       end()
-      return res
     }
-    else
+    else {
       return stashFnCalls.send.apply(res, args)
+    }
+    return res
   }
   res.json = function() {
     const args = args2Arr(arguments)
@@ -208,7 +220,6 @@ if(!areWeTestingWithJest())
     //  console.log("res.end",args)
     data.finishedAt = new Date()
 
-
     removeFromHead.forEach(key=>{
       stashFnCalls.removeHeader(key);
     })
@@ -219,11 +230,11 @@ if(!areWeTestingWithJest())
     data.resHeaders = headers
 
   // Convert both dates to milliseconds
-  const date1_ms = data.startedAt.getTime();
-  const date2_ms = data.finishedAt.getTime();
+  //const date1_ms = data.startedAt.getTime();
+  //const date2_ms = data.finishedAt.getTime();
 
   // Calculate the difference in milliseconds
-  const difference_ms = date2_ms - date1_ms;
+//  const difference_ms = date2_ms - date1_ms;
     try {
 
       if(data.statusCode){
@@ -235,9 +246,12 @@ if(!areWeTestingWithJest())
         //if("object" === typeof data.resBody){
     //    console.log(specificScama)
           if (specificScama) {
+          //  console.log(data.resBody)
             const cleanedBody = after(specificScama, data)
+            data.resBody = cleanedBody || data.resBody
+            //  console.log(data.resBody)
 //console.log(cleanedBody)
-            stashFnCalls.json.call(res,cleanedBody)
+            stashFnCalls.json.call(res,data.resBody)
           }else {
             stashFnCalls.json.call(res,data.resBody)
           }
@@ -249,9 +263,10 @@ if(!areWeTestingWithJest())
     // TODO: may need to buffer the responce..
     // as we can override the responce with out
     // warning about app sending data down the wire
-
-    console.log(`[${data.statusCode}] ${req.method}:${req.originalUrl} - ${difference_ms/1000}sec`)
-        return stashFnCalls.end.call(res)
+    if(!areWeTestingWithJest()){
+      logFT(req, res, data, specificScama)
+    }
+      return stashFnCalls.end.call(res)
     } catch(err) {
         errorHandler(err);
     }
@@ -275,8 +290,18 @@ if(!areWeTestingWithJest())
 //console.log(" ====== CALLING BEFORE !!")
       // Store specificScama as its needed in the "äfter" fn
       //try{
-
+//console.log({matchFound,scamaForEndPoint})
         specificScama = before({scamaForEndPoint, data, genMessage})
+
+        if(!specificScama) {
+          throw {
+              firetail:"urlNotInYaml",
+              status:404,
+              val:data
+          }
+        }
+
+        specificScama.resource = matchFound ? matchFound.path : ""
     //  }catch(err){
     //    console.error(err)
     //  }

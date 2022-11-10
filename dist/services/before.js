@@ -23,7 +23,7 @@ module.exports = function before(_a) {
     if (!scamaVerb) {
         throw {
             firetail: "notFound",
-            status: 404,
+            status: 405,
             val: { url: url, verb: verb, scamaForEndPoint: scamaForEndPoint }
         }; // END throw
     } // END if ! scamaVerb

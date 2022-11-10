@@ -10,6 +10,7 @@ function intersection (a, b) {
 //=====================================================
 module.exports = function after(specificScama, data) {
     var statusCode = data.statusCode, accept = data.headers.accept, resHeaders = data.resHeaders, resBody = data.resBody, dev = data.dev, customBodyDecoders = data.customBodyDecoders;
+    var usingCustomBodyDecoders = false;
     // check return Content-Type is in callers accept type
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
     //console.log("resHeaders",resHeaders)
@@ -47,25 +48,13 @@ module.exports = function after(specificScama, data) {
                     val: replyContentType
                 };
             }
-            //   console.log(resBody)
-            ///   console.log(response.content)
-            var contentSchema = response.content[replyContentType];
-            //   console.log(replyContentType,contentSchema)
-            // CHECK it is one of the formats in the Yaml
-            if (!contentSchema) {
-                throw {
-                    firetail: "appContentTypeNotInYaml",
-                    status: 501,
-                    val: replyContentType
-                };
-            }
-            var schema_1 = contentSchema.schema;
             //.log(schema)
             //console.log(replyContentType)
             //console.log(customBodyDecoders)
             if ("object" === typeof customBodyDecoders
                 && customBodyDecoders[replyContentType]) {
                 resBody = customBodyDecoders[replyContentType](resBody);
+                usingCustomBodyDecoders = true;
                 if (!resBody) {
                     throw {
                         firetail: "problemWithCustomBodyDecoder",
@@ -81,6 +70,20 @@ module.exports = function after(specificScama, data) {
                     val: replyContentType
                 };
             }
+            //   console.log(resBody)
+            // console.log(response.content)
+            var contentSchema = response.content[replyContentType];
+            //   console.log(replyContentType,contentSchema)
+            // CHECK it is one of the formats in the Yaml
+            if (!contentSchema) {
+                return;
+                /*  throw {
+                      firetail:"appContentTypeNotInYaml",
+                      status:501,
+                      val:replyContentType
+                  }*/
+            }
+            var schema_1 = contentSchema.schema;
             //  console.log(contentKey)
             //if (contentKey){
             // console.log(resBody)
@@ -101,10 +104,10 @@ module.exports = function after(specificScama, data) {
                         }
                     };
                 }
-                return resBody.map(function (item) { return validateBody(schema_1.items, false, dev)(item); });
+                return usingCustomBodyDecoders ? undefined : resBody.map(function (item) { return validateBody(schema_1.items, false, dev)(item); });
             }
             var validater = validateBody(schema_1, false, dev);
-            return validater(resBody);
+            return usingCustomBodyDecoders ? undefined : validater(resBody);
             /*} else {
                 throw {
                     firetail:"responseContentTypeMismatch",

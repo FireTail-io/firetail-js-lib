@@ -31,7 +31,7 @@ module.exports = function before({scamaForEndPoint,data,genMessage}){
     if ( ! scamaVerb) {
         throw {
             firetail:"notFound",
-            status:404,
+            status:405,
             val:{url,verb,scamaForEndPoint}
         } // END throw
     } // END if ! scamaVerb

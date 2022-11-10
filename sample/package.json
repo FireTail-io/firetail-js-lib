@@ -14,13 +14,14 @@
     "scribbles": "^1.5.0",
     "xml2json":"^0.12.0"
   },
-  "_scribbles": {
-    "logLevel":"warn",
+  "scribbles": {
+    "time":"HH:mm:ss.SSS",
     "format": "{time} <{logLevel}> {fileName}:{lineNumber} {message} {value} {stackTrace}"
   },
   "firetail":{
       "addApi": "./petstore.yaml",
       "specificationDir":"api",
-      "dev":true
+      "dev":true,
+      "apiKey":"PS-02-9862afcd-1e43-4f1f-92ac-8e4fd71c8c5f-66736edd-bace-4cfe-8496-94148adfd79f"
   }
 }

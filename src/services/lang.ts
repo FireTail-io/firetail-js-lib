@@ -3,7 +3,7 @@ const errMessages = {
   dev:{
     missingJWTtoken:"No authorization token provided",
     notJWTBearer:"token dont not start with 'bearer: '",
-    urlNotInYaml:({url,addApiSt})=>`${url} was NOT in ${addApiSt}`,
+    urlNotInYaml:({url,yamlPathSt})=>`${url} was NOT in ${yamlPathSt}`,
     badJWTFunctionOutput:`The JWT parce function did not return an oject`,
     missingArgs:"Missing required query argument.",
     //unknowenArgs:"Unknowen query argument.",

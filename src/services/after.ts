@@ -14,7 +14,7 @@ function intersection (a, b) {
 module.exports = function after(specificScama, data){
 
 let { statusCode, headers: { accept }, resHeaders, resBody, dev, customBodyDecoders } = data
-
+let usingCustomBodyDecoders = false;
 // check return Content-Type is in callers accept type
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
 //console.log("resHeaders",resHeaders)
@@ -63,26 +63,13 @@ let { statusCode, headers: { accept }, resHeaders, resBody, dev, customBodyDecod
     }
   }
 
-//   console.log(resBody)
-///   console.log(response.content)
-const  contentSchema =  response.content[replyContentType]
-
-//   console.log(replyContentType,contentSchema)
-  // CHECK it is one of the formats in the Yaml
-  if( ! contentSchema){
-    throw {
-        firetail:"appContentTypeNotInYaml",
-        status:501,
-        val:replyContentType
-    }
-  }
-const { schema } = contentSchema
 //.log(schema)
 //console.log(replyContentType)
 //console.log(customBodyDecoders)
 if("object" === typeof customBodyDecoders
 && customBodyDecoders[replyContentType]){
   resBody = customBodyDecoders[replyContentType](resBody)
+  usingCustomBodyDecoders = true
   if(!resBody){
       throw {
           firetail:"problemWithCustomBodyDecoder",
@@ -98,6 +85,21 @@ if("object" === typeof customBodyDecoders
     }
 }
 
+//   console.log(resBody)
+  // console.log(response.content)
+const  contentSchema =  response.content[replyContentType]
+
+//   console.log(replyContentType,contentSchema)
+  // CHECK it is one of the formats in the Yaml
+  if( ! contentSchema){
+    return;
+  /*  throw {
+        firetail:"appContentTypeNotInYaml",
+        status:501,
+        val:replyContentType
+    }*/
+  }
+const { schema } = contentSchema
   //  console.log(contentKey)
       //if (contentKey){
       // console.log(resBody)
@@ -119,11 +121,11 @@ if("object" === typeof customBodyDecoders
               }
             }
           }
-          return resBody.map(item => validateBody(schema.items,false, dev)(item))
+          return usingCustomBodyDecoders ? undefined : resBody.map(item => validateBody(schema.items,false, dev)(item))
         }
 
         const validater = validateBody(schema,false, dev)
-        return validater(resBody)
+        return usingCustomBodyDecoders ? undefined : validater(resBody)
       /*} else {
           throw {
               firetail:"responseContentTypeMismatch",
