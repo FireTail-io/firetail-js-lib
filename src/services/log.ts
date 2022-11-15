@@ -18,7 +18,7 @@ function combinHeaderListVals(headerList){
 
 
 function out(req, res, data, specificScama){
-
+//console.log(new Error())
 const date1_ms = data.startedAt.getTime();
 const date2_ms = data.finishedAt.getTime();
 
@@ -54,8 +54,8 @@ const payload = {
 } // END payload
 
 //if(data.dev){
-//  console.info(`Firetail.io - [${data.statusCode}] ${req.method}:${req.originalUrl} - ${executionTime/1000}sec`,payload)
-//if (0){
+  console.info(`Firetail.io - [${data.statusCode}] ${req.method}:${req.originalUrl} - ${executionTime/1000}sec`,payload)
+if (0){
     const options = {
       hostname: 'api.logging.eu-west-1.sandbox.firetail.app',
       port: 443,
@@ -81,7 +81,7 @@ console.log(JSON.parse(d))
           req.write(JSON.stringify(payload))
           req.on('error', error => {console.error(error)})
           req.end()
-  //} // END else
+  } // END else
   /*else {
     console.error("Missing Firetail API key!")
   }*/

@@ -1,95 +1,200 @@
+// for Basic, Bearer and other HTTP authentications schemes
+function http(schemes, headers, authCb,decodedJwt){
+
+  const authHeader = headers.authorization;
+  if( ! authHeader){
+    //console.log("! authHeader)
+    throw {
+        firetail:"missingJWTtoken",
+        status:401
+    } // END throw
+  } // if ! headers.authorization
+
+  const { bearerFormat } = schemes
+  if("jwt" === bearerFormat.toLowerCase()){
+      return jwt(schemes, headers, authCb,decodedJwt)
+  }
+
+  const [user,pass] = new Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
+  try{
+    return authCb({
+      user,
+      pass,
+      scope:schemes.scopes
+    },headers)
+  }catch(err){
+    throw {
+        firetail:"authenticationFailed",
+        message:err.message || err,
+        headers:[['WWW-Authenticate', 'Basic']],
+        status:401
+    }
+  }
+} // END http
+
+function jwt(schemes, headers, authCb, decodedJwt){
+
+  const authHeader = headers.authorization;
+   if (! headers.authorization.toLowerCase().startsWith("bearer")){
+        throw {
+            firetail:"notJWTBearer",
+            status:401
+        } // END throw
+    }
+
+  let result = null;
+
+  if("function" === typeof decodedJwt){
+    result = authCb({
+      authorization:authHeader,
+      decoded:decodedJwt(headers),
+      scope:schemes.scopes
+    },headers)
+  } else if(true === decodedJwt){
+      const token = headers.authorization.split(" ").pop().replace(/['"]+/g, '')
+      const tokenDecodablePart = token.split('.')[1];
+      const decoded = Buffer.from(tokenDecodablePart, 'base64').toString();
+      result = authCb({
+        authorization:authHeader,
+        decoded:JSON.parse(decoded),
+        token,
+        scope:schemes.scopes
+      },headers)
+  }else {
+    result = authCb({
+      authorization:authHeader,
+      token:headers.authorization.split(" ").pop(),
+      scope:schemes.scopes
+    },headers)
+  } // END else
+
+  if("object" !== typeof result){
+    throw {
+        firetail:"badJWTFunctionOutput",
+        status:401
+    } // END throw
+  } // END if
+  return result
+} // END jwt
+
+// for API keys and cookie authentication
+function apiKey(schemes, headers, authCb, decodedJwt){
+
+  let token = headers[schemes.name.toLowerCase()]
+  if("query" === schemes.in){
+    const { query } = this
+    token = query[schemes.name]
+  }
+
+  if( ! token){
+    throw {
+        firetail:"missingJWTtoken",
+        status:403
+    }
+  }
+
+  const scopes = schemes.scopes
+              || schemes.flows &&
+                 schemes.flows.implicit &&
+                 schemes.flows.implicit.scopes
+              || {}
+
+  return authCb({
+    authorization:token,
+    scopes
+  },headers)
+} // END apikey
+
+// Implicit Grant ~ https://circuit.github.io/oauth.html#implicit
+function oauth2(schemes, headers, authCb, decodedJwt){
+  const authHeader = headers.authorization;
+  if( ! authHeader){
+    throw {
+        firetail:"missingJWTtoken",
+        status:401
+    } // END throw
+  } // if ! headers.authorization
+
+  const scopes = schemes.scopes
+              || schemes.flows &&
+                 schemes.flows.implicit &&
+                 schemes.flows.implicit.scopes
+              || {}
+
+  return authCb({
+    authorization:authHeader.split(" ").pop(),
+    scopes
+  },headers)
+} // END oauth2
+
+function openid(){
+
+} // END openid
+
+//for OpenID Connect Discovery
+function openIdConnect(){
+
+} // END openIdConnect
+
+const securityType = { http, oauth2, openid, apiKey }
+
+
+ //jwt, oauth, openid, apikey, basic
 
 //=====================================================
 //======================== validate security controller
 //=====================================================
 
-module.exports = function security({securities,scamaVerb, operationsFn, securitySchemes,headers, decodedJwt, req, genMessage}){
-//console.log("security",arguments)
+function security({ authCallbacks,
+                    scamaVerb,
+                    operationsFn,
+                    securitySchemes,
+                    headers,
+                    decodedJwt,
+                    req,
+                    secName  }){
+//console.log(secName)
   //++++++++ check caller has the right security headers
   //++++++++++++++++++++++++++++++++++++++++++++++++++++
-/*
-  console.log("X check caller has the right security headers")
-  console.log(1)
-  console.log("->",operationsFn)
-  console.log(2)*/
+  return new Promise((resolve, reject) => {
+  if( ! secName){
+    return resolve(true)
+  }
   try{
-    if(scamaVerb.security){
-    ///console.log(3,scamaVerb.security)
-      scamaVerb.security.forEach(sec=> {
-      //  console.log(4,sec)
-        Object.keys(sec).forEach(secName=> {
+      const scheme = securitySchemes[secName]
+      const authCb = authCallbacks[  secName]
+      if("function" !== typeof authCb){
+        throw {
+            firetail:"missingJWTFunction",
+            status:401
+        }
+     } // END if
+//console.log(secName,scheme)
+     const result = securityType[scheme.type].call(req,scheme,headers,authCb,decodedJwt)
+     resolve(result)
 
-        //  console.log(5,secName)
-          if(securitySchemes[secName]){
-        //  console.log(6,securitySchemes[secName])
-            const optName = secName//securitySchemes[secName]["x-bearerInfoFunc"]
-
-
-            if( ! headers.authorization){
-          //  console.log(6.1,"")
-              throw {
-                  firetail:"missingJWTtoken",
-                  status:401
-              } // END throw
-            } // if ! headers.authorization
-            else if (! headers.authorization.toLowerCase().startsWith("bearer")){
-                throw {
-                    firetail:"notJWTBearer",
-                    status:401
-                } // END throw
-            }
-          //  console.log(72,decodedJwt,optName,req,securities)
-
-            if("function" === typeof decodedJwt){
-          //  console.log(8)
-              req[optName] = securities[optName](decodedJwt(headers))
-            }else if(decodedJwt){
-          //  console.log(9)
-                const token = headers.authorization.split(" ").pop().replace(/['"]+/g, '')
-                const tokenDecodablePart = token.split('.')[1];
-                const decoded = Buffer.from(tokenDecodablePart, 'base64').toString();
-                req[optName] = securities[optName](JSON.parse(decoded),token)
-            }else if("function" === typeof securities[optName]){
-            //  console.log(10)
-              req[optName] = securities[optName](headers.authorization.split(" ").pop())
-            } else {
-          //    console.log("missingJWTFunction -> ")//,genMessage("missingJWTFunction",optName))
-              throw {
-                  firetail:"missingJWTFunction",
-                  status:401,
-                  val:optName
-              }
-            }
-          //  console.log(0)
-          //  console.log(typeof req[optName], req[optName])//,genMessage("badJWTFunctionOutput"))
-            if("object" !== typeof req[optName]){
-              throw {
-                  firetail:"badJWTFunctionOutput",
-                  status:401
-              }
-            }
-            //console.log(8,req.jwt)
-        } // END if securitySchemes[secName]
-      /*  else {
-          throw new Error("YAML is missing securitySchemes")
-        }*/
-        }) // END forEach Object.keys
-      }) // END forEach scamaVerb.security
-    } // END if scamaVerb.security
   }catch(err){
-    if(err.firetail){
-      throw err
-    }
-  //  console.error(err)
-    throw {
+//console.error(err)
+    reject( err.firetail ? err : {
       message:err.message || err,
       status: 401
-    }
-  }
-/*
-  console.log()
-  console.log(scamaVerb)
-  console.log()
-  console.log(securitySchemes)
-  console.log()*/
+    }) // END reject
+  } // END catch
+
+  }) // END Promise
 }
+
+security.getSecName = ({security},securitySchemes)=>{
+  let foundSecName;
+  if(security){
+    security.forEach(sec=> {
+      Object.keys(sec).forEach(secName=> {
+        if(securitySchemes[secName]){
+          foundSecName = secName
+        }
+      })
+    })
+  }
+  return foundSecName
+} // END getSecName
+module.exports = security

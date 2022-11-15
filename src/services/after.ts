@@ -54,7 +54,7 @@ let usingCustomBodyDecoders = false;
 
 
   // CHECK the client can accept it
-  if( ! clientWillTakeANYtype
+  if(300 > statusCode && ! clientWillTakeANYtype
   &&  ! wantedContentTypes.includes(replyContentType) ){
     throw {
         firetail:"clientCantAcceptThisContentType",
@@ -85,7 +85,7 @@ if("object" === typeof customBodyDecoders
     }
 }
 
-//   console.log(resBody)
+   //console.log(typeof resBody, resBody)
   // console.log(response.content)
 const  contentSchema =  response.content[replyContentType]
 

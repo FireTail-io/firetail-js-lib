@@ -89,7 +89,7 @@ app.listen(port, () => {
   * `overRideError`[Function] (err): a callback to replace the generated firetail error with a custom error you can generate specific to your platform/interfaces
   * `operations`[Object]: an object, where the keys that will match with the `operationId`s and executed in the same way an Express route would be
   * `decodedJwt`[Function] (headers), Encodes the JWT token from the header. Returning the JWT as JSON
-  * `securities[Object]` Each **key** in this object maps to a function, represents a security scheme that can be used in your end-points
+  * `authCallbacks[Object]` Each **key** in this object maps to a function, represents a security scheme that can be used in your end-points
   * `customBodyDecoders[Object]` Each **key** in this object maps to a function. This is used to parse an unknown `content-type` into JSON so the middleware can apply the rules outlined in YAML file.
 
 ## Examples: Dynamic Configuration
@@ -124,7 +124,7 @@ Node file
     }
   }
 ```
-### securities
+### authCallbacks
 For each security schema used, you will need to provide a matching named function in the security object under options
 
 Yaml file
@@ -138,7 +138,7 @@ components:
 ```
 Node file
 ```js
-  securities:{
+  authCallbacks:{
     jwt:(decodedJwtAsJSON)=>{
     const { authorization } = decodedJwtAsJSON
        //... run securitie logic

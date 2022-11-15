@@ -42,6 +42,8 @@ paths:
     post:
       summary: Create a pet
       operationId: createPets
+      security:
+        - key: []
       tags:
         - pets
       requestBody:
@@ -95,6 +97,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+      security:
+        - oauth2: ["uid"]
     delete:
       summary: Remove a pet
       security:
@@ -109,12 +113,12 @@ paths:
           schema:
             type: integer
       responses:
-        '201':
+        '202':
           description: Null response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Pets"
+                $ref: "#/components/schemas/Pet"
         default:
           description: unexpected error
           content:
@@ -192,6 +196,18 @@ components:
           "limit": 10485760  # additional properties specific to the problem type are allowed
         }
   securitySchemes:
+    oauth2:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: https://api.getbase.com/oauth2/authorize
+          scopes:
+            read: Grant read-only access to all your data except for the account and user info
+            write: Grant write-only access to all your data except for the account and user info
+            profile: Grant read-only access to the account and user info only
+    basic:
+      type: http
+      scheme: basic
     jwt:
       type: http
       scheme: bearer

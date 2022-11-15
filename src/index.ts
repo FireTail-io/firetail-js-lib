@@ -44,8 +44,6 @@ const re = /(?:\.([^.]+))?$/;
 function deepRequire(dirname,selector){
   selector = selector || ["js"]
   return getFilesFromDir(dirname, selector.map(ext=>`.${ext}`)).reduce((packages,file) =>{
-
-      //console.log("file",file)
     if(file === "/index.js")  return packages
     //if(file[0] !== "/") file = "/"+file;
 
@@ -105,7 +103,7 @@ module.exports = function fileTaileSetup(opts: Options) : Function{
 
   const myOpts = { ...defaultOpts, ...opts }
   //console.log(myOpts)
-  const { addApi, overRideError, operations, dev, decodedJwt, securities, specificationDir, customBodyDecoders, apiKey } = myOpts
+  const { addApi, overRideError, operations, dev, decodedJwt, authCallbacks, specificationDir, customBodyDecoders, apiKey } = myOpts
 
   //const console = {log:()=>{},warn:()=>{},error:()=>{}}
   let addApiSt = defaultOpts.addApi
@@ -181,14 +179,14 @@ if( specificationDir ){
                                   const {components} = apiSpec
                                   if(components &&
                                      components.securitySchemes){
-                                       if("object" !== typeof securities){
+                                       if("object" !== typeof authCallbacks){
                                          throw {
                                            firetail:"missingJWTFunctions"
                                          }
                                        }
 
                                        const securitySchemeNames = Object.keys(components.securitySchemes)
-                                       const securityNames       = Object.keys(securities)
+                                       const securityNames       = Object.keys(authCallbacks)
 
                                        if(securityNames.length !== securitySchemeNames.length){
                                          throw {
@@ -212,7 +210,7 @@ if( specificationDir ){
         yamlPathSt:addApiSt,
         apiSpecPr,
         dev,
-        securities,
+        authCallbacks,
         customBodyDecoders,
         operationsFn:flattenObj(operations || {}),
         apiKey
