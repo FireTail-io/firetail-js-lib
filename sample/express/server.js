@@ -77,11 +77,13 @@ con.log({a:4});
 const express = require('express')
 const scribbles = require('scribbles')
 const parseXmlString = require('xml2json');
-global.console = scribbles
+//global.console = scribbles
+global.scribbles = scribbles
 const app = express()
 const port = 3001
 
 
+require('./test');
 
 app.use(
   express.raw({
@@ -106,39 +108,21 @@ function listPets(req, res){
 //=================================== Firetail settings
 //=====================================================
 
-const firetailSetup = require("../dist");//require("firetail")
+const firetailSetup = require("../../dist");//require("firetail")
 
 const firetailOpts = {
   addApi: "./petstore.yaml",
   overRideError:(err)=>{
-  //  console.error("overRideError");
     return err
   },
   authCallbacks:{
     jwt:({authorization})=>{
-      //console.log(" ------ JWT",authorization)
       const token = authorization.split(" ").pop().replace(/['"]+/g, '')
-      //  console.log(" --- ",token)
       const tokenDecodablePart = token.split('.').pop();
-      //console.log(" --- ",tokenDecodablePart)
-
       const decoded = Buffer.from(tokenDecodablePart, 'base64').toString();
-      //console.log(" --- ",decoded)
-
-        // ... CHECK JWT
-      //  if( (Date.now()/1000) > decoded.exp){
-        //  throw new Error("You token is too old")
-      //  }
-
-
-
-        // throw
-
-
       return JSON.parse(decoded)
     },
     key:({authorization})=>{
-
       if("key" !== authorization){
         throw new Error("Invalid token")
       }
@@ -168,12 +152,7 @@ const firetailOpts = {
   },
   // override Express'es controller based on "operationId"
   operations:{
-    // FLAT name
     listPets,
-    // Nested
-  /*  app : {
-      cat_id:cat
-    }*/
   }, // END operations
   customBodyDecoders:{
     'application/xml': body => parseXmlString.toJson(body,{object:true}).Pet
@@ -195,8 +174,7 @@ app.get('/', (req, res) => {
 })
 
 app.delete('/pets/:petId', (req, res) => {
-//console.log("delete('/pets/:petId'",req.jwt)
-//console.log(req.params.petId,data.map(({id})=>`${id}`))
+
   if(! data.map(({id})=>`${id}`)
            .includes(req.params.petId)){
     res.status(400)

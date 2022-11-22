@@ -85,7 +85,7 @@ interface Options {
 /* istanbul ignore next */
 if( ! areWeTestingWithJest()){
     try{
-      const packageJsonPath = path.resolve(path.dirname(require.main.filename),"./package.json")
+      const packageJsonPath = path.resolve(path.dirname(require.main && require.main.filename ||""),"./package.json")
       const packageJson = require(packageJsonPath)
       if(packageJson.firetail){
         defaultOpts = packageJson.firetail

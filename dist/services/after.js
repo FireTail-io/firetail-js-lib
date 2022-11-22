@@ -40,7 +40,7 @@ module.exports = function after(specificScama, data) {
         if (response.content) {
             var availableContentTypes = Object.keys(response.content);
             // CHECK the client can accept it
-            if (!clientWillTakeANYtype
+            if (300 > statusCode && !clientWillTakeANYtype
                 && !wantedContentTypes.includes(replyContentType)) {
                 throw {
                     firetail: "clientCantAcceptThisContentType",
@@ -70,7 +70,7 @@ module.exports = function after(specificScama, data) {
                     val: replyContentType
                 };
             }
-            //   console.log(resBody)
+            //console.log(typeof resBody, resBody)
             // console.log(response.content)
             var contentSchema = response.content[replyContentType];
             //   console.log(replyContentType,contentSchema)
