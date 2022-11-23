@@ -15,6 +15,7 @@ var path = require('path');
 var fs = require('fs');
 var middleware = require('./services/middleware');
 var errMessages = require('./services/lang');
+var firetailWrapper = require("./firetailWrapper");
 //const deepRequire = require('pick-n-mix/utils/deepRequire')
 //const decodedJwt = true
 function areWeTestingWithJest() {
@@ -77,7 +78,7 @@ if (!areWeTestingWithJest()) {
 module.exports = function fileTaileSetup(opts) {
     var myOpts = __assign(__assign({}, defaultOpts), opts);
     //console.log(myOpts)
-    var addApi = myOpts.addApi, overRideError = myOpts.overRideError, operations = myOpts.operations, dev = myOpts.dev, decodedJwt = myOpts.decodedJwt, authCallbacks = myOpts.authCallbacks, specificationDir = myOpts.specificationDir, customBodyDecoders = myOpts.customBodyDecoders, apiKey = myOpts.apiKey;
+    var addApi = myOpts.addApi, overRideError = myOpts.overRideError, operations = myOpts.operations, dev = myOpts.dev, decodedJwt = myOpts.decodedJwt, authCallbacks = myOpts.authCallbacks, specificationDir = myOpts.specificationDir, customBodyDecoders = myOpts.customBodyDecoders, apiKey = myOpts.apiKey, lambda = myOpts.lambda;
     //const console = {log:()=>{},warn:()=>{},error:()=>{}}
     var addApiSt = defaultOpts.addApi;
     //+++++++++++++++++++++++++++++++++++++++++ genMessage
@@ -177,10 +178,11 @@ module.exports = function fileTaileSetup(opts) {
         authCallbacks: authCallbacks,
         customBodyDecoders: customBodyDecoders,
         operationsFn: flattenObj(operations || {}),
-        apiKey: apiKey
+        apiKey: apiKey,
+        lambda: lambda
     };
     var myMiddleware = middleware.bind(data);
     myMiddleware.firetailData = data;
-    return myMiddleware;
+    return lambda ? firetailWrapper.bind(myMiddleware) : myMiddleware;
 }; // END fileTaileSetup
 //# sourceMappingURL=index.js.map

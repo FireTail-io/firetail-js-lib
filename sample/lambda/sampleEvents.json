@@ -1,0 +1,180 @@
+{
+  "lambda function url":{
+        "version": "2.0",
+        "routeKey": "$default",
+        "rawPath": "/pets",
+        "rawQueryString": "",
+        "headers": {
+            "x-amzn-tls-cipher-suite": "ECDHE-RSA-AES128-GCM-SHA256",
+            "x-amzn-tls-version": "TLSv1.2",
+            "x-amzn-trace-id": "Root=1-637df348-02d18f6572806cea4ae753d3",
+            "x-forwarded-proto": "https",
+            "postman-token": "6a7607cf-bd25-418e-b8f5-b97cbd3e2364",
+            "host": "htlkggjszku7cdquavb6qnviu40eqtdz.lambda-url.eu-west-1.on.aws",
+            "x-forwarded-port": "443",
+            "x-forwarded-for": "176.46.19.102",
+            "accept-encoding": "gzip, deflate, br",
+            "accept": "*/*",
+            "user-agent": "PostmanRuntime/7.29.2"
+        },
+        "requestContext": {
+            "accountId": "anonymous",
+            "apiId": "htlkggjszku7cdquavb6qnviu40eqtdz",
+            "domainName": "htlkggjszku7cdquavb6qnviu40eqtdz.lambda-url.eu-west-1.on.aws",
+            "domainPrefix": "htlkggjszku7cdquavb6qnviu40eqtdz",
+            "http": {
+                "method": "GET",
+                "path": "/pets",
+                "protocol": "HTTP/1.1",
+                "sourceIp": "176.46.19.102",
+                "userAgent": "PostmanRuntime/7.29.2"
+            },
+            "requestId": "c355f8b1-adaa-4e50-b46e-c6e0033ad7aa",
+            "routeKey": "$default",
+            "stage": "$default",
+            "time": "23/Nov/2022:10:17:44 +0000",
+            "timeEpoch": 1669198664526
+        },
+        "isBase64Encoded": false
+    },
+
+    "api Gateway Proxy V2":{
+    "version": "2.0",
+    "routeKey": "$default",
+    "rawPath": "/pets",
+    "rawQueryString": "parameter1=value1&parameter1=value2&parameter2=value",
+    "cookies": [
+      "cookie1",
+      "cookie2"
+    ],
+    "headers": {
+      "Header1": "value1",
+      "Header2": "value1,value2"
+    },
+    "queryStringParameters": {
+      "parameter1": "value1,value2",
+      "parameter2": "value"
+    },
+    "requestContext": {
+      "accountId": "123456789012",
+      "apiId": "api-id",
+      "authentication": {
+        "clientCert": {
+          "clientCertPem": "CERT_CONTENT",
+          "subjectDN": "www.example.com",
+          "issuerDN": "Example issuer",
+          "serialNumber": "a1:a1:a1:a1:a1:a1:a1:a1:a1:a1:a1:a1:a1:a1:a1:a1",
+          "validity": {
+            "notBefore": "May 28 12:30:02 2019 GMT",
+            "notAfter": "Aug  5 09:36:04 2021 GMT"
+          }
+        }
+      },
+      "authorizer": {
+        "key": "key"
+      },
+      "domainName": "id.execute-api.us-east-1.amazonaws.com",
+      "domainPrefix": "id",
+      "http": {
+        "method": "POST",
+        "path": "/pets",
+        "protocol": "HTTP/1.1",
+        "sourceIp": "192.168.0.1/32",
+        "userAgent": "agent"
+      },
+      "requestId": "id",
+      "routeKey": "$default",
+      "stage": "$default",
+      "time": "12/Mar/2020:19:03:58 +0000",
+      "timeEpoch": 1583348638390
+    },
+    "body": "{\"name\": \"tom\"}",
+    "pathParameters": {
+      "parameter1": "value1"
+    },
+    "isBase64Encoded": false,
+    "stageVariables": {
+      "stageVariable1": "value1",
+      "stageVariable2": "value2"
+    }
+  },
+  "api Gateway Proxy Event":{
+    "version": "1.0",
+    "resource": "/pets",
+    "path": "/pets",
+    "httpMethod": "GET",
+    "headers": {
+      "foo": "bar"
+    },
+    "multiValueHeaders": {
+      "foo1": [
+        "1"
+      ],
+      "foo2": [
+        "A",
+        "B"
+      ]
+    },
+    "queryStringParameters": {
+      "limit": "2",
+      "some": "thing"
+    },
+    "multiValueQueryStringParameters": {
+      "A": [
+        "1",
+        "2"
+      ],
+      "B": [
+        "3"
+      ]
+    },
+    "requestContext": {
+      "accountId": "123456789012",
+      "apiId": "id",
+      "authorizer": {
+        "claims": null,
+        "scopes": null
+      },
+      "domainName": "id.execute-api.us-east-1.amazonaws.com",
+      "domainPrefix": "id",
+      "extendedRequestId": "request-id",
+      "httpMethod": "GET",
+      "identity": {
+        "accessKey": null,
+        "accountId": null,
+        "caller": null,
+        "cognitoAuthenticationProvider": null,
+        "cognitoAuthenticationType": null,
+        "cognitoIdentityId": null,
+        "cognitoIdentityPoolId": null,
+        "principalOrgId": null,
+        "sourceIp": "192.168.0.1/32",
+        "user": null,
+        "userAgent": "user-agent",
+        "userArn": null,
+        "clientCert": {
+          "clientCertPem": "CERT_CONTENT",
+          "subjectDN": "www.example.com",
+          "issuerDN": "Example issuer",
+          "serialNumber": "a1:a1:a1:a1:a1:a1:a1:a1:a1:a1:a1:a1:a1:a1:a1:a1",
+          "validity": {
+            "notBefore": "May 28 12:30:02 2019 GMT",
+            "notAfter": "Aug  5 09:36:04 2021 GMT"
+          }
+        }
+      },
+      "path": "/pets",
+      "protocol": "HTTP/1.1",
+      "requestId": "id=",
+      "requestTime": "04/Mar/2020:19:15:17 +0000",
+      "requestTimeEpoch": 1583349317135,
+      "resourceId": null,
+      "resourcePath": "/pets",
+      "stage": "$default"
+    },
+    "pathParameters": null,
+    "stageVariables": null,
+    "body": "Hello from Lambda!",
+    "isBase64Encoded": false
+  }
+}

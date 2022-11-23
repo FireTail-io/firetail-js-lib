@@ -33,7 +33,8 @@ module.exports = function middleware(req, res, next) {
     customBodyDecoders,
     decodedJwt,
     authCallbacks,
-    apiKey
+    apiKey,
+    lambda
   } = this
   // .then(({paths})=>paths);
 
@@ -53,6 +54,7 @@ module.exports = function middleware(req, res, next) {
       headers:req.headers,
       params: req.params,
       query:req.query,
+      lambda
     //  status:200
     } // END data
     data._reqBody = data.reqBody

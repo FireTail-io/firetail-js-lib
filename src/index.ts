@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const middleware = require('./services/middleware');
 const errMessages = require('./services/lang');
+const firetailWrapper = require("./firetailWrapper");
 //const deepRequire = require('pick-n-mix/utils/deepRequire')
 //const decodedJwt = true
 
@@ -103,7 +104,7 @@ module.exports = function fileTaileSetup(opts: Options) : Function{
 
   const myOpts = { ...defaultOpts, ...opts }
   //console.log(myOpts)
-  const { addApi, overRideError, operations, dev, decodedJwt, authCallbacks, specificationDir, customBodyDecoders, apiKey } = myOpts
+  const { addApi, overRideError, operations, dev, decodedJwt, authCallbacks, specificationDir, customBodyDecoders, apiKey, lambda } = myOpts
 
   //const console = {log:()=>{},warn:()=>{},error:()=>{}}
   let addApiSt = defaultOpts.addApi
@@ -213,11 +214,12 @@ if( specificationDir ){
         authCallbacks,
         customBodyDecoders,
         operationsFn:flattenObj(operations || {}),
-        apiKey
+        apiKey,
+        lambda
       }
 const  myMiddleware = middleware.bind(data)
        myMiddleware.firetailData = data
-return myMiddleware
+return lambda ? firetailWrapper.bind(myMiddleware) : myMiddleware
 
 
 } // END fileTaileSetup

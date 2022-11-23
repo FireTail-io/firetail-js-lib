@@ -16,7 +16,7 @@ module.exports = function middleware(req, res, next) {
     //res.setHeader("Server", "firetail-API");
     //res.removeHeader("X-Powered-By");
     //console.log(` -X- ${req.method}:${req.originalUrl}`,req.headers)
-    var _a = this, genMessage = _a.genMessage, yamlPathSt = _a.yamlPathSt, apiSpecPr = _a.apiSpecPr, apiSpec = _a.apiSpec, operationsFn = _a.operationsFn, dev = _a.dev, customBodyDecoders = _a.customBodyDecoders, decodedJwt = _a.decodedJwt, authCallbacks = _a.authCallbacks, apiKey = _a.apiKey;
+    var _a = this, genMessage = _a.genMessage, yamlPathSt = _a.yamlPathSt, apiSpecPr = _a.apiSpecPr, apiSpec = _a.apiSpec, operationsFn = _a.operationsFn, dev = _a.dev, customBodyDecoders = _a.customBodyDecoders, decodedJwt = _a.decodedJwt, authCallbacks = _a.authCallbacks, apiKey = _a.apiKey, lambda = _a.lambda;
     // .then(({paths})=>paths);
     var data = {
         apiKey: apiKey,
@@ -34,6 +34,7 @@ module.exports = function middleware(req, res, next) {
         headers: req.headers,
         params: req.params,
         query: req.query,
+        lambda: lambda
         //  status:200
     }; // END data
     data._reqBody = data.reqBody;

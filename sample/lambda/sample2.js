@@ -1,24 +1,19 @@
 "use strict";
 
 const data = require('./animals.json')
+const events = require('./sampleEvents.json')
+//console.log(require)
 const firetailSetup = require("../../dist");
 
-const firetailWrapper = firetailSetup({
+const firetailWrapper = firetailSetup({lambda:true,addApi: "./petstore.yaml"})
 
-  // This is all you need!!
-  lambda:true,
-
-  addApi: "./petstore.yaml",
-})
-
-module.exports.pets = firetailWrapper((event,context) => {
-
+const next = firetailWrapper((event) => {
   const statusCode = 200
   if(event.queryStringParameters
   && event.queryStringParameters.limit){
     return {
       statusCode,
-      body: JSON.stringify(data.slice(0, event.queryStringParameters.limit)),
+      body: JSON.stringify(data.slice(0, req.query.limit)),
     };
   }
   return {
@@ -26,3 +21,5 @@ module.exports.pets = firetailWrapper((event,context) => {
     body: JSON.stringify(data),
   };
 });
+
+next(events["api Gateway Proxy Event"])

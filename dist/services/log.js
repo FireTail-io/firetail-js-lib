@@ -15,6 +15,7 @@ function combinHeaderListVals(headerList) {
 } // END combinHeaderListVals
 function out(req, res, data, specificScama) {
     //console.log(new Error())
+    //console.log(data)
     var date1_ms = data.startedAt.getTime();
     var date2_ms = data.finishedAt.getTime();
     // Calculate the difference in milliseconds
@@ -47,8 +48,20 @@ function out(req, res, data, specificScama) {
         } // END oauth
     }; // END payload
     //if(data.dev){
-    console.info("Firetail.io - [".concat(data.statusCode, "] ").concat(req.method, ":").concat(req.originalUrl, " - ").concat(executionTime / 1000, "sec"), payload);
-    if (0) {
+    console.info("Firetail.io - [".concat(data.statusCode, "] ").concat(req.method, ":").concat(req.originalUrl, " - ").concat(executionTime / 1000, "sec"));
+    if (data.lambda) {
+        var logExt = {
+            "event": req.lambdaEvent,
+            "response": {
+                "statusCode": payload.response.statusCode,
+                "body": payload.response.body
+            },
+            "execution_time": executionTime
+        };
+        console.log("firetail:log-ext:", logExt);
+        console.log("firetail:log-ext:" + btoa(JSON.stringify(logExt)));
+    }
+    else {
         var options = {
             hostname: 'api.logging.eu-west-1.sandbox.firetail.app',
             port: 443,
@@ -61,6 +74,7 @@ function out(req, res, data, specificScama) {
                 "x-ft-api-key": data.apiKey
             } // END headers
         }; // END options
+        console.log(options, payload);
         var req_1 = https.request(options, function (res) {
             console.log("statusCode: ".concat(res.statusCode));
             res.setEncoding('utf8');
