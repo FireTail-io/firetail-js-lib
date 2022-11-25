@@ -57,6 +57,8 @@ module.exports = function middleware(req, res, next) {
       lambda
     //  status:200
     } // END data
+    data.headers.accept = data.headers.accept || "*/*"
+
     data._reqBody = data.reqBody
 
   /*  if(dev){
@@ -235,6 +237,7 @@ if("object" === typeof errContent){
 
   let end = function () {
     end = ()=> console.log("END was already CALLeD")
+    res.end = ()=>{}
     const args = args2Arr(arguments)
     //  console.log("res.end",args)
     data.finishedAt = new Date()
@@ -260,7 +263,7 @@ if("object" === typeof errContent){
         stashFnCalls.status.call(res,data.statusCode)
       }
       //res.send = stashFnCalls.send.bind(res)
-//console.log(data.resBody)
+//console.log(data)
       if(data.resBody){
         //if("object" === typeof data.resBody){
       //  console.log(specificScama)
@@ -279,10 +282,12 @@ if("object" === typeof errContent){
         }*/
       } // END if data.resBody
  stashFnCalls.end.call(res)
+ stashFnCalls.end = ()=>{}
     // TODO: may need to buffer the responce..
     // as we can override the responce with out
     // warning about app sending data down the wire
-    if(!areWeTestingWithJest()){
+
+    if(data.lambda || !areWeTestingWithJest()){
       logFT(req, res, data, specificScama)
     }
 
@@ -358,7 +363,7 @@ if("object" === typeof errContent){
                   Object.assign(req.query,data.query)
                   next = ()=>operationsFn[operationId](req, res, next)
                 } else {
-                  console.log(`No operationId match for ${operationId}`)
+                  //console.log(`No operationId match for ${operationId}`)
                 }
               } // END if operationId
         /*    } // END if scamaVerb
@@ -374,7 +379,7 @@ if("object" === typeof errContent){
     /*if (specificScama) {
       throw err
     }*/
-  //  console.error(err,new Error().stack)
+    //console.error(err,new Error().stack)
     errorHandler(err)
   }) // END catch
 

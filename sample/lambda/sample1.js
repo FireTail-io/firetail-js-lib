@@ -13,7 +13,7 @@ const next = firetailWrapper((event) => {
   && event.queryStringParameters.limit){
     return {
       statusCode,
-      body: JSON.stringify(data.slice(0, req.query.limit)),
+      body: JSON.stringify(data.slice(0, event.queryStringParameters.limit)),
     };
   }
   return {
@@ -22,4 +22,4 @@ const next = firetailWrapper((event) => {
   };
 });
 
-next(events["lambda function url"])
+next(events["lambda function url"]).then(console.log)

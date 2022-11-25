@@ -48,7 +48,7 @@ function out(req, res, data, specificScama) {
         } // END oauth
     }; // END payload
     //if(data.dev){
-    console.info("Firetail.io - [".concat(data.statusCode, "] ").concat(req.method, ":").concat(req.originalUrl, " - ").concat(executionTime / 1000, "sec"));
+    //  console.info(`Firetail.io - [${data.statusCode}] ${req.method}:${req.originalUrl} - ${executionTime/1000}sec`)
     if (data.lambda) {
         var logExt = {
             "event": req.lambdaEvent,
@@ -58,7 +58,7 @@ function out(req, res, data, specificScama) {
             },
             "execution_time": executionTime
         };
-        console.log("firetail:log-ext:", logExt);
+        //console.log("firetail:log-ext:",logExt)
         console.log("firetail:log-ext:" + btoa(JSON.stringify(logExt)));
     }
     else {
@@ -74,12 +74,12 @@ function out(req, res, data, specificScama) {
                 "x-ft-api-key": data.apiKey
             } // END headers
         }; // END options
-        console.log(options, payload);
+        //console.log(options,payload)
         var req_1 = https.request(options, function (res) {
-            console.log("statusCode: ".concat(res.statusCode));
+            //  console.log(`statusCode: ${res.statusCode}`)
             res.setEncoding('utf8');
             res.on('data', function (d) {
-                console.log(JSON.parse(d));
+                //  console.log(JSON.parse(d))
                 //console.log(Buffer.isBuffer(d),d.toString('utf8'))
             });
         });

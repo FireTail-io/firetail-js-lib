@@ -37,6 +37,7 @@ module.exports = function middleware(req, res, next) {
         lambda: lambda
         //  status:200
     }; // END data
+    data.headers.accept = data.headers.accept || "*/*";
     data._reqBody = data.reqBody;
     /*  if(dev){
         if(data.url.startsWith("/firetail")){
@@ -205,6 +206,7 @@ module.exports = function middleware(req, res, next) {
     }*/
     var end = function () {
         end = function () { return console.log("END was already CALLeD"); };
+        res.end = function () { };
         var args = args2Arr(arguments);
         //  console.log("res.end",args)
         data.finishedAt = new Date();
@@ -226,7 +228,7 @@ module.exports = function middleware(req, res, next) {
                 stashFnCalls.status.call(res, data.statusCode);
             }
             //res.send = stashFnCalls.send.bind(res)
-            //console.log(data.resBody)
+            //console.log(data)
             if (data.resBody) {
                 //if("object" === typeof data.resBody){
                 //  console.log(specificScama)
@@ -246,10 +248,11 @@ module.exports = function middleware(req, res, next) {
                     }*/
             } // END if data.resBody
             stashFnCalls.end.call(res);
+            stashFnCalls.end = function () { };
             // TODO: may need to buffer the responce..
             // as we can override the responce with out
             // warning about app sending data down the wire
-            if (!areWeTestingWithJest()) {
+            if (data.lambda || !areWeTestingWithJest()) {
                 logFT(req, res, data, specificScama);
             }
         }
@@ -321,7 +324,7 @@ module.exports = function middleware(req, res, next) {
                     next = function () { return operationsFn[operationId](req, res, next); };
                 }
                 else {
-                    console.log("No operationId match for ".concat(operationId));
+                    //console.log(`No operationId match for ${operationId}`)
                 }
             } // END if operationId
             /*    } // END if scamaVerb
@@ -336,7 +339,7 @@ module.exports = function middleware(req, res, next) {
         /*if (specificScama) {
           throw err
         }*/
-        //  console.error(err,new Error().stack)
+        //console.error(err,new Error().stack)
         errorHandler(err);
     }); // END catch
 }; // END middleware

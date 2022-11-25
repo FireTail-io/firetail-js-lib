@@ -162,6 +162,12 @@ function security({ authCallbacks,
   }
   try{
       const scheme = securitySchemes[secName]
+      if(! authCallbacks){
+        throw {
+            firetail:"missingJWTtoken",
+            status:401
+        }
+     } // END if
       const authCb = authCallbacks[  secName]
       if("function" !== typeof authCb){
         throw {

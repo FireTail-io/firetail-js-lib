@@ -6,7 +6,6 @@
 //=====================================================
 
 function acceptTypes(acceptSt) {
-
   return acceptSt.split(",")
                  .map(type=>type.split(";")[0])
 

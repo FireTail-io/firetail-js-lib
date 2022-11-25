@@ -70,9 +70,9 @@ module.exports = function before(_a) {
         queryNametoCheck.forEach(function (_a) {
             var required = _a.required, name = _a.name, schema = _a.schema;
             //  console.log("name",name)
-            //        console.log("queryNamesRecived",queryNamesRecived)
+            //      console.log("queryNamesRecived",queryNamesRecived)
             if (required && !queryNamesRecived_1.includes(name)) {
-                console.warn(name + " was not found as a named query ");
+                //console.warn(name +" was not found as a named query ")
                 throw {
                     firetail: "missingArgs",
                     status: 400

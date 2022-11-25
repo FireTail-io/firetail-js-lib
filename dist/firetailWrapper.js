@@ -55,17 +55,19 @@ function firetailWrapper(next) {
     return function (event, context) {
         return new Promise(function (resolve, reject) {
             var protocol = event.requestContext.http ? "http" : "https";
+            var ip = event.requestContext.identity ? event.requestContext.identity.sourceIp
+                : event.requestContext[protocol].sourceIp;
             var req = genReq({
                 method: event.httpMethod || event.requestContext.http.method,
-                originalUrl: event.rawPath,
+                originalUrl: event.rawPath || event.resource,
                 body: event.body,
                 headers: event.headers,
                 params: event.pathParameters || {},
                 query: event.queryStringParameters || {},
-                httpVersion: event.requestContext[protocol].protocol.split("/").pop(),
+                httpVersion: (event.requestContext.protocol || event.requestContext[protocol].protocol).split("/").pop(),
                 protocol: protocol,
                 hostname: event.headers.host,
-                ip: event.requestContext[protocol].sourceIp,
+                ip: ip,
                 lambdaEvent: event
             }), res = genRes();
             firetailMiddleware(req, res, function () {

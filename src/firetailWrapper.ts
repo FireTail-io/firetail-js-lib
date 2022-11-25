@@ -54,9 +54,12 @@ function firetailWrapper(next){
 
       const protocol = event.requestContext.http ? "http" : "https"
 
+      const ip = event.requestContext.identity ? event.requestContext.identity.sourceIp
+                                               : event.requestContext[protocol].sourceIp
+
       const req = genReq({
          method : event.httpMethod || event.requestContext.http.method,
-    originalUrl : event.rawPath,
+    originalUrl : event.rawPath || event.resource,
            body : event.body,
         headers : event.headers,
          params : event.pathParameters || {},
@@ -65,7 +68,7 @@ function firetailWrapper(next){
           (event.requestContext.protocol || event.requestContext[protocol].protocol).split("/").pop(),
           protocol,
           hostname:event.headers.host,
-          ip:event.requestContext[protocol].sourceIp,
+          ip,
           lambdaEvent:event
       }),
         res = genRes();

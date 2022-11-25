@@ -42,8 +42,10 @@ let usingCustomBodyDecoders = false;
 
   const response = specificScama.responses[statusCode]
                 || specificScama.responses.default
-//console.log(response)
+//console.log(data,response,Object.keys(specificScama.responses),statusCode)
 // What Scamas can we use to check the response
+
+
   if (response){
 //    console.log(accept)
 //      console.log(response.content)
@@ -142,7 +144,7 @@ const { schema } = contentSchema
         }*/ // END throw
     //  console.warn("No 'content' entry in Yaml")
     }
-  } else {
+  } else if(400>statusCode){ //response
      throw {
          firetail:"statusCodeNotFound",
          status:400,

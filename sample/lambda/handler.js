@@ -1,6 +1,7 @@
 "use strict";
 
 const data = require('./animals.json')
+// TODO: publish to NPM so we can test on AWS
 const firetailSetup = require("../../dist");
 
 const firetailWrapper = firetailSetup({
@@ -24,5 +25,6 @@ module.exports.pets = firetailWrapper((event,context) => {
   return {
     statusCode,
     body: JSON.stringify(data),
+  //  headers:[] /// look into headers setting content type
   };
 });

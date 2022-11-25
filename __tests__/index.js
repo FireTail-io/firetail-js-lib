@@ -1,109 +1,10 @@
+const Serverless_Events = require('./sampleEvents.json')
+const data = require('./animals.json')
 const firetailSetup = require("../dist");
 const firetailOpts = {
   addApi:"./cases.yaml",
   testing:true
 }
-
-/*
-
-var testSet = []
-
-testSet.push({
-	result:{
-  	params:{
-    	b:"xx"
-    },
-    path:"/a/{b}"
-  },
-  url : "/a/xx",
-  yamlPaths : ["/a/{b}"]
-})
-
-testSet.push({
-	result:null,
-  url : "/bar",
-  yamlPaths : ["/foo"]
-})
-
-testSet.push({
-	result:null,
-  url : "/a",
-  yamlPaths : ["/a/{b}"]
-})
-
-testSet.push({
-	result:null,
-  url : "/a/b",
-  yamlPaths : ["/a"]
-})
-
-testSet.push({
-	result:{
-  	params:{
-    	b:"foo",
-      d:"at"
-    },
-    path:"/a/{b}/c{d}"
-  },
-  url : "/a/foo/cat",
-  yamlPaths : ["/z","/c/{b}","/a/{b}/c{d}","/abc"]
-})
-
-testSet.push({
-	result:{
-  	params:{
-    	b:"xx",
-      d:"at"
-    },
-    path:"/a/{b}/c{d}/e"
-  },
-  url : "/a/xx/cat/e",
-  yamlPaths : ["/z","/c/{b}","/a/{b}/c{d}/e","/abc"]
-})
-
-testSet.push({
-	result:{
-  	params:{
-    	org_uuid:"ORGID",
-      app_uuid:"APPID"
-    },
-    path:"/organisations/{org_uuid}/applications/{app_uuid}/apis"
-  },
-  url : "/organisations/ORGID/applications/APPID/apis",
-	yamlPaths : [
-    "/organisations/{org_uuid}/applications",
-  	"/organisations/{org_uuid}/applications/{app_uuid}",
-    "/organisations/{org_uuid}/applications/{app_uuid}/apis",
-    "/organisations/{org_uuid}/applications/{app_uuid}/apis/{api_uuid}",
-    "/organisations/{org_uuid}/applications/{app_uuid}/apis/{api_uuid}/tokens",
-    "/organisations/{org_uuid}/applications/{app_uuid}/apis/{api_uuid}/requests"
-  ]
-})
-
-testSet.push({
-	result:{
-  	params:{
-    	org_uuid:"ORGID"
-    },
-    path:"/organisations/{org_uuid}/integrations/available"
-  },
-  url : "/organisations/ORGID/integrations/available",
-	yamlPaths : [
-    "/organisations/{org_uuid}/integrations/available",
-  	"/organisations/{org_uuid}/integrations/{customer_integration_uuid}"
-  ]
-})
-
-testSet.push({
-	result:null,
-  url : "/organisations/ORGID/integrations/available/foo",
-	yamlPaths : [
-    "/organisations/{org_uuid}/integrations/available",
-  	"/organisations/{org_uuid}/integrations/{customer_integration_uuid}"
-  ]
-})
-
-*/
 
 function genReq(override={}) {
   const req = {
@@ -172,89 +73,95 @@ describe('test YAML file is ok', () => {
 })
 
 //=====================================================
-//====================================== test GET calls
+//==================================== test Firetail JS
 //=====================================================
 
 describe('test Firetail', () => {
 
-//+++++++++++ should lookup "operationId" ~ nasted obj
-//++++++++++++++++++++++++++++++++++++++++++++++++++++
+  //+++++++++++ should lookup "operationId" ~ nasted obj
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-  test('should load operationId Fns from Dir', () => {
-    const myFiretailOpts = Object.assign({},firetailOpts)
-      myFiretailOpts.specificationDir = "./specificationDir"
-      myFiretailOpts.addApi = ()=>firetailOpts.addApi
-      firetailSetup(myFiretailOpts)
-      expect(true).toBe(true);
-  })
-
-//++++++++++ should error if YAML PATH is not a string
-//++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-  test('should error if YAML PATH is not a string', () => {
-
-    const myFiretailOpts = Object.assign({},firetailOpts)
-          myFiretailOpts.addApi = 123
-    expect(() =>{
-      firetailSetup(myFiretailOpts)
-    }).toThrowError();
-
-}); // END test 'should error if YAML PATH is not a string'
-
-//++++++++++++++++++ should error if missing YAML PATH
-//++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-  test('should error if missing YAML PATH', () => {
-
-    const myFiretailOpts = Object.assign({},firetailOpts)
-    delete myFiretailOpts.addApi
-    expect(() =>{
-      firetailSetup(myFiretailOpts)
-    }).toThrowError();
-
-}); // END test 'should error if missing YAML PATH'
-
-//+++++++++++++++++ should error if URL is not in YAML
-//++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-//++ should work with process.env.API_YAML = YAML PATH
-//++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-  test('should work with process.env.API_YAML = YAML PATH', () => {
-
-    const myFiretailOpts = Object.assign({},firetailOpts)
-    delete myFiretailOpts.addApi
-    Object.assign(process.env,{ API_YAML:firetailOpts.addApi })
-    firetailSetup(myFiretailOpts)
-    delete process.env.API_YAML
-    expect(true).toBe(true);
-
-}); // END test 'should work with process.env.API_YAML = YAML PATH'
-
-//+++++++++++++++++ should error if URL is not in YAML
-//++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-  test('should error if URL is not in YAML', (done) => {
-
-    let optId_called = false
-    let app_called   = false
-    const next = ()=>{ app_called = true }
-
-    const myFiretailOpts = Object.assign({},firetailOpts)
-          myFiretailOpts.dev = true
-    const res = genRes({
-      end:()=>{
-        expect(res.statusCode).toBe(404);
-        done()
-      }
+    test('should load operationId Fns from Dir', () => {
+      const myFiretailOpts = Object.assign({},firetailOpts)
+        myFiretailOpts.specificationDir = "./specificationDir"
+        myFiretailOpts.addApi = ()=>firetailOpts.addApi
+        firetailSetup(myFiretailOpts)
+        expect(true).toBe(true);
     })
-    const firetailMiddleware = firetailSetup(myFiretailOpts)
-          firetailMiddleware(genReq({
-            originalUrl:"/something"
-          }),res , next)
 
-}); // END test 'should error if URL is not in YAML'
+  //++++++++++ should error if YAML PATH is not a string
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+    test('should error if YAML PATH is not a string', () => {
+
+      const myFiretailOpts = Object.assign({},firetailOpts)
+            myFiretailOpts.addApi = 123
+      expect(() =>{
+        firetailSetup(myFiretailOpts)
+      }).toThrowError();
+
+  }); // END test 'should error if YAML PATH is not a string'
+
+  //++++++++++++++++++ should error if missing YAML PATH
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    test('should error if missing YAML PATH', () => {
+
+      const myFiretailOpts = Object.assign({},firetailOpts)
+      delete myFiretailOpts.addApi
+      expect(() =>{
+        firetailSetup(myFiretailOpts)
+      }).toThrowError();
+
+  }); // END test 'should error if missing YAML PATH'
+
+  //+++++++++++++++++ should error if URL is not in YAML
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+  //++ should work with process.env.API_YAML = YAML PATH
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    test('should work with process.env.API_YAML = YAML PATH', () => {
+
+      const myFiretailOpts = Object.assign({},firetailOpts)
+      delete myFiretailOpts.addApi
+      Object.assign(process.env,{ API_YAML:firetailOpts.addApi })
+      firetailSetup(myFiretailOpts)
+      delete process.env.API_YAML
+      expect(true).toBe(true);
+
+  }); // END test 'should work with process.env.API_YAML = YAML PATH'
+
+  //+++++++++++++++++ should error if URL is not in YAML
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    test('should error if URL is not in YAML', (done) => {
+
+      let optId_called = false
+      let app_called   = false
+      const next = ()=>{ app_called = true }
+
+      const myFiretailOpts = Object.assign({},firetailOpts)
+            myFiretailOpts.dev = true
+      const res = genRes({
+        end:()=>{
+          expect(res.statusCode).toBe(404);
+          done()
+        }
+      })
+      const firetailMiddleware = firetailSetup(myFiretailOpts)
+            firetailMiddleware(genReq({
+              originalUrl:"/something"
+            }),res , next)
+
+  }); // END test 'should error if URL is not in YAML'
+
+})
+//=====================================================
+//====================================== test GET calls
+//=====================================================
+
+describe('test Firetail:Express', () => {
 
 //++++++++++++++++ should error if Verb is not in YAML
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -386,11 +293,9 @@ describe('test Firetail', () => {
           } // myFiretailOpts.operations
     const res = genRes({
       end:()=>{
-        if(!done) return;
         expect(optId_called).toBe(true);
         expect(app_called).toBe(false);
         done()
-        done = 0
       }
     })
     const firetailMiddleware = firetailSetup(myFiretailOpts)
@@ -429,11 +334,9 @@ describe('test Firetail', () => {
             originalUrl:"/check_operationId_fn"
           }), genRes({
             end:()=>{
-              if(!done) return;
               expect(optId_called).toBe(true);
               expect(app_called).toBe(false);
               done()
-              done = 0
             }
           }), next)
   }); // END test 'should lookup "operationId" ~ named'
@@ -462,11 +365,9 @@ describe('test Firetail', () => {
             originalUrl:"/check/foo"
           }), genRes({
             end:()=>{
-              if(!done) return;
               expect(optId_called).toBe(true);
               expect(app_called).toBe(false);
               done()
-              done = 0
             }
           }), next)
 
@@ -491,12 +392,15 @@ describe('test Firetail', () => {
     const myFiretailOpts = Object.assign({},firetailOpts)
     myFiretailOpts.operations = {
       "check_frag_query":(req,res)=>{
+        //console.log("------ 1",req.params,req.query,vals)
           optId_called = true
           expect(req.params.fragmentVal2).toBe(vals.fVal2);
-          expect(req.query.limit).toBe(vals.limit);
+          expect(req.query.limit).toBe(+vals.limit);
           expect(req.query.marker).toBe(vals.marker);
+            //console.log("------ 2")
           res.send()
           res.end()
+          //  console.log("------ 3")
       } // END "optId.basic"
     } // END myFiretailOpts.operations
 
@@ -539,7 +443,7 @@ describe('test Firetail', () => {
       "check_frag_query":(req,res)=>{
           optId_called = true
           expect(req.params.fragmentVal2).toBe(vals.fragmentVal2);
-          expect(req.query.limit).toBe(vals.limit);
+          expect(req.query.limit).toBe(+vals.limit);
           expect(req.query.marker).toBe(vals.marker);
           res.send()
           res.end()
@@ -634,6 +538,64 @@ describe('test Firetail', () => {
 }); // END describe 'test GET requests'
 
 
+
+//=====================================================
+//====================================== test GET calls
+//=====================================================
+
+describe('test Firetail:Serverless', () => {
+
+
+    test('should work with lambda function url', (done) => {
+
+      const myFiretailOpts = {dev:true,lambda:true, addApi:"./petstore.yaml"}
+      const firetailWrapper = firetailSetup(myFiretailOpts)
+
+      const next = firetailWrapper((event) => {
+        const statusCode = 200
+        if(event.queryStringParameters
+        && event.queryStringParameters.limit){
+          return {
+            statusCode,
+            body: JSON.stringify(data.slice(0, event.queryStringParameters.limit)),
+          };
+        }
+        return {
+          statusCode,
+          body: JSON.stringify(data),
+        };
+      });
+
+      const cLog = console.log
+
+      console.log = (txt)=>{
+        cLog(txt,new Error().stack)
+        expect(txt.startsWith("firetail:log-ext:")).toBe(true);
+      }
+      next(Serverless_Events["lambda function url"])
+      .then(({statusCode,body})=>{
+        expect(statusCode).toBe(200);
+        expect(body).toBe('[{"id":1,"name":"Bubbles","tag":"fish"},'+
+                           '{"id":2,"name":"Jax","tag":"cat"},'+
+                           '{"id":3,"name":"Tiger Lily","tag":"cat"},'+
+                           '{"id":4,"name":"Buzz","tag":"dog"},'+
+                           '{"id":5,"name":"Duke"}]')
+        return next(Serverless_Events["api Gateway Proxy Event"])
+      }).then(({statusCode,body})=>{
+          expect(statusCode).toBe(200);
+          expect(body).toBe('[{"id":1,"name":"Bubbles","tag":"fish"},'+
+                             '{"id":2,"name":"Jax","tag":"cat"}]')
+        console.log = cLog.bind(console)
+        done()
+      })
+
+    })
+})
+
+//=====================================================
+//========================================= test secure
+//=====================================================
+
 describe('test secure in requests', () => {
 
     test('should reject if JWT is missing', (done) => {
@@ -677,7 +639,7 @@ describe('test secure in requests', () => {
 
         const myFiretailOpts = Object.assign({dev:true},firetailOpts)
 
-        myFiretailOpts.securities = {
+        myFiretailOpts.authCallbacks = {
           jwt:(authorization)=>{
             verifier_called = true
           }
@@ -720,9 +682,9 @@ describe('test secure in requests', () => {
                   jwt_basic:next
                 } // END myFiretailOpts.operations
 
-                myFiretailOpts.securities = {
-                  jwt:(authorization)=>{
-                    expect(authorization).toBe("...");
+                myFiretailOpts.authCallbacks = {
+                  jwt:({authorization,token,scope},headers)=>{
+                    expect(token).toBe("...");
                     throw new Error("bad value")
                   }
                 } // END securities
@@ -760,15 +722,14 @@ describe('test secure in requests', () => {
             app:{jwt_basic:next}
           } // END myFiretailOpts.operations
 
-          myFiretailOpts.securities = {
-            jwt:(authorization)=>{
+          myFiretailOpts.authCallbacks = {
+            jwt:(vals)=>{
               return 123
             }
           } // END securities
 
           const res = genRes({
             end:()=>{
-              if(!done) return;
               // check status code is 401
               expect(res.statusCode).toBe(401);
               //check message
@@ -777,7 +738,6 @@ describe('test secure in requests', () => {
               expect(verifier_called).toBe(false);
               expect(   basic_called).toBe(false);
               done()
-              done = 0
             } // END end
           }) // END genRes
 
@@ -816,8 +776,8 @@ describe('test secure in requests', () => {
               } // END operations
             } // END myFiretailOpts.operations
 
-            myFiretailOpts.securities = {
-              jwt:(header)=>{
+            myFiretailOpts.authCallbacks = {
+              jwt:(vals,header)=>{
                 verifier_called = true
                 return {
                     sub : "1234567890",
@@ -829,7 +789,6 @@ describe('test secure in requests', () => {
 
       const res = genRes({
         end:()=>{
-          if(!done) return;
           // check status code is 401
           expect(res.statusCode).toBe(200);
 
@@ -839,7 +798,6 @@ describe('test secure in requests', () => {
           expect(verifier_called).toBe(true);
           expect(   basic_called).toBe(true);
           done()
-          done = 0
         } // END end
       }) // END genRes
 
@@ -869,8 +827,8 @@ describe('test secure in requests', () => {
         } // END operations
       } // END myFiretailOpts.operations
 
-      myFiretailOpts.securities = {
-        jwt:(token, required_scopes)=>{
+      myFiretailOpts.authCallbacks = {
+        jwt:({token,scope}, headers)=>{
           verifier_called = true
           return {
               sub : "1234567890",
@@ -881,7 +839,6 @@ describe('test secure in requests', () => {
       }
       const res = genRes({
         end:()=>{
-          if(!done) return;
           // check status code is 401
           expect(res.statusCode).toBe(200);
 
@@ -891,7 +848,6 @@ describe('test secure in requests', () => {
           expect(verifier_called).toBe(true);
           expect(   basic_called).toBe(true);
           done()
-          done = 0
         } // END end
       }) // END genRes
 
