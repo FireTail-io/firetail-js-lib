@@ -569,7 +569,7 @@ describe('test Firetail:Serverless', () => {
       const cLog = console.log
 
       console.log = (txt)=>{
-        cLog(txt,new Error().stack)
+        //cLog(txt,new Error().stack)
         expect(txt.startsWith("firetail:log-ext:")).toBe(true);
       }
       next(Serverless_Events["lambda function url"])
