@@ -205,7 +205,7 @@ module.exports = function middleware(req, res, next) {
   
     }*/
     var end = function () {
-        end = function () { return console.log("END was already CALLeD"); };
+        end = function () { }; //console.log("END was already CALLeD")
         res.end = function () { };
         var args = args2Arr(arguments);
         //  console.log("res.end",args)

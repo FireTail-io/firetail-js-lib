@@ -87,9 +87,11 @@ interface Options {
 if( ! areWeTestingWithJest()){
     try{
       const packageJsonPath = path.resolve(path.dirname(require.main && require.main.filename ||""),"./package.json")
-      const packageJson = require(packageJsonPath)
-      if(packageJson.firetail){
-        defaultOpts = packageJson.firetail
+      if (fs.existsSync(packageJsonPath)) {
+        const packageJson = require(packageJsonPath)
+        if(packageJson.firetail){
+          defaultOpts = packageJson.firetail
+        }
       }
     } catch (err){
       console.error(err)

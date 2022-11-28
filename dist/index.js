@@ -63,9 +63,11 @@ var defaultOpts = {};
 if (!areWeTestingWithJest()) {
     try {
         var packageJsonPath = path.resolve(path.dirname(require.main && require.main.filename || ""), "./package.json");
-        var packageJson = require(packageJsonPath);
-        if (packageJson.firetail) {
-            defaultOpts = packageJson.firetail;
+        if (fs.existsSync(packageJsonPath)) {
+            var packageJson = require(packageJsonPath);
+            if (packageJson.firetail) {
+                defaultOpts = packageJson.firetail;
+            }
         }
     }
     catch (err) {
