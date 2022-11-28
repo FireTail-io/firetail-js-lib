@@ -236,7 +236,7 @@ if("object" === typeof errContent){
   }*/
 
   let end = function () {
-    end = ()=> console.log("END was already CALLeD")
+    end = ()=> {}//console.log("END was already CALLeD")
     res.end = ()=>{}
     const args = args2Arr(arguments)
     //  console.log("res.end",args)

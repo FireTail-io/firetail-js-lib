@@ -66,7 +66,7 @@ if(data.lambda){
     "execution_time": executionTime
   }
   //console.log("firetail:log-ext:",logExt)
-  console.log("firetail:log-ext:"+btoa(JSON.stringify(logExt)))
+  console.log("firetail:log-ext:"+Buffer.from(JSON.stringify(logExt)).toString('base64'))
 
 }else{
     const options = {
