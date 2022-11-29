@@ -1,89 +1,12 @@
 
 const data = require('./animals.json')
 
-const Color = {
-  Reset: "\x1b[0m",
-  Bright: "\x1b[1m",
-  Dim: "\x1b[2m",
-  Underscore: "\x1b[4m",
-  Blink: "\x1b[5m",
-  Reverse: "\x1b[7m",
-  Hidden: "\x1b[8m",
-
-  FgBlack: "\x1b[30m",
-  FgRed: "\x1b[31m",
-  FgGreen: "\x1b[32m",
-  FgYellow: "\x1b[33m",
-  FgBlue: "\x1b[34m",
-  FgMagenta: "\x1b[35m",
-  FgCyan: "\x1b[36m",
-  FgWhite: "\x1b[37m",
-
-  BgBlack: "\x1b[40m",
-  BgRed: "\x1b[41m",
-  BgGreen: "\x1b[42m",
-  BgYellow: "\x1b[43m",
-  BgBlue: "\x1b[44m",
-  BgMagenta: "\x1b[45m",
-  BgCyan: "\x1b[46m",
-  BgWhite: "\x1b[47m"
-}
-//console.log(Color)
-   /*
-console.log(`\x1b[38;2;230;159;0m${"orange"}\x1b[0m`);
-console.log(`\x1b[38;2;86;180;233m${"skyBlue"}\x1b[0m`);
-console.log(`\x1b[38;2;0;158;115m${"bluishGreen"}\x1b[0m`);
-console.log(`\x1b[38;2;240;228;66m${"Yellow"}\x1b[0m`);
-console.log(`\x1b[38;2;0;114;178m${"Blue"}\x1b[0m`);
-console.log(`\x1b[38;2;213;94;0m${"Vermillon"}\x1b[0m`);
-console.log(`\x1b[38;2;204;121;167m${"reddishPurple"}\x1b[0m`);*/
-
-//console.log(`\x1b[31m${"str"}\x1b[39m`);
-/*
-  for (let i = 0; i < 256; ++i)
-    console.log(`\x1b[38;5;${i}mhe ${i}m llo\x1b[0m`)
-  for (let i = 0; i < 256; ++i)
-    console.log(`\x1b[48;5;${i}mhe ${i}m llo\x1b[0m`)
-*/
-//=====================================================
-//============================================= Imports
-//=====================================================
-/*
-const stream = new WritableStream({
-  start(controller) {
-
-  },
-  write(chunk, controller) {
-console.log(chunk+"")
-  },
-  close(controller) {
-
-  },
-  abort(reason) {
-
-  }
-}, {
-  highWaterMark: 3,
-  size: () => 1
-});
-
-//stream.stdout = stream
-const {Console} = console
-
-const con = new Console(stream)
-con.log({a:4});
-*/
-
 const express = require('express')
 const scribbles = require('scribbles')
 const parseXmlString = require('xml2json');
-//global.console = scribbles
-global.scribbles = scribbles
+global.console = scribbles
 const app = express()
 const port = 3001
-
-
-require('./test');
 
 app.use(
   express.raw({
@@ -108,7 +31,7 @@ function listPets(req, res){
 //=================================== Firetail settings
 //=====================================================
 
-const firetailSetup = require("../../dist");//require("firetail")
+const firetailSetup = require("@public.firetail.io/firetail-api");
 
 const firetailOpts = {
   addApi: "./petstore.yaml",
@@ -158,7 +81,6 @@ const firetailOpts = {
     'application/xml': body => parseXmlString.toJson(body,{object:true}).Pet
   }
 } // END firetailOpts
-//console.log(firetailOpts)
 
 //=====================================================
 //======================================== Add Firetail
@@ -187,7 +109,6 @@ app.delete('/pets/:petId', (req, res) => {
   }
 
   const copy = [...data]
-  //console.log(copy)
   let removedItem = null
 
   //empty
@@ -204,13 +125,9 @@ app.delete('/pets/:petId', (req, res) => {
     }
   })
 
-  //console.log(data)
-  //console.log(removedItem)
-  //console.log(res)
-//  console.log(Object.keys(res))
   res.status(202)
   res.json(removedItem)
-})
+}) // END app.delete '/pets/:petId'
 
 
 //=====================================================
