@@ -1,6 +1,6 @@
 # Firetail JS Library
 
-Frustrated with a lack of quality service level API tool? Firetail is here to help! [![npm version](https://badge.fury.io/js/firetail-api.svg)](https://www.npmjs.com/package/firetail-api) is a middleware for **Express** and **Node** development. This document will cover setup and configuration. You can also find a complete working example, in the [sample](./sample) folder.
+Frustrated with a lack of quality service level API tool? Firetail is here to help! [![npm version](https://badge.fury.io/js/@public.firetail.io%2Ffiretail-api.svg)](https://www.npmjs.com/package/@public.firetail.io/firetail-api) is a middleware for **Express** and **Node** development. This document will cover setup and configuration. You can also find a complete working example, in the [sample](./sample) folder.
 
 [![Code Coverage](https://github.com/FireTail-io/firetail-js-lib/actions/workflows/codecov.yml/badge.svg)](https://github.com/FireTail-io/firetail-js-lib/actions/workflows/codecov.yml)
 [![codecov](https://codecov.io/gh/FireTail-io/firetail-js-lib/branch/main/graph/badge.svg?token=BN44NPKV8H)](https://codecov.io/gh/FireTail-io/firetail-js-lib)
@@ -21,7 +21,7 @@ Firetail is a Middleware that intercept Http/Rest requests based on [OpenAPI Spe
 
 ### Prerequisites
 
-[![Node v14](http://img.shields.io/badge/node-v14+-darkgreen.svg)](https://nodejs.org) [![Express v4+](http://img.shields.io/badge/Express-v4+-darkred.svg)](https://expressjs.com)
+[![Node v14](http://img.shields.io/badge/node-v14+-darkgreen.svg)](https://nodejs.org) with [![Express v4+](http://img.shields.io/badge/Express-v4+-darkred.svg)](https://expressjs.com) or [![AWS Lamdba](https://img.shields.io/badge/AWS-Lamdba-orange.svg)](https://aws.amazon.com/lambda/)
 
 
 ### Installing It
