@@ -1,19 +1,13 @@
 "use strict";
-
 const data = require('./animals.json')
-// TODO: publish to NPM so we can test on AWS
-const firetailSetup = require("../../dist");
+const scribbles = require("scribbles");
+scribbles.config({ mode:"prod" })
+const firetailSetup = require("@public.firetail.io/firetail-api");
 
-const firetailWrapper = firetailSetup({
-
-  // This is all you need!!
-  lambda:true,
-
-  addApi: "./petstore.yaml",
-})
+const firetailWrapper = firetailSetup({ addApi: "./petstore.yaml" })
 
 module.exports.pets = firetailWrapper((event,context) => {
-
+  scribbles.log(event)
   const statusCode = 200
   if(event.queryStringParameters
   && event.queryStringParameters.limit){

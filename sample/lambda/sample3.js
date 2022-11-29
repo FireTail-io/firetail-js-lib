@@ -3,7 +3,7 @@
 const data = require('./animals.json')
 const events = require('./sampleEvents.json')
 //console.log(require)
-const firetailSetup = require("../../dist");
+const firetailSetup = require("@public.firetail.io/firetail-api");
 
 const firetailWrapper = firetailSetup({
   lambda:true,

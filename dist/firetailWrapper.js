@@ -37,13 +37,16 @@ function genRes(override) {
             return res;
         },
         end: function () {
+            //console.log("end ===>>>",res.__data)
             return res;
         },
         send: function (x) {
+            //console.log("send ===>>>",x)
             res.__data = x;
             return res;
         },
         json: function (x) {
+            //console.log("json ===>>>",x)
             res.__data = x;
             return res;
         }
@@ -69,14 +72,24 @@ function firetailWrapper(next) {
                 hostname: event.headers.host,
                 ip: ip,
                 lambdaEvent: event
-            }), res = genRes();
+            }), res = genRes({
+                end: function () {
+                    //console.log("end ===>>>",res.__data)
+                    //console.log(callHasErrored)
+                    if (callHasErrored)
+                        setTimeout(function () { return resolve(res.__data); });
+                }
+            });
+            var callHasErrored = true;
             firetailMiddleware(req, res, function () {
                 var result = next(event, context);
-                //  console.log("--->>>",typeof result,result)
+                //  console.log("--->>>",result)
                 if (!result.then) {
                     result = Promise.resolve(result);
                 }
                 result.then(function (val) {
+                    callHasErrored = false;
+                    //  console.log("--->>>",result)
                     res.json(JSON.parse(val.body));
                     //  console.log(" --- ",res.__data)
                     var payload = __assign(__assign({}, val), { body: JSON.stringify(res.__data) });
