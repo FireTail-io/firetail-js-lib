@@ -1,6 +1,7 @@
 const Serverless_Events = require('./sampleEvents.json')
 const data = require('./animals.json')
 const firetailSetup = require("../dist");
+const errMessages = require("../dist/services/lang")
 const firetailOpts = {
   addApi:"./cases.yaml",
   testing:true
@@ -50,13 +51,16 @@ function genRes(override) {
      return res
    },
    end:()=>{
+     //console.log("end ===>>>",res.__data)
      return res
    },
    send:(x)=>{
+     //console.log("send ===>>>",x)
      res.__data = x;
      return res
    },
    json:(x)=>{
+    // console.log("json ===>>>",x)
      res.__data = x;
      return res
    }
@@ -374,6 +378,123 @@ describe('test Firetail:Express', () => {
   }); // END test 'should process fragments'
 
 
+//++++++ should process bad fragments + bad query ~ OK
+//++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+  test('should process bad fragments + bad query ~ OK', (done) => {
+
+        let optId_called = false
+        let app_called = false
+        const next = ()=>{ app_called = true }
+
+        const vals = {
+          fVal2:"1",
+          limit:"3",
+          marker:undefined
+        }
+
+        const myFiretailOpts = Object.assign({},firetailOpts)
+        myFiretailOpts.operations = {
+          dev:true,
+          "check_bad_frag_query":(req,res)=>{
+            //console.log("------ 1",req.params,req.query,vals)
+            optId_called = true
+            res.send()
+            res.end()
+           } // END "optId.basic"
+        } // END myFiretailOpts.operations
+
+        const req = genReq({
+            originalUrl:`/check_bad/${vals.fVal2}/withquery?limit=${vals.limit}`,
+            query:{
+              limit:vals.limit
+            }
+          })
+        const res = genRes({
+          end:()=>{
+            //console.log(res)
+            expect(optId_called).toBe(true);
+            expect(app_called).toBe(false);
+            done()
+          }
+        })
+        firetailSetup(myFiretailOpts)(req,res, next)
+
+  }); // END test 'should process fragments'
+
+  //++++++ should process bad fragments + bad query ~ OK
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    test('should process bad fragments + query', (done) => {
+
+          let optId_called = false
+          let app_called = false
+          const next = ()=>{ app_called = true }
+
+          const vals = {
+            fVal2:"asd",
+            limit:"3",
+            marker:undefined
+          }
+
+          const myFiretailOpts = Object.assign({},firetailOpts)
+          myFiretailOpts.operations = {
+            "check_bad_frag_query":(req,res)=>{} // END "optId.basic"
+          } // END myFiretailOpts.operations
+
+          const req = genReq({
+              originalUrl:`/check_bad/${vals.fVal2}/withquery?limit=${vals.limit}`,
+              query:{
+                limit:vals.limit
+              }
+            })
+          const res = genRes({
+            end:()=>{
+              expect(optId_called).toBe(false);
+              expect(app_called).toBe(false);
+              done()
+            }
+          })
+          firetailSetup(myFiretailOpts)(req,res, next)
+
+    }); // END test 'should process fragments'
+
+      //++++++ should process bad fragments + bad query ~ OK
+      //++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+        test('should process bad fragments + bad query', (done) => {
+
+              let optId_called = false
+              let app_called = false
+              const next = ()=>{ app_called = true }
+
+              const vals = {
+                fVal2:"1s",
+                limit:"3s",
+                marker:undefined
+              }
+
+              const myFiretailOpts = Object.assign({},firetailOpts)
+              myFiretailOpts.operations = {
+                "check_bad_frag_query":(req,res)=>{} // END "optId.basic"
+              } // END myFiretailOpts.operations
+
+              const req = genReq({
+                  originalUrl:`/check_bad/${vals.fVal2}/withquery?limit=${vals.limit}`,
+                  query:{
+                    limit:vals.limit
+                  }
+                })
+              const res = genRes({
+                end:()=>{
+                  expect(optId_called).toBe(false);
+                  expect(app_called).toBe(false);
+                  done()
+                }
+              })
+              firetailSetup(myFiretailOpts)(req,res, next)
+
+        }); // END test 'should process fragments'
 //+++++++++++++++++++ should process fragments + query
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -861,3 +982,29 @@ describe('test secure in requests', () => {
     })
 
  })
+
+
+ //=====================================================
+ //========================================= test Lang
+ //=====================================================
+
+ describe('test developer messages', () => {
+
+     test('should reject if JWT is missing', () => {
+       let temp = false;
+       for(const groupName in errMessages){
+         for(const firetailTag in errMessages[groupName]){
+           const message = errMessages[groupName][firetailTag]
+           if("function" === typeof message){
+              if("notFound" === firetailTag)
+                temp = message({url:"/",verb:"GET",scamaForEndPoint:{a:1,b:2}})
+              else
+                temp = message({})
+           } else {
+              temp = message
+           }
+         }
+         expect(!!temp).toBe(true);
+       }
+     })
+})
