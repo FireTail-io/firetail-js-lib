@@ -31,13 +31,13 @@ In your command line, type:
 $ npm install --save firetail-js
 ```
 
-### a HelloWorld
+### Express.js HelloWorld
 Place your API YAML inside the root path of your application. Then run:
 
 ```js
 // ========== Lets import what we are going to need
 const express = require('express')
-const firetailSetup = require("firetail-js")
+const firetailSetup = require("@public.firetail.io/firetail-api");
 // ========== Create our server
 const app = express()
 
@@ -67,6 +67,30 @@ app.listen(port, () => {
 })
 ```
 
+### AWS Lamdba HelloWorld
+Place your API YAML inside the root path of your application. Then run:
+
+```js
+// ========== Lets import what we are going to need
+const firetailSetup = require("@public.firetail.io/firetail-api");
+
+// ========== firetail options
+const firetailOpts = { lamdba:true, addApi: "./swagger.yaml" }
+
+// ========== install the firetail middleware
+const firetailWrapper = firetailSetup(firetailOpts)
+
+// ========== Add the end-point you want
+//...
+module.exports.app = firetailWrapper((event,context) => {
+  return {
+    statusCode:200,
+    body: "FireTail sample"
+  };
+})
+//... They should match whats in your YAML
+```
+
 # Configuration options. Configuration can be loaded in one of three ways.
   1. Via environment variables
   2. Inside the package.json under a "firetail" attribute
@@ -74,7 +98,9 @@ app.listen(port, () => {
 
 *Note: 1 & 2 can only reference static values. Where as the 3rd option can handle static and dynamic*
 
-⚠️ The `addApi` is the only mandatory option that must be passed!
+## Important ⚠️
+ * The `addApi` is the only mandatory option that must be passed!
+ * `package.json` is not accessible by **Lamdba**! So Configuration **must** be in environment variables or passed in at runtime
 
 **Static values:**  
 
