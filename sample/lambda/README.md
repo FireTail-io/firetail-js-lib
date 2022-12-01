@@ -1,25 +1,54 @@
-<!--
-title: 'AWS Simple HTTP Endpoint example in NodeJS'
-description: 'This template demonstrates how to make a simple HTTP API with Node.js running on AWS Lambda and API Gateway using the Serverless Framework.'
-layout: Doc
-framework: v3
-platform: AWS
-language: nodeJS
-authorLink: 'https://github.com/serverless'
-authorName: 'Serverless, inc.'
-authorAvatar: 'https://avatars1.githubusercontent.com/u/13742415?s=200&v=4'
--->
+# Serverless Framework Example
 
-# Serverless Framework Node HTTP API on AWS
-
-This template demonstrates how to make a simple HTTP API with Node.js running on AWS Lambda and API Gateway using the Serverless Framework.
+This template demonstrates how to make a simple HTTP API with [Firetail](https://www.npmjs.com/package/@public.firetail.io/firetail-api) running on AWS Lambda and API Gateway using the Serverless Framework.
 
 This template does not include any kind of persistence (database). For more advanced examples, check out the [serverless/examples repository](https://github.com/serverless/examples/) which includes Typescript, Mongo, DynamoDB and other examples.
 
-## Usage
+**For a complete kitchen sink style example. See: [Petstore Express.js Example](https://github.com/FireTail-io/firetail-js-lib/tree/main/sample/express)**
 
-### Deployment
+## To get started
 
+Clone this repository
+```cli
+git clone git@github.com:FireTail-io/firetail-js-lib.git
+cd firetail-js-lib/sample/lamdba
+```
+Now we can install the samples dependencies
+```cli
+npm install
+```
+Now you can start the server
+```cli
+serverless offline
+```
+
+## Try it out
+Now that the server is started. Open a browser and go to **http://localhost:3002**
+
+## structure
+```
+lamdba/
+├─ animals.json      ← Sample data to be use
+├─ petstore.yaml     ← The open API specification that this service will a here too
+├─ serverless.yml    ← Entry point and wiring for the service
+└─ handler.js        ← Function and wiring for the service
+```
+
+### We can try some different types of requests
+* *it's recommended when testing an API to use a tool such as [postman](https://www.postman.com/)*
+
+#### Use Lamdba's native routing mechanism | **[GET: /pets](http://localhost:3002/pets)**
+This endpoint list all pets. You can find the implementation at [handler.js ~ module.exports.pets](https://github.com/FireTail-io/firetail-js-lib/blob/lamdba/sample/lambda/handler.js#L9). It is load on [serverless.yml.js ~ functions:pets:handler](https://github.com/FireTail-io/firetail-js-lib/blob/main/sample/lambda/serverless.yml#L13)
+
+The important thing to note is that the service's handler is passed to `firetailWrapper` before being exported. This is what allow Firetail to intercept the request and and apply the API protection.
+
+
+#### Passing query arguments | **[GET: /pets?limit=2](http://localhost:3002/pets?limit=2)**
+ The same as above while utilising queryStringParameters
+
+---
+
+## To deployment this example
 ```
 $ serverless deploy
 ```
@@ -56,37 +85,3 @@ Which should result in response similar to the following (removed `input` conten
   }
 }
 ```
-
-### Local development
-
-You can invoke your function locally by using the following command:
-
-```bash
-serverless invoke local --function hello
-```
-
-Which should result in response similar to the following:
-
-```
-{
-  "statusCode": 200,
-  "body": "{\n  \"message\": \"Go Serverless v3.0! Your function executed successfully!\",\n  \"input\": \"\"\n}"
-}
-```
-
-
-Alternatively, it is also possible to emulate API Gateway and Lambda locally by using `serverless-offline` plugin. In order to do that, execute the following command:
-
-```bash
-serverless plugin install -n serverless-offline
-```
-
-It will add the `serverless-offline` plugin to `devDependencies` in `package.json` file as well as will add it to `plugins` in `serverless.yml`.
-
-After installation, you can start local emulation with:
-
-```
-serverless offline
-```
-
-To learn more about the capabilities of `serverless-offline`, please refer to its [GitHub repository](https://github.com/dherault/serverless-offline).

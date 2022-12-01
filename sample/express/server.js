@@ -59,7 +59,7 @@ const firetailOpts = {
       }
     },
     oauth2:({authorization,scopes},headers)=>{
-      if("oauth2" !== authorization){
+      if("RsT5OjbzRn430zqMLgV3Ia" !== authorization){
         throw new Error("Invalid token")
       }
       const result = {
