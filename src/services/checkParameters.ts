@@ -23,10 +23,11 @@ module.exports = function checkParameters(val: string,schema){
   switch(schema.type) {
     case "number":
     case "integer":
+
       let isok = true
       //format: int64
       const parcedVal = +val
-      if(`${parcedVal}`!== val){
+      if(`${parcedVal}`!== val && "string" === typeof val){
         isErr = { firetail:"notANumber", val }
       }
 

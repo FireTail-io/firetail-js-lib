@@ -1,35 +1,6 @@
 
 const data = require('./animals.json')
 
-//=====================================================
-//============================================= Imports
-//=====================================================
-/*
-const stream = new WritableStream({
-  start(controller) {
-
-  },
-  write(chunk, controller) {
-console.log(chunk+"")
-  },
-  close(controller) {
-
-  },
-  abort(reason) {
-
-  }
-}, {
-  highWaterMark: 3,
-  size: () => 1
-});
-
-//stream.stdout = stream
-const {Console} = console
-
-const con = new Console(stream)
-con.log({a:4});
-*/
-
 const express = require('express')
 const scribbles = require('scribbles')
 const parseXmlString = require('xml2json');
@@ -60,48 +31,56 @@ function listPets(req, res){
 //=================================== Firetail settings
 //=====================================================
 
-const firetailSetup = require("../dist");//require("firetail")
+const firetailSetup = require("@public.firetail.io/firetail-api");
 
 const firetailOpts = {
   addApi: "./petstore.yaml",
   overRideError:(err)=>{
-    console.error("overRideError");
     return err
   },
-  securities:{
+  authCallbacks:{
     jwt:({authorization})=>{
-      console.log(" ------ JWT",authorization)
       const token = authorization.split(" ").pop().replace(/['"]+/g, '')
-      const tokenDecodablePart = token.split('.')[1];
+      const tokenDecodablePart = token.split('.').pop();
       const decoded = Buffer.from(tokenDecodablePart, 'base64').toString();
-
-        // ... CHECK JWT
-      //  if( (Date.now()/1000) > decoded.exp){
-        //  throw new Error("You token is too old")
-      //  }
-
-
-
-        // throw
-
-
       return JSON.parse(decoded)
-    }
+    },
+    key:({authorization})=>{
+      if("key" !== authorization){
+        throw new Error("Invalid token")
+      }
+      return true
+    },
+    basic:({user, pass})=>{
+      if (user == 'admin' && pass == 'password') {
+        return true // authorized
+      } else {
+        throw new Error('You are not authenticated!');
+      }
+    },
+    oauth2:({authorization,scopes},headers)=>{
+      if("RsT5OjbzRn430zqMLgV3Ia" !== authorization){
+        throw new Error("Invalid token")
+      }
+      const result = {
+        scopes:Object.keys(scopes)
+      }
+
+      result.scopes.forEach(scope=>{
+        result[scope] = scope
+      })
+
+      return result
+    },
   },
   // override Express'es controller based on "operationId"
   operations:{
-    // FLAT name
     listPets,
-    // Nested
-  /*  app : {
-      cat_id:cat
-    }*/
   }, // END operations
   customBodyDecoders:{
     'application/xml': body => parseXmlString.toJson(body,{object:true}).Pet
   }
 } // END firetailOpts
-//console.log(firetailOpts)
 
 //=====================================================
 //======================================== Add Firetail
@@ -122,7 +101,9 @@ app.delete('/pets/:petId', (req, res) => {
            .includes(req.params.petId)){
     res.status(400)
        .json({
-         message:`No pet with an ID of "${req.params.petId}" was found`
+         type:req.originalUrl,
+         title:`No pet with an ID of "${req.params.petId}" was found`,
+         status:400
        })
     return;
   }
@@ -144,10 +125,9 @@ app.delete('/pets/:petId', (req, res) => {
     }
   })
 
-  //console.log(res)
-//  console.log(Object.keys(res))
-  res.status(201).json(removedItem)
-})
+  res.status(202)
+  res.json(removedItem)
+}) // END app.delete '/pets/:petId'
 
 
 //=====================================================

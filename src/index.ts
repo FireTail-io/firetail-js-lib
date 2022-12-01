@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const middleware = require('./services/middleware');
 const errMessages = require('./services/lang');
+const firetailWrapper = require("./firetailWrapper");
 //const deepRequire = require('pick-n-mix/utils/deepRequire')
 //const decodedJwt = true
 
@@ -44,8 +45,6 @@ const re = /(?:\.([^.]+))?$/;
 function deepRequire(dirname,selector){
   selector = selector || ["js"]
   return getFilesFromDir(dirname, selector.map(ext=>`.${ext}`)).reduce((packages,file) =>{
-
-      //console.log("file",file)
     if(file === "/index.js")  return packages
     //if(file[0] !== "/") file = "/"+file;
 
@@ -87,14 +86,20 @@ interface Options {
 /* istanbul ignore next */
 if( ! areWeTestingWithJest()){
     try{
-      const packageJsonPath = path.resolve(path.dirname(require.main.filename),"./package.json")
-      const packageJson = require(packageJsonPath)
-      if(packageJson.firetail){
-        defaultOpts = packageJson.firetail
+      const packageJsonPath = path.resolve(path.dirname(require.main && require.main.filename ||""),"./package.json")
+      if (fs.existsSync(packageJsonPath)) {
+        const packageJson = require(packageJsonPath)
+        if(packageJson.firetail){
+          defaultOpts = packageJson.firetail
+        }
       }
     } catch (err){
       console.error(err)
     }
+}
+
+if(undefined === defaultOpts.lambda){
+  defaultOpts.lambda = !!process.env.AWS_LAMBDA_FUNCTION_NAME
 }
 
 //=====================================================
@@ -105,7 +110,7 @@ module.exports = function fileTaileSetup(opts: Options) : Function{
 
   const myOpts = { ...defaultOpts, ...opts }
   //console.log(myOpts)
-  const { addApi, overRideError, operations, dev, decodedJwt, securities, specificationDir, customBodyDecoders, apiKey } = myOpts
+  const { addApi, overRideError, operations, dev, decodedJwt, authCallbacks, specificationDir, customBodyDecoders, apiKey, lambda } = myOpts
 
   //const console = {log:()=>{},warn:()=>{},error:()=>{}}
   let addApiSt = defaultOpts.addApi
@@ -181,14 +186,14 @@ if( specificationDir ){
                                   const {components} = apiSpec
                                   if(components &&
                                      components.securitySchemes){
-                                       if("object" !== typeof securities){
+                                       if("object" !== typeof authCallbacks){
                                          throw {
                                            firetail:"missingJWTFunctions"
                                          }
                                        }
 
                                        const securitySchemeNames = Object.keys(components.securitySchemes)
-                                       const securityNames       = Object.keys(securities)
+                                       const securityNames       = Object.keys(authCallbacks)
 
                                        if(securityNames.length !== securitySchemeNames.length){
                                          throw {
@@ -212,14 +217,15 @@ if( specificationDir ){
         yamlPathSt:addApiSt,
         apiSpecPr,
         dev,
-        securities,
+        authCallbacks,
         customBodyDecoders,
         operationsFn:flattenObj(operations || {}),
-        apiKey
+        apiKey,
+        lambda
       }
 const  myMiddleware = middleware.bind(data)
        myMiddleware.firetailData = data
-return myMiddleware
+return lambda ? firetailWrapper.bind(myMiddleware) : myMiddleware
 
 
 } // END fileTaileSetup

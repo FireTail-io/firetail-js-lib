@@ -1,0 +1,14 @@
+{
+  "scripts": {
+    "s1": "node sample1",
+    "s2": "node sample2",
+    "s3": "node sample3"
+  },
+  "devDependencies": {
+    "serverless-offline": "^11.5.0"
+  },
+  "dependencies": {
+    "@public.firetail.io/firetail-api": "^0.3.0",
+    "scribbles": "^1.5.0"
+  }
+}

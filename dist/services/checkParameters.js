@@ -34,7 +34,7 @@ module.exports = function checkParameters(val, schema) {
             var isok = true;
             //format: int64
             var parcedVal = +val;
-            if ("".concat(parcedVal) !== val) {
+            if ("".concat(parcedVal) !== val && "string" === typeof val) {
                 isErr = { firetail: "notANumber", val: val };
             }
             if (!isErr

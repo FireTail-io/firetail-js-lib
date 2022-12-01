@@ -15,6 +15,7 @@ var path = require('path');
 var fs = require('fs');
 var middleware = require('./services/middleware');
 var errMessages = require('./services/lang');
+var firetailWrapper = require("./firetailWrapper");
 //const deepRequire = require('pick-n-mix/utils/deepRequire')
 //const decodedJwt = true
 function areWeTestingWithJest() {
@@ -44,7 +45,6 @@ var re = /(?:\.([^.]+))?$/;
 function deepRequire(dirname, selector) {
     selector = selector || ["js"];
     return getFilesFromDir(dirname, selector.map(function (ext) { return ".".concat(ext); })).reduce(function (packages, file) {
-        //console.log("file",file)
         if (file === "/index.js")
             return packages;
         //if(file[0] !== "/") file = "/"+file;
@@ -62,15 +62,20 @@ var defaultOpts = {};
 /* istanbul ignore next */
 if (!areWeTestingWithJest()) {
     try {
-        var packageJsonPath = path.resolve(path.dirname(require.main.filename), "./package.json");
-        var packageJson = require(packageJsonPath);
-        if (packageJson.firetail) {
-            defaultOpts = packageJson.firetail;
+        var packageJsonPath = path.resolve(path.dirname(require.main && require.main.filename || ""), "./package.json");
+        if (fs.existsSync(packageJsonPath)) {
+            var packageJson = require(packageJsonPath);
+            if (packageJson.firetail) {
+                defaultOpts = packageJson.firetail;
+            }
         }
     }
     catch (err) {
         console.error(err);
     }
+}
+if (undefined === defaultOpts.lambda) {
+    defaultOpts.lambda = !!process.env.AWS_LAMBDA_FUNCTION_NAME;
 }
 //=====================================================
 //==================================== file Taile Setup
@@ -78,7 +83,7 @@ if (!areWeTestingWithJest()) {
 module.exports = function fileTaileSetup(opts) {
     var myOpts = __assign(__assign({}, defaultOpts), opts);
     //console.log(myOpts)
-    var addApi = myOpts.addApi, overRideError = myOpts.overRideError, operations = myOpts.operations, dev = myOpts.dev, decodedJwt = myOpts.decodedJwt, securities = myOpts.securities, specificationDir = myOpts.specificationDir, customBodyDecoders = myOpts.customBodyDecoders, apiKey = myOpts.apiKey;
+    var addApi = myOpts.addApi, overRideError = myOpts.overRideError, operations = myOpts.operations, dev = myOpts.dev, decodedJwt = myOpts.decodedJwt, authCallbacks = myOpts.authCallbacks, specificationDir = myOpts.specificationDir, customBodyDecoders = myOpts.customBodyDecoders, apiKey = myOpts.apiKey, lambda = myOpts.lambda;
     //const console = {log:()=>{},warn:()=>{},error:()=>{}}
     var addApiSt = defaultOpts.addApi;
     //+++++++++++++++++++++++++++++++++++++++++ genMessage
@@ -144,14 +149,14 @@ module.exports = function fileTaileSetup(opts) {
         const {components} = apiSpec
         if(components &&
            components.securitySchemes){
-             if("object" !== typeof securities){
+             if("object" !== typeof authCallbacks){
                throw {
                  firetail:"missingJWTFunctions"
                }
              }
 
              const securitySchemeNames = Object.keys(components.securitySchemes)
-             const securityNames       = Object.keys(securities)
+             const securityNames       = Object.keys(authCallbacks)
 
              if(securityNames.length !== securitySchemeNames.length){
                throw {
@@ -175,13 +180,14 @@ module.exports = function fileTaileSetup(opts) {
         yamlPathSt: addApiSt,
         apiSpecPr: apiSpecPr,
         dev: dev,
-        securities: securities,
+        authCallbacks: authCallbacks,
         customBodyDecoders: customBodyDecoders,
         operationsFn: flattenObj(operations || {}),
-        apiKey: apiKey
+        apiKey: apiKey,
+        lambda: lambda
     };
     var myMiddleware = middleware.bind(data);
     myMiddleware.firetailData = data;
-    return myMiddleware;
+    return lambda ? firetailWrapper.bind(myMiddleware) : myMiddleware;
 }; // END fileTaileSetup
 //# sourceMappingURL=index.js.map

@@ -1,6 +1,6 @@
 # Firetail JS Library
 
-Frustrated with a lack of quality service level API tool? Firetail is here to help! [![npm version](https://badge.fury.io/js/firetail-api.svg)](https://www.npmjs.com/package/firetail-api) is a middleware for **Express** and **Node** development. This document will cover setup and configuration. You can also find a complete working example, in the [sample](./sample) folder.
+Frustrated with a lack of quality service level API tool? Firetail is here to help! [![npm version](https://badge.fury.io/js/@public.firetail.io%2Ffiretail-api.svg)](https://www.npmjs.com/package/@public.firetail.io/firetail-api) is a middleware for **Express** and **Node** development. This document will cover setup and configuration. You can also find a complete working example, in the [sample](./sample) folder.
 
 [![Code Coverage](https://github.com/FireTail-io/firetail-js-lib/actions/workflows/codecov.yml/badge.svg)](https://github.com/FireTail-io/firetail-js-lib/actions/workflows/codecov.yml)
 [![codecov](https://codecov.io/gh/FireTail-io/firetail-js-lib/branch/main/graph/badge.svg?token=BN44NPKV8H)](https://codecov.io/gh/FireTail-io/firetail-js-lib)
@@ -21,7 +21,7 @@ Firetail is a Middleware that intercept Http/Rest requests based on [OpenAPI Spe
 
 ### Prerequisites
 
-[![Node v14](http://img.shields.io/badge/node-v14+-darkgreen.svg)](https://nodejs.org) [![Express v4+](http://img.shields.io/badge/Express-v4+-darkred.svg)](https://expressjs.com)
+[![Node v14](http://img.shields.io/badge/node-v14+-darkgreen.svg)](https://nodejs.org) with [![Express v4+](http://img.shields.io/badge/Express-v4+-darkred.svg)](https://expressjs.com) or [![AWS Lamdba](https://img.shields.io/badge/AWS-Lamdba-orange.svg)](https://aws.amazon.com/lambda/)
 
 
 ### Installing It
@@ -31,13 +31,13 @@ In your command line, type:
 $ npm install --save firetail-js
 ```
 
-### a HelloWorld
+### Express.js HelloWorld
 Place your API YAML inside the root path of your application. Then run:
 
 ```js
 // ========== Lets import what we are going to need
 const express = require('express')
-const firetailSetup = require("firetail-js")
+const firetailSetup = require("@public.firetail.io/firetail-api");
 // ========== Create our server
 const app = express()
 
@@ -67,6 +67,30 @@ app.listen(port, () => {
 })
 ```
 
+### AWS Lamdba HelloWorld
+Place your API YAML inside the root path of your application. Then run:
+
+```js
+// ========== Lets import what we are going to need
+const firetailSetup = require("@public.firetail.io/firetail-api");
+
+// ========== firetail options
+const firetailOpts = { lamdba:true, addApi: "./swagger.yaml" }
+
+// ========== install the firetail middleware
+const firetailWrapper = firetailSetup(firetailOpts)
+
+// ========== Add the end-point you want
+//...
+module.exports.app = firetailWrapper((event,context) => {
+  return {
+    statusCode:200,
+    body: "FireTail sample"
+  };
+})
+//... They should match whats in your YAML
+```
+
 # Configuration options. Configuration can be loaded in one of three ways.
   1. Via environment variables
   2. Inside the package.json under a "firetail" attribute
@@ -74,7 +98,9 @@ app.listen(port, () => {
 
 *Note: 1 & 2 can only reference static values. Where as the 3rd option can handle static and dynamic*
 
-⚠️ The `addApi` is the only mandatory option that must be passed!
+## Important ⚠️
+ * The `addApi` is the only mandatory option that must be passed!
+ * `package.json` is not accessible by **Lamdba**! So Configuration **must** be in environment variables or passed in at runtime
 
 **Static values:**  
 
@@ -89,7 +115,7 @@ app.listen(port, () => {
   * `overRideError`[Function] (err): a callback to replace the generated firetail error with a custom error you can generate specific to your platform/interfaces
   * `operations`[Object]: an object, where the keys that will match with the `operationId`s and executed in the same way an Express route would be
   * `decodedJwt`[Function] (headers), Encodes the JWT token from the header. Returning the JWT as JSON
-  * `securities[Object]` Each **key** in this object maps to a function, represents a security scheme that can be used in your end-points
+  * `authCallbacks[Object]` Each **key** in this object maps to a function, represents a security scheme that can be used in your end-points
   * `customBodyDecoders[Object]` Each **key** in this object maps to a function. This is used to parse an unknown `content-type` into JSON so the middleware can apply the rules outlined in YAML file.
 
 ## Examples: Dynamic Configuration
@@ -124,7 +150,7 @@ Node file
     }
   }
 ```
-### securities
+### authCallbacks
 For each security schema used, you will need to provide a matching named function in the security object under options
 
 Yaml file
@@ -138,7 +164,7 @@ components:
 ```
 Node file
 ```js
-  securities:{
+  authCallbacks:{
     jwt:(decodedJwtAsJSON)=>{
     const { authorization } = decodedJwtAsJSON
        //... run securitie logic
