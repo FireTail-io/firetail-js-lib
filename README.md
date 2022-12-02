@@ -17,6 +17,8 @@ Firetail is a Middleware that intercept Http/Rest requests based on [OpenAPI Spe
  * Automatically filter out sensitive values from responses based on your definitions
  * Can use Express **routes** or use dynamic functions with the `operationId`
 
+# [Jump to Quickstart](https://github.com/FireTail-io/javascript-quickstarts)
+
 # How to Use
 
 ### Prerequisites
