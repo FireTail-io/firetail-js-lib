@@ -18,7 +18,8 @@ function combinHeaderListVals(headerList){
 
 
 function out(req, res, data, specificScama){
-
+//console.log(new Error())
+//console.log(data)
 const date1_ms = data.startedAt.getTime();
 const date2_ms = data.finishedAt.getTime();
 
@@ -54,8 +55,20 @@ const payload = {
 } // END payload
 
 //if(data.dev){
-//  console.info(`Firetail.io - [${data.statusCode}] ${req.method}:${req.originalUrl} - ${executionTime/1000}sec`,payload)
-//if (0){
+//  console.info(`Firetail.io - [${data.statusCode}] ${req.method}:${req.originalUrl} - ${executionTime/1000}sec`)
+if(data.lambda){
+  const logExt = {
+    "event": req.lambdaEvent,
+    "response": {
+        "statusCode": payload.response.statusCode,
+              "body": payload.response.body
+    },
+    "execution_time": executionTime
+  }
+  //console.log("firetail:log-ext:",logExt)
+  console.log("firetail:log-ext:"+Buffer.from(JSON.stringify(logExt)).toString('base64'))
+
+}else{
     const options = {
       hostname: 'api.logging.eu-west-1.sandbox.firetail.app',
       port: 443,
@@ -68,20 +81,20 @@ const payload = {
         "x-ft-api-key":data.apiKey
       } // END headers
     } // END options
-
+//console.log(options,payload)
     const req = https.request(options, res => {
-            console.log(`statusCode: ${res.statusCode}`)
+          //  console.log(`statusCode: ${res.statusCode}`)
     res.setEncoding('utf8');
             res.on('data', d => {
 
-console.log(JSON.parse(d))
+              //  console.log(JSON.parse(d))
               //console.log(Buffer.isBuffer(d),d.toString('utf8'))
             })
           })
           req.write(JSON.stringify(payload))
           req.on('error', error => {console.error(error)})
           req.end()
-  //} // END else
+  } // END else
   /*else {
     console.error("Missing Firetail API key!")
   }*/

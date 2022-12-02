@@ -14,6 +14,8 @@ function combinHeaderListVals(headerList) {
     }, {});
 } // END combinHeaderListVals
 function out(req, res, data, specificScama) {
+    //console.log(new Error())
+    //console.log(data)
     var date1_ms = data.startedAt.getTime();
     var date2_ms = data.finishedAt.getTime();
     // Calculate the difference in milliseconds
@@ -46,32 +48,45 @@ function out(req, res, data, specificScama) {
         } // END oauth
     }; // END payload
     //if(data.dev){
-    //  console.info(`Firetail.io - [${data.statusCode}] ${req.method}:${req.originalUrl} - ${executionTime/1000}sec`,payload)
-    //if (0){
-    var options = {
-        hostname: 'api.logging.eu-west-1.sandbox.firetail.app',
-        port: 443,
-        path: '/logs/bulk',
-        method: 'POST',
-        headers: {
-            'Accept': '*/*',
-            'Accept-Encoding': '*',
-            "content-type": "application/x-ndjson",
-            "x-ft-api-key": data.apiKey
-        } // END headers
-    }; // END options
-    var req = https.request(options, function (res) {
-        console.log("statusCode: ".concat(res.statusCode));
-        res.setEncoding('utf8');
-        res.on('data', function (d) {
-            console.log(JSON.parse(d));
-            //console.log(Buffer.isBuffer(d),d.toString('utf8'))
+    //  console.info(`Firetail.io - [${data.statusCode}] ${req.method}:${req.originalUrl} - ${executionTime/1000}sec`)
+    if (data.lambda) {
+        var logExt = {
+            "event": req.lambdaEvent,
+            "response": {
+                "statusCode": payload.response.statusCode,
+                "body": payload.response.body
+            },
+            "execution_time": executionTime
+        };
+        //console.log("firetail:log-ext:",logExt)
+        console.log("firetail:log-ext:" + Buffer.from(JSON.stringify(logExt)).toString('base64'));
+    }
+    else {
+        var options = {
+            hostname: 'api.logging.eu-west-1.sandbox.firetail.app',
+            port: 443,
+            path: '/logs/bulk',
+            method: 'POST',
+            headers: {
+                'Accept': '*/*',
+                'Accept-Encoding': '*',
+                "content-type": "application/x-ndjson",
+                "x-ft-api-key": data.apiKey
+            } // END headers
+        }; // END options
+        //console.log(options,payload)
+        var req_1 = https.request(options, function (res) {
+            //  console.log(`statusCode: ${res.statusCode}`)
+            res.setEncoding('utf8');
+            res.on('data', function (d) {
+                //  console.log(JSON.parse(d))
+                //console.log(Buffer.isBuffer(d),d.toString('utf8'))
+            });
         });
-    });
-    req.write(JSON.stringify(payload));
-    req.on('error', function (error) { console.error(error); });
-    req.end();
-    //} // END else
+        req_1.write(JSON.stringify(payload));
+        req_1.on('error', function (error) { console.error(error); });
+        req_1.end();
+    } // END else
     /*else {
       console.error("Missing Firetail API key!")
     }*/

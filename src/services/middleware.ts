@@ -19,8 +19,8 @@ function areWeTestingWithJest() {
 
 module.exports = function middleware(req, res, next) {
 
-    res.setHeader("Server", "firetail-API");
-    res.removeHeader("X-Powered-By");
+    //res.setHeader("Server", "firetail-API");
+    //res.removeHeader("X-Powered-By");
 
   //console.log(` -X- ${req.method}:${req.originalUrl}`,req.headers)
   const {
@@ -32,8 +32,9 @@ module.exports = function middleware(req, res, next) {
     dev,
     customBodyDecoders,
     decodedJwt,
-    securities,
-    apiKey
+    authCallbacks,
+    apiKey,
+    lambda
   } = this
   // .then(({paths})=>paths);
 
@@ -53,8 +54,11 @@ module.exports = function middleware(req, res, next) {
       headers:req.headers,
       params: req.params,
       query:req.query,
+      lambda
     //  status:200
     } // END data
+    data.headers.accept = data.headers.accept || "*/*"
+
     data._reqBody = data.reqBody
 
   /*  if(dev){
@@ -103,8 +107,10 @@ module.exports = function middleware(req, res, next) {
 let errorHandlerCalled = false
   const errorHandler = err => {
 
-if(!areWeTestingWithJest())
-    console.error(err)
+if( !areWeTestingWithJest()){
+  console.error(err,new Error().stack)
+
+}
 
     if(errorHandlerCalled){
       console.error("errorHandler was already called")
@@ -122,14 +128,17 @@ if(!areWeTestingWithJest())
       title:genMessage("default"),
       error:undefined
     }
-
+//console.log(typeof defaultErrorVal,defaultErrorVal)
     if(err.message){
       defaultErrorVal.title = err.message
+//  console.log(typeof defaultErrorVal,defaultErrorVal)
     } else if(err.firetail){
       defaultErrorVal.title = genMessage(err.firetail, err.val)
       err.message = defaultErrorVal.title
+//  console.log(typeof defaultErrorVal,defaultErrorVal)
     }
 
+  //  console.log(typeof defaultErrorVal,defaultErrorVal)
     if(dev && isUI){
       defaultErrorVal.error = {
         message:err.message,
@@ -139,24 +148,36 @@ if(!areWeTestingWithJest())
       defaultErrorVal.title = err.message || err
     }
 
-    const errContent = "function" === typeof overRideError ? overRideError(err)
+    const errContent = "function" === typeof overRideError ? overRideError(Object.assign({},defaultErrorVal,err))
                                                            : defaultErrorVal
-
+ //console.log(typeof errContent,errContent)
+ //console.log(typeof err,err)
+ //console.log(typeof defaultErrorVal,defaultErrorVal)
                     // Because overRideError may not have a status
-      data.status = errContent.status || defaultErrorVal.status
+    data.status = errContent.status || defaultErrorVal.status
     //  console.log(data)
     //  console.log(errContent.status, defaultErrorVal.status)
-    stashFnCalls.status(data.status)
+    res.status(data.status)
     /*if(){
 
     }
-    stashFnCalls.header('Content-Type', 'application/json');*/
-    stashFnCalls["object" === typeof errContent ? "json"
-                                                : "send"](errContent)
-    stashFnCalls.end()
+    res.header('Content-Type', 'application/json');*/
+    if(Array.isArray(err.headers)){
+      err.headers.forEach(([key,val])=>res.setHeader(key, val))
+    }
+//console.log(errContent)
+if("object" === typeof errContent){
+  res.setHeader("content-type","application/json")
+  data.resBody = errContent
+  res.json(errContent)
+}else{
+  res.send(errContent)
+}
+/*
+    res.end()
     if(!areWeTestingWithJest()){
       logFT(req, res, { ...data, resBody:errContent, statusCode:data.status },specificScama)
-    }
+    }*/
  } // END errorHandler
 
 //+++++++++++++++++++++++++++++++++++++++++++ stash fn
@@ -215,7 +236,8 @@ if(!areWeTestingWithJest())
   }*/
 
   let end = function () {
-    end = ()=> console.log("END was already CALLeD")
+    end = ()=> {}//console.log("END was already CALLeD")
+    res.end = ()=>{}
     const args = args2Arr(arguments)
     //  console.log("res.end",args)
     data.finishedAt = new Date()
@@ -241,15 +263,15 @@ if(!areWeTestingWithJest())
         stashFnCalls.status.call(res,data.statusCode)
       }
       //res.send = stashFnCalls.send.bind(res)
-//console.log(data.resBody)
+//console.log(data)
       if(data.resBody){
         //if("object" === typeof data.resBody){
-    //    console.log(specificScama)
+      //  console.log(specificScama)
           if (specificScama) {
           //  console.log(data.resBody)
             const cleanedBody = after(specificScama, data)
             data.resBody = cleanedBody || data.resBody
-            //  console.log(data.resBody)
+          //    console.log(data.resBody)
 //console.log(cleanedBody)
             stashFnCalls.json.call(res,data.resBody)
           }else {
@@ -259,14 +281,16 @@ if(!areWeTestingWithJest())
           stashFnCalls.send.call(res,data.resBody)
         }*/
       } // END if data.resBody
-
+ stashFnCalls.end.call(res)
+ stashFnCalls.end = ()=>{}
     // TODO: may need to buffer the responce..
     // as we can override the responce with out
     // warning about app sending data down the wire
-    if(!areWeTestingWithJest()){
+
+    if(data.lambda || !areWeTestingWithJest()){
       logFT(req, res, data, specificScama)
     }
-      return stashFnCalls.end.call(res)
+
     } catch(err) {
         errorHandler(err);
     }
@@ -313,7 +337,8 @@ if(!areWeTestingWithJest())
       //req.params = data.params
     //  req.query  = data.query
 
-      security({
+    const secName = security.getSecName(specificScama,components.securitySchemes)
+    return security({
         scamaVerb:specificScama,
         operationsFn,
         securitySchemes:components.securitySchemes,
@@ -321,31 +346,32 @@ if(!areWeTestingWithJest())
         decodedJwt,
         req,
         genMessage,
-        securities
-      })
+        authCallbacks,
+        secName
+      }).then( result =>{
+        req[secName] = result
+        /*    if(scamaForEndPoint){
+            const { verb } = data
+            const scamaVerb = scamaForEndPoint[verb]
+            if(scamaVerb){*/
+              const { operationId } = specificScama//scamaForEndPoint[data.verb]//scamaVerb
+              if(operationId){
+                if(operationsFn[operationId]){
+                  req.params = req.params || {}
+                  // TODO: should this type conversion be extended to all the non-operationsFn ?
+                  Object.assign(req.params,data.params)
+                  Object.assign(req.query,data.query)
+                  next = ()=>operationsFn[operationId](req, res, next)
+                } else {
+                  //console.log(`No operationId match for ${operationId}`)
+                }
+              } // END if operationId
+        /*    } // END if scamaVerb
+        } */// END if scamaForEndPoint
+      //  console.log("should NOT be here!")
+        next()
 
-  /*    if(scamaForEndPoint){
-          const { verb } = data
-          const scamaVerb = scamaForEndPoint[verb]
-          //console.log("scamaVerb",scamaVerb)
-          if(scamaVerb){*/
-          //  console.log(specificScama)
-            const { operationId } = specificScama//scamaForEndPoint[data.verb]//scamaVerb
-            if(operationId){
-          //    console.log(operationId,operationsFn[operationId])
-              if(operationsFn[operationId]){
-                req.params = req.params || {}
-                // TODO: should this type conversion be extended to all the non-operationsFn ?
-                Object.assign(req.params,data.params)
-                Object.assign(req.query,data.query)
-                next = ()=>operationsFn[operationId](req, res, next)
-              } else {
-                console.log(`No operationId match for ${operationId}`)
-              }
-            } // END if operationId
-      /*    } // END if scamaVerb
-      } */// END if scamaForEndPoint
-    next()
+      })
   }) // END apiSpecPr.then
   .catch(err=> {
     // If specificScama is set then before was fine
@@ -353,7 +379,7 @@ if(!areWeTestingWithJest())
     /*if (specificScama) {
       throw err
     }*/
-  //  console.error(err,new Error().stack)
+    //console.error(err,new Error().stack)
     errorHandler(err)
   }) // END catch
 

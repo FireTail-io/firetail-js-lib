@@ -9,7 +9,7 @@ var errMessages = {
         badJWTFunctionOutput: "The JWT parce function did not return an oject",
         missingArgs: "Missing required query argument.",
         //unknowenArgs:"Unknowen query argument.",
-        missingJWTFunction: function (optId) { return "No function with \"".concat(optId, "\" could be found for parcing JWTs"); },
+        missingJWTFunction: function (optId) { return "No function with \"".concat(optId, "\" could be found"); },
         missingJWTFunctions: "Missing security schemes functions",
         notFound: function (_a) {
             var url = _a.url, verb = _a.verb, scamaForEndPoint = _a.scamaForEndPoint;
@@ -41,6 +41,7 @@ var errMessages = {
         },
         toShort: function (val) { return "\"".concat(val, "\" is to shot."); },
         toLong: function (val) { return "\"".concat(val, "\" is to long."); },
+        authenticationFailed: "Authentication failed",
         unknownType: function (type) { return "Unknown type: " + type; },
         clientCantAcceptThisContentType: function (replyContentType) { return "Your request have an 'Accept' header that includes \"".concat(replyContentType, "\""); },
         appContentTypeNotInYaml: function (replyContentType) { return "no schema definition was found for \"".concat(replyContentType, "\""); },
@@ -51,7 +52,7 @@ var errMessages = {
         badOptionYamlPath: function (yamlPath) { return "yamlPath is not validat:e: " + JSON.stringify(yamlPath); },
         default: "There was a problem with your request. Please check your API spec",
         badJWTFunctionOutput: "Could not parce JWT",
-        missingJWTFunction: "Could not parce JWT",
+        missingJWTFunction: "Could not parce security",
         responseContentTypeMismatch: "Could not find a matching type.",
         unknownContentType: "invalid content-type for this end-point",
         clientCantAcceptThisContentType: "Not Acceptable"

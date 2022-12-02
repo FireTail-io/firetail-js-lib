@@ -1,14 +1,3 @@
-var __assign = (this && this.__assign) || function () {
-    __assign = Object.assign || function(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-                t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
-};
 var args2Arr = require("../utils/args2Arr");
 var matchUrl = require("../utils/match");
 var security = require("./security");
@@ -24,10 +13,10 @@ function areWeTestingWithJest() {
 //========================================== middleware
 //=====================================================
 module.exports = function middleware(req, res, next) {
-    res.setHeader("Server", "firetail-API");
-    res.removeHeader("X-Powered-By");
+    //res.setHeader("Server", "firetail-API");
+    //res.removeHeader("X-Powered-By");
     //console.log(` -X- ${req.method}:${req.originalUrl}`,req.headers)
-    var _a = this, genMessage = _a.genMessage, yamlPathSt = _a.yamlPathSt, apiSpecPr = _a.apiSpecPr, apiSpec = _a.apiSpec, operationsFn = _a.operationsFn, dev = _a.dev, customBodyDecoders = _a.customBodyDecoders, decodedJwt = _a.decodedJwt, securities = _a.securities, apiKey = _a.apiKey;
+    var _a = this, genMessage = _a.genMessage, yamlPathSt = _a.yamlPathSt, apiSpecPr = _a.apiSpecPr, apiSpec = _a.apiSpec, operationsFn = _a.operationsFn, dev = _a.dev, customBodyDecoders = _a.customBodyDecoders, decodedJwt = _a.decodedJwt, authCallbacks = _a.authCallbacks, apiKey = _a.apiKey, lambda = _a.lambda;
     // .then(({paths})=>paths);
     var data = {
         apiKey: apiKey,
@@ -45,8 +34,10 @@ module.exports = function middleware(req, res, next) {
         headers: req.headers,
         params: req.params,
         query: req.query,
+        lambda: lambda
         //  status:200
     }; // END data
+    data.headers.accept = data.headers.accept || "*/*";
     data._reqBody = data.reqBody;
     /*  if(dev){
         if(data.url.startsWith("/firetail")){
@@ -90,8 +81,9 @@ module.exports = function middleware(req, res, next) {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
     var errorHandlerCalled = false;
     var errorHandler = function (err) {
-        if (!areWeTestingWithJest())
-            console.error(err);
+        if (!areWeTestingWithJest()) {
+            console.error(err, new Error().stack);
+        }
         if (errorHandlerCalled) {
             console.error("errorHandler was already called");
             return;
@@ -105,13 +97,17 @@ module.exports = function middleware(req, res, next) {
             title: genMessage("default"),
             error: undefined
         };
+        //console.log(typeof defaultErrorVal,defaultErrorVal)
         if (err.message) {
             defaultErrorVal.title = err.message;
+            //  console.log(typeof defaultErrorVal,defaultErrorVal)
         }
         else if (err.firetail) {
             defaultErrorVal.title = genMessage(err.firetail, err.val);
             err.message = defaultErrorVal.title;
+            //  console.log(typeof defaultErrorVal,defaultErrorVal)
         }
+        //  console.log(typeof defaultErrorVal,defaultErrorVal)
         if (dev && isUI) {
             defaultErrorVal.error = {
                 message: err.message,
@@ -121,23 +117,40 @@ module.exports = function middleware(req, res, next) {
         else if (dev) {
             defaultErrorVal.title = err.message || err;
         }
-        var errContent = "function" === typeof overRideError ? overRideError(err)
+        var errContent = "function" === typeof overRideError ? overRideError(Object.assign({}, defaultErrorVal, err))
             : defaultErrorVal;
+        //console.log(typeof errContent,errContent)
+        //console.log(typeof err,err)
+        //console.log(typeof defaultErrorVal,defaultErrorVal)
         // Because overRideError may not have a status
         data.status = errContent.status || defaultErrorVal.status;
         //  console.log(data)
         //  console.log(errContent.status, defaultErrorVal.status)
-        stashFnCalls.status(data.status);
+        res.status(data.status);
         /*if(){
     
         }
-        stashFnCalls.header('Content-Type', 'application/json');*/
-        stashFnCalls["object" === typeof errContent ? "json"
-            : "send"](errContent);
-        stashFnCalls.end();
-        if (!areWeTestingWithJest()) {
-            logFT(req, res, __assign(__assign({}, data), { resBody: errContent, statusCode: data.status }), specificScama);
+        res.header('Content-Type', 'application/json');*/
+        if (Array.isArray(err.headers)) {
+            err.headers.forEach(function (_a) {
+                var key = _a[0], val = _a[1];
+                return res.setHeader(key, val);
+            });
         }
+        //console.log(errContent)
+        if ("object" === typeof errContent) {
+            res.setHeader("content-type", "application/json");
+            data.resBody = errContent;
+            res.json(errContent);
+        }
+        else {
+            res.send(errContent);
+        }
+        /*
+            res.end()
+            if(!areWeTestingWithJest()){
+              logFT(req, res, { ...data, resBody:errContent, statusCode:data.status },specificScama)
+            }*/
     }; // END errorHandler
     //+++++++++++++++++++++++++++++++++++++++++++ stash fn
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -192,7 +205,8 @@ module.exports = function middleware(req, res, next) {
   
     }*/
     var end = function () {
-        end = function () { return console.log("END was already CALLeD"); };
+        end = function () { }; //console.log("END was already CALLeD")
+        res.end = function () { };
         var args = args2Arr(arguments);
         //  console.log("res.end",args)
         data.finishedAt = new Date();
@@ -214,15 +228,15 @@ module.exports = function middleware(req, res, next) {
                 stashFnCalls.status.call(res, data.statusCode);
             }
             //res.send = stashFnCalls.send.bind(res)
-            //console.log(data.resBody)
+            //console.log(data)
             if (data.resBody) {
                 //if("object" === typeof data.resBody){
-                //    console.log(specificScama)
+                //  console.log(specificScama)
                 if (specificScama) {
                     //  console.log(data.resBody)
                     var cleanedBody = after(specificScama, data);
                     data.resBody = cleanedBody || data.resBody;
-                    //  console.log(data.resBody)
+                    //    console.log(data.resBody)
                     //console.log(cleanedBody)
                     stashFnCalls.json.call(res, data.resBody);
                 }
@@ -233,13 +247,14 @@ module.exports = function middleware(req, res, next) {
                       stashFnCalls.send.call(res,data.resBody)
                     }*/
             } // END if data.resBody
+            stashFnCalls.end.call(res);
+            stashFnCalls.end = function () { };
             // TODO: may need to buffer the responce..
             // as we can override the responce with out
             // warning about app sending data down the wire
-            if (!areWeTestingWithJest()) {
+            if (data.lambda || !areWeTestingWithJest()) {
                 logFT(req, res, data, specificScama);
             }
-            return stashFnCalls.end.call(res);
         }
         catch (err) {
             errorHandler(err);
@@ -282,7 +297,8 @@ module.exports = function middleware(req, res, next) {
         //console.log(2)
         //req.params = data.params
         //  req.query  = data.query
-        security({
+        var secName = security.getSecName(specificScama, components.securitySchemes);
+        return security({
             scamaVerb: specificScama,
             operationsFn: operationsFn,
             securitySchemes: components.securitySchemes,
@@ -290,31 +306,32 @@ module.exports = function middleware(req, res, next) {
             decodedJwt: decodedJwt,
             req: req,
             genMessage: genMessage,
-            securities: securities
-        });
-        /*    if(scamaForEndPoint){
+            authCallbacks: authCallbacks,
+            secName: secName
+        }).then(function (result) {
+            req[secName] = result;
+            /*    if(scamaForEndPoint){
                 const { verb } = data
                 const scamaVerb = scamaForEndPoint[verb]
-                //console.log("scamaVerb",scamaVerb)
                 if(scamaVerb){*/
-        //  console.log(specificScama)
-        var operationId = specificScama.operationId; //scamaForEndPoint[data.verb]//scamaVerb
-        if (operationId) {
-            //    console.log(operationId,operationsFn[operationId])
-            if (operationsFn[operationId]) {
-                req.params = req.params || {};
-                // TODO: should this type conversion be extended to all the non-operationsFn ?
-                Object.assign(req.params, data.params);
-                Object.assign(req.query, data.query);
-                next = function () { return operationsFn[operationId](req, res, next); };
-            }
-            else {
-                console.log("No operationId match for ".concat(operationId));
-            }
-        } // END if operationId
-        /*    } // END if scamaVerb
-        } */ // END if scamaForEndPoint
-        next();
+            var operationId = specificScama.operationId; //scamaForEndPoint[data.verb]//scamaVerb
+            if (operationId) {
+                if (operationsFn[operationId]) {
+                    req.params = req.params || {};
+                    // TODO: should this type conversion be extended to all the non-operationsFn ?
+                    Object.assign(req.params, data.params);
+                    Object.assign(req.query, data.query);
+                    next = function () { return operationsFn[operationId](req, res, next); };
+                }
+                else {
+                    //console.log(`No operationId match for ${operationId}`)
+                }
+            } // END if operationId
+            /*    } // END if scamaVerb
+            } */ // END if scamaForEndPoint
+            //  console.log("should NOT be here!")
+            next();
+        });
     }) // END apiSpecPr.then
         .catch(function (err) {
         // If specificScama is set then before was fine
@@ -322,7 +339,7 @@ module.exports = function middleware(req, res, next) {
         /*if (specificScama) {
           throw err
         }*/
-        //  console.error(err,new Error().stack)
+        //console.error(err,new Error().stack)
         errorHandler(err);
     }); // END catch
 }; // END middleware

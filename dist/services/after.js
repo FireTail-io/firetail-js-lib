@@ -32,7 +32,7 @@ module.exports = function after(specificScama, data) {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
     var response = specificScama.responses[statusCode]
         || specificScama.responses.default;
-    //console.log(response)
+    //console.log(data,response,Object.keys(specificScama.responses),statusCode)
     // What Scamas can we use to check the response
     if (response) {
         //    console.log(accept)
@@ -40,7 +40,7 @@ module.exports = function after(specificScama, data) {
         if (response.content) {
             var availableContentTypes = Object.keys(response.content);
             // CHECK the client can accept it
-            if (!clientWillTakeANYtype
+            if (300 > statusCode && !clientWillTakeANYtype
                 && !wantedContentTypes.includes(replyContentType)) {
                 throw {
                     firetail: "clientCantAcceptThisContentType",
@@ -70,7 +70,7 @@ module.exports = function after(specificScama, data) {
                     val: replyContentType
                 };
             }
-            //   console.log(resBody)
+            //console.log(typeof resBody, resBody)
             // console.log(response.content)
             var contentSchema = response.content[replyContentType];
             //   console.log(replyContentType,contentSchema)
@@ -126,7 +126,7 @@ module.exports = function after(specificScama, data) {
             //  console.warn("No 'content' entry in Yaml")
         }
     }
-    else {
+    else if (400 > statusCode) { //response
         throw {
             firetail: "statusCodeNotFound",
             status: 400,

@@ -89,9 +89,9 @@ module.exports = function before({scamaForEndPoint,data,genMessage}){
       queryNametoCheck.forEach(({required,name, schema}) => {
 
       //  console.log("name",name)
-        //        console.log("queryNamesRecived",queryNamesRecived)
+          //      console.log("queryNamesRecived",queryNamesRecived)
         if(required && ! queryNamesRecived.includes(name)){
-          console.warn(name +" was not found as a named query ")
+          //console.warn(name +" was not found as a named query ")
           throw {
               firetail:"missingArgs",
               status:400

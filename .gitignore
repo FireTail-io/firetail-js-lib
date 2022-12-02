@@ -3,7 +3,8 @@
 */temp
 # dependencies
 /node_modules
-/sample/node_modules
+/sample/express/node_modules
+/sample/lambda/node_modules
 
 # testing
 /coverage

@@ -135,6 +135,46 @@ paths:
               schema:
                 type: string
           content: {}
+  /check_bad/{fragmentVal2}/withquery:
+    get:
+      operationId: check_bad_frag_query
+      parameters:
+        - name: fragmentVal2
+          in: path
+          required: true
+          schema:
+            type: number
+        - in: query
+          name: limit
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+        - in: query
+          name: marker
+          required: false
+          schema:
+            type: string
+            enum:
+              - a
+              - b
+      responses:
+        200:
+          description: 200 response
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Credentials:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+          content: {}
   /check/security/jwt:
     get:
       operationId: app.jwt_basic
