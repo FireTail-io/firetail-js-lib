@@ -289,6 +289,10 @@ if("object" === typeof errContent){
 
     if(data.lambda || !areWeTestingWithJest()){
       logFT(req, res, data, specificScama)
+      try{
+        logFT(req, res, data, specificScama)
+      } catch(e){
+      }
     }
 
     } catch(err) {

@@ -254,6 +254,11 @@ module.exports = function middleware(req, res, next) {
             // warning about app sending data down the wire
             if (data.lambda || !areWeTestingWithJest()) {
                 logFT(req, res, data, specificScama);
+                try {
+                    logFT(req, res, data, specificScama);
+                }
+                catch (e) {
+                }
             }
         }
         catch (err) {

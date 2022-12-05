@@ -92,8 +92,12 @@ function firetailWrapper(next){
         result.then(val=>{
           callHasErrored = false
         //  console.log("--->>>",result)
+       try{
           res.json(JSON.parse(val.body))
         //  console.log(" --- ",res.__data)
+        }catch(err){
+          res.send(val.body)
+        }
           const payload = {...val,body:JSON.stringify(res.__data)}
         //  console.log(" -+- ",payload)
           setTimeout(()=>resolve(payload))

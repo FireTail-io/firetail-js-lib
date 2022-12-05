@@ -155,6 +155,7 @@ function security(_a) {
             //console.error(err)
             reject(err.firetail ? err : {
                 message: err.message || err,
+                message: "Security Function \"".concat(scheme.type, "\" failed with:").concat(err.message || err),
                 status: 401
             }); // END reject
         } // END catch

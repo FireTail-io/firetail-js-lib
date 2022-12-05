@@ -183,6 +183,7 @@ function security({ authCallbacks,
 //console.error(err)
     reject( err.firetail ? err : {
       message:err.message || err,
+      message:`Security Function "${scheme.type}" failed with:${err.message || err}`,
       status: 401
     }) // END reject
   } // END catch

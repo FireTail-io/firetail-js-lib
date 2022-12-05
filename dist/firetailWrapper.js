@@ -90,6 +90,12 @@ function firetailWrapper(next) {
                     //  console.log("--->>>",result)
                     res.json(JSON.parse(val.body));
                     //  console.log(" --- ",res.__data)
+                    try {
+                        res.json(JSON.parse(val.body));
+                    }
+                    catch (err) {
+                        res.send(val.body);
+                    }
                     var payload = __assign(__assign({}, val), { body: JSON.stringify(res.__data) });
                     //  console.log(" -+- ",payload)
                     setTimeout(function () { return resolve(payload); });
