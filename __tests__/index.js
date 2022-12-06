@@ -694,7 +694,9 @@ describe('test Firetail:Serverless', () => {
         expect(txt.startsWith("firetail:log-ext:")).toBe(true);
       }
       next(Serverless_Events["lambda function url"])
-      .then(({statusCode,body})=>{
+      .then((a)=>{
+        //cLog(a)
+        const  {statusCode,body} = a
         expect(statusCode).toBe(200);
         expect(body).toBe('[{"id":1,"name":"Bubbles","tag":"fish"},'+
                            '{"id":2,"name":"Jax","tag":"cat"},'+
@@ -815,7 +817,7 @@ describe('test secure in requests', () => {
               // check status code is 401
               expect(res.statusCode).toBe(401);
               //check message
-              expect(res.__data.title).toBe("bad value");
+              expect(res.__data.title).toBe('Security Function "http" failed with:bad value');
 
               expect(verifier_called).toBe(false);
               expect(   basic_called).toBe(false);

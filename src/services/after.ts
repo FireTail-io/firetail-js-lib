@@ -1,11 +1,6 @@
 
 const { acceptTypes } = require("./help");
 const validateBody    = require("./validateBody");
-/*
-function intersection (a, b) {
-    const setA = new Set(a);
-    return b.filter(value => setA.has(value));
-}*/
 
 //=====================================================
 //=========================== validate AFTER controller
@@ -17,7 +12,7 @@ let { statusCode, headers: { accept }, resHeaders, resBody, dev, customBodyDecod
 let usingCustomBodyDecoders = false;
 // check return Content-Type is in callers accept type
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
-//console.log("resHeaders",resHeaders)
+
   let replyContentType = resHeaders.reduce((found,{key,val})=>{
                                       if("content-type" === key.toLowerCase())
                                         return val
@@ -32,8 +27,6 @@ let usingCustomBodyDecoders = false;
 
   const clientWillTakeANYtype = accept.includes("*/*")
 
-//console.log({replyContentType,wantedContentTypes,clientWillTakeANYtype})
-
 //+++++++++++++++ check return data is the right shape
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -42,18 +35,12 @@ let usingCustomBodyDecoders = false;
 
   const response = specificScama.responses[statusCode]
                 || specificScama.responses.default
-//console.log(data,response,Object.keys(specificScama.responses),statusCode)
-// What Scamas can we use to check the response
-
 
   if (response){
-//    console.log(accept)
-//      console.log(response.content)
+
     if(response.content){
 
       const availableContentTypes = Object.keys(response.content)
-
-
 
   // CHECK the client can accept it
   if(300 > statusCode && ! clientWillTakeANYtype
@@ -65,12 +52,10 @@ let usingCustomBodyDecoders = false;
     }
   }
 
-//.log(schema)
-//console.log(replyContentType)
-//console.log(customBodyDecoders)
 if("object" === typeof customBodyDecoders
 && customBodyDecoders[replyContentType]){
   resBody = customBodyDecoders[replyContentType](resBody)
+
   usingCustomBodyDecoders = true
   if(!resBody){
       throw {
@@ -87,11 +72,8 @@ if("object" === typeof customBodyDecoders
     }
 }
 
-   //console.log(typeof resBody, resBody)
-  // console.log(response.content)
 const  contentSchema =  response.content[replyContentType]
 
-//   console.log(replyContentType,contentSchema)
   // CHECK it is one of the formats in the Yaml
   if( ! contentSchema){
     return;
@@ -102,14 +84,10 @@ const  contentSchema =  response.content[replyContentType]
     }*/
   }
 const { schema } = contentSchema
-  //  console.log(contentKey)
-      //if (contentKey){
-      // console.log(resBody)
-      //  console.log(response.content[contentKey])
-      //  console.log("IS validate?")
 
+      //if (contentKey){
     //    const { schema } = response.content[contentKey]
-//console.log(schema)
+
 //++++++++++++++++++++++++++++++ check if its an Array
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
         if("array" === schema.type){

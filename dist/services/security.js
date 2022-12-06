@@ -2,7 +2,6 @@
 function http(schemes, headers, authCb, decodedJwt) {
     var authHeader = headers.authorization;
     if (!authHeader) {
-        //console.log("! authHeader)
         throw {
             firetail: "missingJWTtoken",
             status: 401
@@ -21,6 +20,7 @@ function http(schemes, headers, authCb, decodedJwt) {
         }, headers);
     }
     catch (err) {
+        //    console.error(err)
         throw {
             firetail: "authenticationFailed",
             message: err.message || err,
@@ -125,7 +125,6 @@ var securityType = { http: http, oauth2: oauth2, openid: openid, apiKey: apiKey 
 //=====================================================
 function security(_a) {
     var authCallbacks = _a.authCallbacks, scamaVerb = _a.scamaVerb, operationsFn = _a.operationsFn, securitySchemes = _a.securitySchemes, headers = _a.headers, decodedJwt = _a.decodedJwt, req = _a.req, secName = _a.secName;
-    //console.log(secName)
     //++++++++ check caller has the right security headers
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
     return new Promise(function (resolve, reject) {
@@ -147,14 +146,12 @@ function security(_a) {
                     status: 401
                 };
             } // END if
-            //console.log(secName,scheme)
             var result = securityType[scheme.type].call(req, scheme, headers, authCb, decodedJwt);
             resolve(result);
         }
         catch (err) {
-            //console.error(err)
             reject(err.firetail ? err : {
-                message: err.message || err,
+                message: "Security Function \"".concat(scheme.type, "\" failed with:").concat(err.message || err),
                 status: 401
             }); // END reject
         } // END catch

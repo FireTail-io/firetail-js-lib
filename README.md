@@ -17,11 +17,13 @@ Firetail is a Middleware that intercept Http/Rest requests based on [OpenAPI Spe
  * Automatically filter out sensitive values from responses based on your definitions
  * Can use Express **routes** or use dynamic functions with the `operationId`
 
+# [Jump to Quickstart](https://github.com/FireTail-io/javascript-quickstarts)
+
 # How to Use
 
 ### Prerequisites
 
-[![Node v14](http://img.shields.io/badge/node-v14+-darkgreen.svg)](https://nodejs.org) with [![Express v4+](http://img.shields.io/badge/Express-v4+-darkred.svg)](https://expressjs.com) or [![AWS Lamdba](https://img.shields.io/badge/AWS-Lamdba-orange.svg)](https://aws.amazon.com/lambda/)
+[![Node v14](http://img.shields.io/badge/node-v14+-darkgreen.svg)](https://nodejs.org) with [![Express v4+](http://img.shields.io/badge/Express-v4+-darkred.svg)](https://expressjs.com) or [![AWS Lamdba](https://img.shields.io/badge/serverless-3-orange.svg)](https://www.serverless.com/framework/docs)
 
 
 ### Installing It

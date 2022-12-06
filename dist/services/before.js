@@ -52,7 +52,7 @@ module.exports = function before(_a) {
                 data.params[name] = checkParameters(data.params[name], schema);
             }
         });
-        //  console.log(" B ------- ",data.params)
+        //console.log(" B ------- ",data.params)
         //+++++++++++++++++++++++++++++ query params are right
         //++++++++++++++++++++++++++++++++++++++++++++++++++++
         var queryNametoCheck = scamaVerb.parameters
@@ -65,12 +65,12 @@ module.exports = function before(_a) {
         //console.log("data",data)
         var query_1 = data.query;
         var queryNamesRecived_1 = Object.keys(query_1);
-        //console.log("queryNamesRecived",queryNamesRecived)
+        //  console.log("queryNamesRecived",queryNamesRecived)
         //console.log("queryNametoCheck",queryNametoCheck)
         queryNametoCheck.forEach(function (_a) {
             var required = _a.required, name = _a.name, schema = _a.schema;
             //  console.log("name",name)
-            //      console.log("queryNamesRecived",queryNamesRecived)
+            //    console.log("queryNamesRecived",queryNamesRecived)
             if (required && !queryNamesRecived_1.includes(name)) {
                 //console.warn(name +" was not found as a named query ")
                 throw {
@@ -85,14 +85,14 @@ module.exports = function before(_a) {
             }
             //console.log("A queryNamesRecived",queryNamesRecived)
             queryNamesRecived_1 = queryNamesRecived_1.filter(function (queryName) { return queryName !== name; });
-            //console.log("B queryNamesRecived",queryNamesRecived)
+            //  console.log("B queryNamesRecived",queryNamesRecived)
             /*console.log(`"${name}" ~ ${url}`,schema)
             if(! schema){
               console.warn(`No schema for query: "${name}" ~ ${url}`)
             } */ if (schema) { //if(queryNamesRecived.includes(name)){
-                //console.log(1,name)
-                //console.log(2,query[name])
-                //console.log(3,schema)
+                //console.log(name)
+                //console.log(query[name])
+                //  console.log(schema)
                 data.query[name] = checkParameters(query_1[name], schema);
             }
         }); // END foreach
@@ -142,7 +142,7 @@ module.exports = function before(_a) {
         validater = validateBody(schema, true, dev);
         //  console.log()
         //  console.log(contentType)
-        //console.log()
+        //console.log(1)
         if (contentType.endsWith("json")) {
             data.reqBody = JSON.parse(reqBody);
         }

@@ -37,9 +37,11 @@ function genRes(override) {
             return res;
         },
         end: function () { return res; },
-        send: function (x) { return res; },
+        send: function (x) {
+            res.__data = res.__data || x;
+            return res;
+        },
         json: function (x) {
-            //console.log("json ===>>>",x)
             res.__data = x;
             return res;
         }
@@ -72,8 +74,6 @@ function firetailWrapper(next) {
                 lambdaEvent: event
             }), res = genRes({
                 end: function () {
-                    //console.log("end ===>>>",res.__data)
-                    //console.log(callHasErrored)
                     if (callHasErrored) /* istanbul ignore next */
                         setTimeout(function () { return resolve(res.__data); });
                 }
@@ -81,17 +81,31 @@ function firetailWrapper(next) {
             var callHasErrored = true;
             firetailMiddleware(req, res, function () {
                 var result = next(event, context);
-                //  console.log("--->>>",result)
                 if (!result.then) {
                     result = Promise.resolve(result);
                 }
                 result.then(function (val) {
                     callHasErrored = false;
-                    //  console.log("--->>>",result)
-                    res.json(JSON.parse(val.body));
-                    //  console.log(" --- ",res.__data)
-                    var payload = __assign(__assign({}, val), { body: JSON.stringify(res.__data) });
-                    //  console.log(" -+- ",payload)
+                    if (val) {
+                        if (val.headers) {
+                            Object.keys(val.headers)
+                                .forEach(function (key) {
+                                res.setHeader(key, val.headers[key]);
+                            });
+                        } // END if
+                        if (val.statusCode) {
+                            res.status(val.statusCode);
+                        }
+                    }
+                    try {
+                        var bodyObj = JSON.parse(val.body);
+                        res.json(bodyObj);
+                    }
+                    catch (err) {
+                        res.send(val.body);
+                    }
+                    var payload = __assign(__assign({}, val), { body: "string" === typeof res.__data ? res.__data
+                            : JSON.stringify(res.__data) });
                     setTimeout(function () { return resolve(payload); });
                 });
             }); // END firetailMiddleware

@@ -16,13 +16,10 @@ var fs = require('fs');
 var middleware = require('./services/middleware');
 var errMessages = require('./services/lang');
 var firetailWrapper = require("./firetailWrapper");
-//const deepRequire = require('pick-n-mix/utils/deepRequire')
-//const decodedJwt = true
 function areWeTestingWithJest() {
     return process.env.JEST_WORKER_ID !== undefined;
 }
 function getFilesFromDir(dir, fileTypes) {
-    //  console.log({dir, fileTypes})
     var filesToReturn = [];
     function walkDir(currentPath) {
         var files = fs.readdirSync(currentPath);
@@ -38,7 +35,6 @@ function getFilesFromDir(dir, fileTypes) {
     }
     ;
     walkDir(dir);
-    //  console.log("filesToReturn",filesToReturn)
     return filesToReturn;
 }
 var re = /(?:\.([^.]+))?$/;
@@ -47,14 +43,8 @@ function deepRequire(dirname, selector) {
     return getFilesFromDir(dirname, selector.map(function (ext) { return ".".concat(ext); })).reduce(function (packages, file) {
         if (file === "/index.js")
             return packages;
-        //if(file[0] !== "/") file = "/"+file;
         var pathParts = file.replace(re.exec(file)[0], "").split("/").slice(1);
-        /*  console.log("pathParts",pathParts)
-        if(pathParts[pathParts.length-1] === "index")
-        pathParts.pop()*/
-        //console.log("join(_)",pathParts.join("."))
         packages[pathParts.join(".")] = require(dirname + "/".concat(file));
-        //console.log("packages",Object.keys(packages))
         return packages;
     }, {});
 } // END deepRequire
@@ -71,7 +61,7 @@ if (!areWeTestingWithJest()) {
         }
     }
     catch (err) {
-        console.error(err);
+        console.error(new Error().stack, err);
     }
 }
 if (undefined === defaultOpts.lambda) {
@@ -82,9 +72,7 @@ if (undefined === defaultOpts.lambda) {
 //=====================================================
 module.exports = function fileTaileSetup(opts) {
     var myOpts = __assign(__assign({}, defaultOpts), opts);
-    //console.log(myOpts)
     var addApi = myOpts.addApi, overRideError = myOpts.overRideError, operations = myOpts.operations, dev = myOpts.dev, decodedJwt = myOpts.decodedJwt, authCallbacks = myOpts.authCallbacks, specificationDir = myOpts.specificationDir, customBodyDecoders = myOpts.customBodyDecoders, apiKey = myOpts.apiKey, lambda = myOpts.lambda;
-    //const console = {log:()=>{},warn:()=>{},error:()=>{}}
     var addApiSt = defaultOpts.addApi;
     //+++++++++++++++++++++++++++++++++++++++++ genMessage
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -95,14 +83,11 @@ module.exports = function fileTaileSetup(opts) {
         if (dev && errMessages.dev[key]) {
             mess = errMessages.dev[key];
         }
-        //console.log(`typeof mess = ${typeof mess}`,mess)
         if ("function" === typeof mess) {
-            //console.log(` >>> `,mess(data))
             return mess(data);
         }
         return mess || errMessages.prod.default;
     }; // END genMessage
-    //  console.log(new Error("").stack)
     var callerFile = new Error("").stack
         .split("\n")[2]
         .split("(").pop()
@@ -117,9 +102,9 @@ module.exports = function fileTaileSetup(opts) {
         else if ("string" === typeof addApi) {
             addApiSt = addApi;
         }
-        //console.log("addApiSt",addApiSt,addApi)
         if ("string" !== typeof addApiSt) {
-            throw new Error(genMessage("badOptionYamlPath", addApi)); //"addApi is not validate: "+JSON.stringify(addApi))
+            throw new Error(genMessage("badOptionYamlPath", addApi));
+            //"addApi is not validate: "+JSON.stringify(addApi))
         }
         if (addApiSt.startsWith(".")) {
             addApiSt = path.resolve(callerDir, addApiSt);
@@ -142,9 +127,9 @@ module.exports = function fileTaileSetup(opts) {
     /*if("string" !== typeof addApiSt){
       throw new Error("Missing path to YAML")
     }*/
-    //console.log("addApiSt",addApiSt)
     // TODO: Should we catch or crash if spce is not found?
     var apiSpecPr = SwaggerParser.validate(addApiSt);
+    //apiSpecPr.then(x=>console.log(x)).catch(y=>console.error(new Error().stack,y))
     /*  .then( apiSpec =>{
         const {components} = apiSpec
         if(components &&

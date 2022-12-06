@@ -3,7 +3,6 @@ function http(schemes, headers, authCb,decodedJwt){
 
   const authHeader = headers.authorization;
   if( ! authHeader){
-    //console.log("! authHeader)
     throw {
         firetail:"missingJWTtoken",
         status:401
@@ -23,6 +22,8 @@ function http(schemes, headers, authCb,decodedJwt){
       scope:schemes.scopes
     },headers)
   }catch(err){
+
+        //    console.error(err)
     throw {
         firetail:"authenticationFailed",
         message:err.message || err,
@@ -53,7 +54,9 @@ function jwt(schemes, headers, authCb, decodedJwt){
   } else if(true === decodedJwt){
       const token = headers.authorization.split(" ").pop().replace(/['"]+/g, '')
       const tokenDecodablePart = token.split('.')[1];
+
       const decoded = Buffer.from(tokenDecodablePart, 'base64').toString();
+
       result = authCb({
         authorization:authHeader,
         decoded:JSON.parse(decoded),
@@ -153,7 +156,6 @@ function security({ authCallbacks,
                     decodedJwt,
                     req,
                     secName  }){
-//console.log(secName)
   //++++++++ check caller has the right security headers
   //++++++++++++++++++++++++++++++++++++++++++++++++++++
   return new Promise((resolve, reject) => {
@@ -175,18 +177,17 @@ function security({ authCallbacks,
             status:401
         }
      } // END if
-//console.log(secName,scheme)
+
      const result = securityType[scheme.type].call(req,scheme,headers,authCb,decodedJwt)
+
      resolve(result)
 
   }catch(err){
-//console.error(err)
     reject( err.firetail ? err : {
-      message:err.message || err,
+      message:`Security Function "${scheme.type}" failed with:${err.message || err}`,
       status: 401
     }) // END reject
   } // END catch
-
   }) // END Promise
 }
 
