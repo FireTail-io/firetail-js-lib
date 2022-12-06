@@ -2,7 +2,6 @@
 function http(schemes, headers, authCb, decodedJwt) {
     var authHeader = headers.authorization;
     if (!authHeader) {
-        //console.log("! authHeader)
         throw {
             firetail: "missingJWTtoken",
             status: 401
@@ -49,9 +48,7 @@ function jwt(schemes, headers, authCb, decodedJwt) {
     else if (true === decodedJwt) {
         var token = headers.authorization.split(" ").pop().replace(/['"]+/g, '');
         var tokenDecodablePart = token.split('.')[1];
-        //console.log(tokenDecodablePart)
         var decoded = Buffer.from(tokenDecodablePart, 'base64').toString();
-        //console.log("JSON.parse(decoded)",decoded)
         result = authCb({
             authorization: authHeader,
             decoded: JSON.parse(decoded),
@@ -128,7 +125,6 @@ var securityType = { http: http, oauth2: oauth2, openid: openid, apiKey: apiKey 
 //=====================================================
 function security(_a) {
     var authCallbacks = _a.authCallbacks, scamaVerb = _a.scamaVerb, operationsFn = _a.operationsFn, securitySchemes = _a.securitySchemes, headers = _a.headers, decodedJwt = _a.decodedJwt, req = _a.req, secName = _a.secName;
-    //console.log(secName)
     //++++++++ check caller has the right security headers
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
     return new Promise(function (resolve, reject) {
@@ -150,17 +146,10 @@ function security(_a) {
                     status: 401
                 };
             } // END if
-            //console.log(secName,scheme)
-            //console.log("a",scheme.type)
             var result = securityType[scheme.type].call(req, scheme, headers, authCb, decodedJwt);
-            // console.log("b")
             resolve(result);
-            // console.log("c")
         }
         catch (err) {
-            //console.log("d")
-            //  console.error(err)
-            //console.error(err)
             reject(err.firetail ? err : {
                 message: "Security Function \"".concat(scheme.type, "\" failed with:").concat(err.message || err),
                 status: 401

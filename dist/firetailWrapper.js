@@ -38,8 +38,6 @@ function genRes(override) {
         },
         end: function () { return res; },
         send: function (x) {
-            //console.log(res)
-            //console.log(x)
             res.__data = res.__data || x;
             return res;
         },
@@ -58,8 +56,6 @@ function genRes(override) {
 function firetailWrapper(next) {
     firetailMiddleware = this;
     return function (event, context) {
-        //  console.log(event)
-        //console.log(context)
         return new Promise(function (resolve, reject) {
             var protocol = event.requestContext.http ? "http" : "https";
             var ip = event.requestContext.identity ? event.requestContext.identity.sourceIp
@@ -78,52 +74,38 @@ function firetailWrapper(next) {
                 lambdaEvent: event
             }), res = genRes({
                 end: function () {
-                    //console.log("end ===>>>",res.__data)
-                    //console.log(callHasErrored)
                     if (callHasErrored) /* istanbul ignore next */
                         setTimeout(function () { return resolve(res.__data); });
                 }
             });
-            //console.log("---<<<<",req)
             var callHasErrored = true;
             firetailMiddleware(req, res, function () {
-                //  console.log("---<<<<",res)
                 var result = next(event, context);
-                //console.log("--->>>",result)
                 if (!result.then) {
                     result = Promise.resolve(result);
                 }
                 result.then(function (val) {
                     callHasErrored = false;
-                    //    console.log("--->>>",val)
-                    // console.log("--->>>",val)
                     if (val) {
                         if (val.headers) {
                             Object.keys(val.headers)
                                 .forEach(function (key) {
                                 res.setHeader(key, val.headers[key]);
-                                //    console.log("---==>",res)
                             });
                         } // END if
                         if (val.statusCode) {
                             res.status(val.statusCode);
                         }
                     }
-                    //  console.log("--->>>",res)
                     try {
                         var bodyObj = JSON.parse(val.body);
                         res.json(bodyObj);
                     }
                     catch (err) {
-                        //  console.error(err)
-                        //    console.log("Calling res.send",res)
                         res.send(val.body);
-                        //  console.log("Called res.send",res)
                     }
-                    //  console.log(" --- ",res)
                     var payload = __assign(__assign({}, val), { body: "string" === typeof res.__data ? res.__data
                             : JSON.stringify(res.__data) });
-                    //  console.log(" -+- ",payload)
                     setTimeout(function () { return resolve(payload); });
                 });
             }); // END firetailMiddleware

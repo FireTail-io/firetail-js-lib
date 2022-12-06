@@ -339,7 +339,6 @@ const myStore = {
     myStore.callbacks[tag].push(cb)
   },
   push:(tag,data)=>{
-  //  console.log(" ------>",tag,data)
     if(myStore.callbacks[tag])
     //setTimeout(()=>{
       myStore.callbacks[tag]

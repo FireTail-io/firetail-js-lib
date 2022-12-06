@@ -14,7 +14,7 @@ function areWeTestingWithJest() {
 
 
 function getFilesFromDir(dir:string, fileTypes:string[]) {
-//  console.log({dir, fileTypes})
+
   var filesToReturn = [];
   function walkDir(currentPath) {
     var files = fs.readdirSync(currentPath);
@@ -28,7 +28,7 @@ function getFilesFromDir(dir:string, fileTypes:string[]) {
     }
   };
   walkDir(dir);
-  //  console.log("filesToReturn",filesToReturn)
+
   return filesToReturn;
 }
 const re = /(?:\.([^.]+))?$/;
@@ -37,35 +37,14 @@ function deepRequire(dirname,selector){
   selector = selector || ["js"]
   return getFilesFromDir(dirname, selector.map(ext=>`.${ext}`)).reduce((packages,file) =>{
     if(file === "/index.js")  return packages
-    //if(file[0] !== "/") file = "/"+file;
 
     const pathParts = file.replace(re.exec(file)[0],"").split("/").slice(1)
-    /*  console.log("pathParts",pathParts)
-    if(pathParts[pathParts.length-1] === "index")
-    pathParts.pop()*/
-//console.log("join(_)",pathParts.join("."))
+
     packages[pathParts.join(".")] = require(dirname+`/${file}`)
-//console.log("packages",Object.keys(packages))
     return packages;
   },{});
 
 } // END deepRequire
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 let defaultOpts = {}
 
@@ -100,10 +79,9 @@ if(undefined === defaultOpts.lambda){
 module.exports = function fileTaileSetup(opts: Options) : Function{
 
   const myOpts = { ...defaultOpts, ...opts }
-  //console.log(myOpts)
+
   const { addApi, overRideError, operations, dev, decodedJwt, authCallbacks, specificationDir, customBodyDecoders, apiKey, lambda } = myOpts
 
-  //const console = {log:()=>{},warn:()=>{},error:()=>{}}
   let addApiSt = defaultOpts.addApi
 
 //+++++++++++++++++++++++++++++++++++++++++ genMessage
@@ -116,16 +94,12 @@ module.exports = function fileTaileSetup(opts: Options) : Function{
     if(dev && errMessages.dev[key]){
        mess = errMessages.dev[key]
     }
-//console.log(`typeof mess = ${typeof mess}`,mess)
+
   if("function" === typeof mess){
-//console.log(` >>> `,mess(data))
       return mess(data)
     }
     return mess || errMessages.prod.default
   } // END genMessage
-
-
-//  console.log(new Error("").stack)
 
   const callerFile = new Error("").stack
                             .split("\n")[2]
@@ -143,9 +117,10 @@ module.exports = function fileTaileSetup(opts: Options) : Function{
     } else if ("string" === typeof addApi) {
         addApiSt = addApi
     }
-    //console.log("addApiSt",addApiSt,addApi)
+
     if ("string" !== typeof addApiSt) {
-      throw new Error(genMessage("badOptionYamlPath",addApi))//"addApi is not validate: "+JSON.stringify(addApi))
+      throw new Error(genMessage("badOptionYamlPath",addApi))
+      //"addApi is not validate: "+JSON.stringify(addApi))
     }
 
     if(addApiSt.startsWith(".")){
@@ -170,9 +145,7 @@ if( specificationDir ){
 /*if("string" !== typeof addApiSt){
   throw new Error("Missing path to YAML")
 }*/
-//console.log("addApiSt",addApiSt)
   // TODO: Should we catch or crash if spce is not found?
-//console.log(addApiSt)
  const apiSpecPr = SwaggerParser.validate(addApiSt)
  //apiSpecPr.then(x=>console.log(x)).catch(y=>console.error(new Error().stack,y))
                               /*  .then( apiSpec =>{
@@ -204,7 +177,7 @@ if( specificationDir ){
                                   }
                                   return apiSpec
                                 }).catch(err=>{throw err})*/
-  //console.log("we are here")
+
   const data = {
         genMessage,
         decodedJwt,
@@ -217,10 +190,9 @@ if( specificationDir ){
         apiKey,
         lambda
       }
-//console.log("we are here")
+
 const  myMiddleware = middleware.bind(data)
        myMiddleware.firetailData = data
 return lambda ? firetailWrapper.bind(myMiddleware) : myMiddleware
-
 
 } // END fileTaileSetup
