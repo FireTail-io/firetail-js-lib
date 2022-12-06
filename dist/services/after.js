@@ -32,11 +32,14 @@ module.exports = function after(specificScama, data) {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
     var response = specificScama.responses[statusCode]
         || specificScama.responses.default;
-    //console.log(data,response,Object.keys(specificScama.responses),statusCode)
+    //console.log(data)
+    //console.log(response)
+    //console.log(Object.keys(specificScama.responses))
+    //console.log(statusCode)
     // What Scamas can we use to check the response
     if (response) {
-        //    console.log(accept)
-        //      console.log(response.content)
+        //  console.log(accept)
+        //  console.log(response.content)
         if (response.content) {
             var availableContentTypes = Object.keys(response.content);
             // CHECK the client can accept it
@@ -54,6 +57,7 @@ module.exports = function after(specificScama, data) {
             if ("object" === typeof customBodyDecoders
                 && customBodyDecoders[replyContentType]) {
                 resBody = customBodyDecoders[replyContentType](resBody);
+                //console.log(resBody)
                 usingCustomBodyDecoders = true;
                 if (!resBody) {
                     throw {
@@ -70,10 +74,10 @@ module.exports = function after(specificScama, data) {
                     val: replyContentType
                 };
             }
-            //console.log(typeof resBody, resBody)
+            //   console.log(typeof resBody, resBody)
             // console.log(response.content)
             var contentSchema = response.content[replyContentType];
-            //   console.log(replyContentType,contentSchema)
+            // console.log(replyContentType,contentSchema)
             // CHECK it is one of the formats in the Yaml
             if (!contentSchema) {
                 return;
@@ -84,10 +88,10 @@ module.exports = function after(specificScama, data) {
                   }*/
             }
             var schema_1 = contentSchema.schema;
-            //  console.log(contentKey)
+            //console.log(contentKey)
             //if (contentKey){
             // console.log(resBody)
-            //  console.log(response.content[contentKey])
+            //console.log(response.content[contentKey])
             //  console.log("IS validate?")
             //    const { schema } = response.content[contentKey]
             //console.log(schema)

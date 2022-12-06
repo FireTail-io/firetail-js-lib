@@ -21,6 +21,7 @@ function http(schemes, headers, authCb, decodedJwt) {
         }, headers);
     }
     catch (err) {
+        //    console.error(err)
         throw {
             firetail: "authenticationFailed",
             message: err.message || err,
@@ -48,7 +49,9 @@ function jwt(schemes, headers, authCb, decodedJwt) {
     else if (true === decodedJwt) {
         var token = headers.authorization.split(" ").pop().replace(/['"]+/g, '');
         var tokenDecodablePart = token.split('.')[1];
+        //console.log(tokenDecodablePart)
         var decoded = Buffer.from(tokenDecodablePart, 'base64').toString();
+        //console.log("JSON.parse(decoded)",decoded)
         result = authCb({
             authorization: authHeader,
             decoded: JSON.parse(decoded),
@@ -148,13 +151,17 @@ function security(_a) {
                 };
             } // END if
             //console.log(secName,scheme)
+            //console.log("a",scheme.type)
             var result = securityType[scheme.type].call(req, scheme, headers, authCb, decodedJwt);
+            // console.log("b")
             resolve(result);
+            // console.log("c")
         }
         catch (err) {
+            //console.log("d")
+            //  console.error(err)
             //console.error(err)
             reject(err.firetail ? err : {
-                message: err.message || err,
                 message: "Security Function \"".concat(scheme.type, "\" failed with:").concat(err.message || err),
                 status: 401
             }); // END reject

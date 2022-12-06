@@ -214,7 +214,7 @@ console.log(req && req.error && req.error.dev ? Html.lite`<div>
 
                           }catch(err){
                               reqMetaData.error = null
-                            //  console.error(err)
+                                      console.error(err)
                           }
                         //  console.log(reqMetaData)
                           myStore.push("reply",reqMetaData)

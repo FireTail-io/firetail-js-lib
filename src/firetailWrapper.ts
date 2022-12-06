@@ -31,9 +31,13 @@ function genRes(override) {
      return res
    },
    end:()=>res,
-   send:(x)=>res,
+   send:(x)=>{
+     //console.log(res)
+     //console.log(x)
+     res.__data = res.__data || x;
+     return res
+   },
    json:(x)=>{
-     //console.log("json ===>>>",x)
      res.__data = x;
      return res
    }
@@ -50,7 +54,8 @@ function genRes(override) {
 function firetailWrapper(next){
   firetailMiddleware = this;
   return (event,context)=> {
-
+  //  console.log(event)
+//console.log(context)
     return new Promise((resolve, reject)=>{
 
       const protocol = event.requestContext.http ? "http" : "https"
@@ -60,10 +65,10 @@ function firetailWrapper(next){
 
       const req = genReq({
          method : event.httpMethod || event.requestContext.http.method,
-    originalUrl : event.rawPath || event.resource,
+    originalUrl : event.rawPath    || event.resource,
            body : event.body,
         headers : event.headers,
-         params : event.pathParameters || {},
+         params : event.pathParameters        || {},
           query : event.queryStringParameters || {},
           httpVersion:
           (event.requestContext.protocol || event.requestContext[protocol].protocol).split("/").pop(),
@@ -82,23 +87,48 @@ function firetailWrapper(next){
       });
 
 
+        //console.log("---<<<<",req)
       let callHasErrored = true
       firetailMiddleware(req,res,()=>{
+      //  console.log("---<<<<",res)
         let result = next(event,context)
-        //  console.log("--->>>",result)
+          //console.log("--->>>",result)
         if( ! result.then){
           result = Promise.resolve(result)
         }
         result.then(val=>{
           callHasErrored = false
-        //  console.log("--->>>",result)
+      //    console.log("--->>>",val)
+      // console.log("--->>>",val)
+       if(val){
+
+         if(val.headers){
+           Object.keys(val.headers)
+                 .forEach(key=>{
+                   res.setHeader(key,val.headers[key])
+                //    console.log("---==>",res)
+                 })
+         } // END if
+         if(val.statusCode){
+           res.status(val.statusCode)
+         }
+       }
+      //  console.log("--->>>",res)
        try{
-          res.json(JSON.parse(val.body))
-        //  console.log(" --- ",res.__data)
+         const bodyObj = JSON.parse(val.body)
+          res.json(bodyObj)
         }catch(err){
+        //  console.error(err)
+      //    console.log("Calling res.send",res)
           res.send(val.body)
+        //  console.log("Called res.send",res)
         }
-          const payload = {...val,body:JSON.stringify(res.__data)}
+        //  console.log(" --- ",res)
+          const payload = {
+            ...val,
+            body:"string" === typeof res.__data ? res.__data
+                                                : JSON.stringify(res.__data)
+          }
         //  console.log(" -+- ",payload)
           setTimeout(()=>resolve(payload))
         })

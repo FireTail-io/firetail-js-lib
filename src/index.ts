@@ -6,15 +6,6 @@ const fs = require('fs');
 const middleware = require('./services/middleware');
 const errMessages = require('./services/lang');
 const firetailWrapper = require("./firetailWrapper");
-//const deepRequire = require('pick-n-mix/utils/deepRequire')
-//const decodedJwt = true
-
-
-
-
-
-
-
 
 function areWeTestingWithJest() {
     return process.env.JEST_WORKER_ID !== undefined;
@@ -94,7 +85,7 @@ if( ! areWeTestingWithJest()){
         }
       }
     } catch (err){
-      console.error(err)
+      console.error(new Error().stack,err)
     }
 }
 
@@ -181,7 +172,9 @@ if( specificationDir ){
 }*/
 //console.log("addApiSt",addApiSt)
   // TODO: Should we catch or crash if spce is not found?
+//console.log(addApiSt)
  const apiSpecPr = SwaggerParser.validate(addApiSt)
+ //apiSpecPr.then(x=>console.log(x)).catch(y=>console.error(new Error().stack,y))
                               /*  .then( apiSpec =>{
                                   const {components} = apiSpec
                                   if(components &&
@@ -211,6 +204,7 @@ if( specificationDir ){
                                   }
                                   return apiSpec
                                 }).catch(err=>{throw err})*/
+  //console.log("we are here")
   const data = {
         genMessage,
         decodedJwt,
@@ -223,6 +217,7 @@ if( specificationDir ){
         apiKey,
         lambda
       }
+//console.log("we are here")
 const  myMiddleware = middleware.bind(data)
        myMiddleware.firetailData = data
 return lambda ? firetailWrapper.bind(myMiddleware) : myMiddleware

@@ -16,8 +16,6 @@ var fs = require('fs');
 var middleware = require('./services/middleware');
 var errMessages = require('./services/lang');
 var firetailWrapper = require("./firetailWrapper");
-//const deepRequire = require('pick-n-mix/utils/deepRequire')
-//const decodedJwt = true
 function areWeTestingWithJest() {
     return process.env.JEST_WORKER_ID !== undefined;
 }
@@ -71,7 +69,7 @@ if (!areWeTestingWithJest()) {
         }
     }
     catch (err) {
-        console.error(err);
+        console.error(new Error().stack, err);
     }
 }
 if (undefined === defaultOpts.lambda) {
@@ -144,7 +142,9 @@ module.exports = function fileTaileSetup(opts) {
     }*/
     //console.log("addApiSt",addApiSt)
     // TODO: Should we catch or crash if spce is not found?
+    //console.log(addApiSt)
     var apiSpecPr = SwaggerParser.validate(addApiSt);
+    //apiSpecPr.then(x=>console.log(x)).catch(y=>console.error(new Error().stack,y))
     /*  .then( apiSpec =>{
         const {components} = apiSpec
         if(components &&
@@ -174,6 +174,7 @@ module.exports = function fileTaileSetup(opts) {
         }
         return apiSpec
       }).catch(err=>{throw err})*/
+    //console.log("we are here")
     var data = {
         genMessage: genMessage,
         decodedJwt: decodedJwt,
@@ -186,6 +187,7 @@ module.exports = function fileTaileSetup(opts) {
         apiKey: apiKey,
         lambda: lambda
     };
+    //console.log("we are here")
     var myMiddleware = middleware.bind(data);
     myMiddleware.firetailData = data;
     return lambda ? firetailWrapper.bind(myMiddleware) : myMiddleware;

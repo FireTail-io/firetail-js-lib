@@ -42,13 +42,16 @@ let usingCustomBodyDecoders = false;
 
   const response = specificScama.responses[statusCode]
                 || specificScama.responses.default
-//console.log(data,response,Object.keys(specificScama.responses),statusCode)
+//console.log(data)
+//console.log(response)
+  //console.log(Object.keys(specificScama.responses))
+  //console.log(statusCode)
 // What Scamas can we use to check the response
 
 
   if (response){
-//    console.log(accept)
-//      console.log(response.content)
+  //  console.log(accept)
+    //  console.log(response.content)
     if(response.content){
 
       const availableContentTypes = Object.keys(response.content)
@@ -71,6 +74,7 @@ let usingCustomBodyDecoders = false;
 if("object" === typeof customBodyDecoders
 && customBodyDecoders[replyContentType]){
   resBody = customBodyDecoders[replyContentType](resBody)
+  //console.log(resBody)
   usingCustomBodyDecoders = true
   if(!resBody){
       throw {
@@ -87,11 +91,11 @@ if("object" === typeof customBodyDecoders
     }
 }
 
-   //console.log(typeof resBody, resBody)
+//   console.log(typeof resBody, resBody)
   // console.log(response.content)
 const  contentSchema =  response.content[replyContentType]
 
-//   console.log(replyContentType,contentSchema)
+  // console.log(replyContentType,contentSchema)
   // CHECK it is one of the formats in the Yaml
   if( ! contentSchema){
     return;
@@ -102,10 +106,10 @@ const  contentSchema =  response.content[replyContentType]
     }*/
   }
 const { schema } = contentSchema
-  //  console.log(contentKey)
+    //console.log(contentKey)
       //if (contentKey){
       // console.log(resBody)
-      //  console.log(response.content[contentKey])
+        //console.log(response.content[contentKey])
       //  console.log("IS validate?")
 
     //    const { schema } = response.content[contentKey]

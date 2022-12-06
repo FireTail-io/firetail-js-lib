@@ -69,7 +69,7 @@ module.exports = function before({scamaForEndPoint,data,genMessage}){
         }
       })
 
-    //  console.log(" B ------- ",data.params)
+      //console.log(" B ------- ",data.params)
 //+++++++++++++++++++++++++++++ query params are right
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -84,12 +84,12 @@ module.exports = function before({scamaForEndPoint,data,genMessage}){
       const { query } = data
 
       let queryNamesRecived = Object.keys(query)
-      //console.log("queryNamesRecived",queryNamesRecived)
+    //  console.log("queryNamesRecived",queryNamesRecived)
       //console.log("queryNametoCheck",queryNametoCheck)
       queryNametoCheck.forEach(({required,name, schema}) => {
 
-      //  console.log("name",name)
-          //      console.log("queryNamesRecived",queryNamesRecived)
+    //  console.log("name",name)
+            //    console.log("queryNamesRecived",queryNamesRecived)
         if(required && ! queryNamesRecived.includes(name)){
           //console.warn(name +" was not found as a named query ")
           throw {
@@ -106,14 +106,14 @@ module.exports = function before({scamaForEndPoint,data,genMessage}){
 
         //console.log("A queryNamesRecived",queryNamesRecived)
         queryNamesRecived = queryNamesRecived.filter( queryName => queryName !== name)
-        //console.log("B queryNamesRecived",queryNamesRecived)
+      //  console.log("B queryNamesRecived",queryNamesRecived)
         /*console.log(`"${name}" ~ ${url}`,schema)
         if(! schema){
           console.warn(`No schema for query: "${name}" ~ ${url}`)
         } */if(schema) {//if(queryNamesRecived.includes(name)){
-          //console.log(1,name)
-          //console.log(2,query[name])
-          //console.log(3,schema)
+          //console.log(name)
+          //console.log(query[name])
+        //  console.log(schema)
           data.query[name] = checkParameters(query[name],schema)
         }
       }) // END foreach
@@ -171,7 +171,7 @@ module.exports = function before({scamaForEndPoint,data,genMessage}){
       validater = validateBody(schema,true, dev)
     //  console.log()
     //  console.log(contentType)
-//console.log()
+//console.log(1)
       if(contentType.endsWith("json")){
         data.reqBody = JSON.parse(reqBody)
       } else {

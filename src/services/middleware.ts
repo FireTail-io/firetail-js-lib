@@ -37,7 +37,11 @@ module.exports = function middleware(req, res, next) {
     lambda
   } = this
   // .then(({paths})=>paths);
-
+  //console.log()
+//console.log("------THIS----------")
+//console.log(this)
+//console.log("----------------")
+//console.log()
   const data = {
       apiKey,
       dev,
@@ -60,7 +64,7 @@ module.exports = function middleware(req, res, next) {
     data.headers.accept = data.headers.accept || "*/*"
 
     data._reqBody = data.reqBody
-
+//console.log(data)
   /*  if(dev){
       if(data.url.startsWith("/firetail")){
         if("/firetail/apis.json" === data.url){
@@ -107,10 +111,10 @@ module.exports = function middleware(req, res, next) {
 let errorHandlerCalled = false
   const errorHandler = err => {
 
-if( !areWeTestingWithJest()){
-  console.error(err,new Error().stack)
+  if( !areWeTestingWithJest()){
+    console.error(err,new Error().stack)
 
-}
+  }
 
     if(errorHandlerCalled){
       console.error("errorHandler was already called")
@@ -131,14 +135,14 @@ if( !areWeTestingWithJest()){
 //console.log(typeof defaultErrorVal,defaultErrorVal)
     if(err.message){
       defaultErrorVal.title = err.message
-//  console.log(typeof defaultErrorVal,defaultErrorVal)
+  //console.log(typeof defaultErrorVal,defaultErrorVal)
     } else if(err.firetail){
       defaultErrorVal.title = genMessage(err.firetail, err.val)
       err.message = defaultErrorVal.title
-//  console.log(typeof defaultErrorVal,defaultErrorVal)
+  //console.log(typeof defaultErrorVal,defaultErrorVal)
     }
 
-  //  console.log(typeof defaultErrorVal,defaultErrorVal)
+    //console.log(typeof defaultErrorVal,defaultErrorVal)
     if(dev && isUI){
       defaultErrorVal.error = {
         message:err.message,
@@ -155,8 +159,8 @@ if( !areWeTestingWithJest()){
  //console.log(typeof defaultErrorVal,defaultErrorVal)
                     // Because overRideError may not have a status
     data.status = errContent.status || defaultErrorVal.status
-    //  console.log(data)
-    //  console.log(errContent.status, defaultErrorVal.status)
+      //console.log(data)
+      //console.log(errContent.status, defaultErrorVal.status)
     res.status(data.status)
     /*if(){
 
@@ -193,7 +197,7 @@ if("object" === typeof errContent){
 
 //+++++++++++++++++++++++++++++++++++++ hi-jack res fn
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
-  const headers = [], removeFromHead = []
+  const headers = data.resHeaders = [], removeFromHead = []
   res.setHeader = (key,val)=>{
 //console.log("res.setHeader",{key,val})
     headers.push({key,val})
@@ -207,15 +211,16 @@ if("object" === typeof errContent){
 
   res.status = function() {
     const args = args2Arr(arguments)
-    //  console.log("res.status",args)
+      //console.log("res.status",args)
     data.statusCode = args[0]
     return res//stashFnCalls.status.apply(res, args)
   }
   res.send = function() {
     //if(data.resBody){  return;  }
     const args = args2Arr(arguments)
-    //  console.log("res.send",args)
+    //  console.log(args)
     data.resBody = data.resBody || args[0]
+    //  console.log(data)
     if(!data.finishedAt){
       end()
     }
@@ -249,7 +254,7 @@ if("object" === typeof errContent){
       stashFnCalls.setHeader(key,val);
     })
 
-    data.resHeaders = headers
+    //data.resHeaders = headers
 
   // Convert both dates to milliseconds
   //const date1_ms = data.startedAt.getTime();
@@ -266,12 +271,13 @@ if("object" === typeof errContent){
 //console.log(data)
       if(data.resBody){
         //if("object" === typeof data.resBody){
-      //  console.log(specificScama)
+    //   console.log(specificScama)
           if (specificScama) {
-          //  console.log(data.resBody)
+          //  console.log(data)
             const cleanedBody = after(specificScama, data)
+            //  console.log(cleanedBody)
             data.resBody = cleanedBody || data.resBody
-          //    console.log(data.resBody)
+            //  console.log(data.resBody)
 //console.log(cleanedBody)
             stashFnCalls.json.call(res,data.resBody)
           }else {
@@ -287,15 +293,19 @@ if("object" === typeof errContent){
     // as we can override the responce with out
     // warning about app sending data down the wire
 
+//    console.log("=======1============")
     if(data.lambda || !areWeTestingWithJest()){
-      logFT(req, res, data, specificScama)
       try{
+//console.log("===========2========")
         logFT(req, res, data, specificScama)
+  //console.log("=========3==========")
       } catch(e){
+//console.error("=========5==========",e)
       }
     }
 
     } catch(err) {
+          console.error(err)
         errorHandler(err);
     }
   } // END res.end
@@ -303,10 +313,12 @@ if("object" === typeof errContent){
 //++++++++++++++++++++++++++++++++++ get ref for scama
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+//console.log("--0--",apiSpecPr)
+// n ??
   apiSpecPr.then(({paths,components}) => {
-
+//console.log("--1--")
       const matchFound = matchUrl(data.url,Object.keys(paths))
-    //  console.log("matchFound",matchFound)
+      //console.log("matchFound",matchFound)
 //console.log("data.url",data.url)
 //console.log("Object.keys(paths)",Object.keys(paths))
       let scamaForEndPoint = null
@@ -329,7 +341,8 @@ if("object" === typeof errContent){
           }
         }
 
-        specificScama.resource = matchFound ? matchFound.path : ""
+        specificScama.resource = matchFound ? matchFound.path
+                                            : ""
     //  }catch(err){
     //    console.error(err)
     //  }
@@ -342,6 +355,9 @@ if("object" === typeof errContent){
     //  req.query  = data.query
 
     const secName = security.getSecName(specificScama,components.securitySchemes)
+    //console.log()
+    //console.log(" ->> secName",secName)
+    //console.log()
     return security({
         scamaVerb:specificScama,
         operationsFn,
@@ -353,6 +369,7 @@ if("object" === typeof errContent){
         authCallbacks,
         secName
       }).then( result =>{
+    //  console.log(" }}}}}}}}] ",result)
         req[secName] = result
         /*    if(scamaForEndPoint){
             const { verb } = data
@@ -383,7 +400,9 @@ if("object" === typeof errContent){
     /*if (specificScama) {
       throw err
     }*/
-    //console.error(err,new Error().stack)
+
+  //  console.error(err)
+
     errorHandler(err)
   }) // END catch
 
