@@ -19,8 +19,8 @@ function areWeTestingWithJest() {
 
 module.exports = function middleware(req, res, next) {
 
-    //res.setHeader("Server", "firetail-API");
-    //res.removeHeader("X-Powered-By");
+    res.setHeader("Server", "firetail-API");
+    res.removeHeader("X-Powered-By");
 
   const {
     genMessage,
