@@ -304,9 +304,8 @@ let errorHandlerCalled = false
       //req.params = data.params
     //  req.query  = data.query
 
-    const secName = security.getSecName(specificScama,components.securitySchemes)
-
-    return security({
+    const secNames = security.getSecName(specificScama,components.securitySchemes)
+    return Promise.all(secNames.map(secName=>security({
         scamaVerb:specificScama,
         operationsFn,
         securitySchemes:components.securitySchemes,
@@ -316,8 +315,9 @@ let errorHandlerCalled = false
         genMessage,
         authCallbacks,
         secName
-      }).then( result =>{
-        req[secName] = result
+      }))).then( results =>{
+            results.forEach((result,index)=>req[secNames[index]] = result)
+
         /*    if(scamaForEndPoint){
             const { verb } = data
             const scamaVerb = scamaForEndPoint[verb]

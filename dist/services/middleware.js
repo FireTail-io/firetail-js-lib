@@ -258,8 +258,8 @@ module.exports = function middleware(req, res, next) {
         }
         //req.params = data.params
         //  req.query  = data.query
-        var secName = security.getSecName(specificScama, components.securitySchemes);
-        return security({
+        var secNames = security.getSecName(specificScama, components.securitySchemes);
+        return Promise.all(secNames.map(function (secName) { return security({
             scamaVerb: specificScama,
             operationsFn: operationsFn,
             securitySchemes: components.securitySchemes,
@@ -269,8 +269,8 @@ module.exports = function middleware(req, res, next) {
             genMessage: genMessage,
             authCallbacks: authCallbacks,
             secName: secName
-        }).then(function (result) {
-            req[secName] = result;
+        }); })).then(function (results) {
+            results.forEach(function (result, index) { return req[secNames[index]] = result; });
             /*    if(scamaForEndPoint){
                 const { verb } = data
                 const scamaVerb = scamaForEndPoint[verb]

@@ -192,12 +192,12 @@ function security({ authCallbacks,
 }
 
 security.getSecName = ({security},securitySchemes)=>{
-  let foundSecName;
+  let foundSecName = [];
   if(security){
     security.forEach(sec=> {
       Object.keys(sec).forEach(secName=> {
         if(securitySchemes[secName]){
-          foundSecName = secName
+          foundSecName.push(secName)
         }
       })
     })
