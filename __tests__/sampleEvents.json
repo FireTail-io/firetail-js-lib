@@ -41,15 +41,15 @@
     "api Gateway Proxy V2":{
     "version": "2.0",
     "routeKey": "$default",
-    "rawPath": "/pets",
-    "rawQueryString": "parameter1=value1&parameter1=value2&parameter2=value",
+    "rawPath": "/pets/2",
+    "rawQueryString": "",
     "cookies": [
       "cookie1",
       "cookie2"
     ],
     "headers": {
-      "Header1": "value1",
-      "Header2": "value1,value2"
+      "authorization":"Bearer RsT5OjbzRn430zqMLgV3Ia",
+      "x-auth":"key"
     },
     "queryStringParameters": {
       "parameter1": "value1,value2",
@@ -76,8 +76,8 @@
       "domainName": "id.execute-api.us-east-1.amazonaws.com",
       "domainPrefix": "id",
       "http": {
-        "method": "POST",
-        "path": "/pets",
+        "method": "DELETE",
+        "path": "/pets/2",
         "protocol": "HTTP/1.1",
         "sourceIp": "192.168.0.1/32",
         "userAgent": "agent"
@@ -88,9 +88,9 @@
       "time": "12/Mar/2020:19:03:58 +0000",
       "timeEpoch": 1583348638390
     },
-    "body": "{\"name\": \"tom\"}",
+    "body": "",
     "pathParameters": {
-      "parameter1": "value1"
+      "petId": "2"
     },
     "isBase64Encoded": false,
     "stageVariables": {
