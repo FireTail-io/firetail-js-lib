@@ -215,7 +215,7 @@ let errorHandlerCalled = false
 
   let end = function () {
     end = ()=> {}
-    res.end = ()=>{}
+    //res.end = ()=>{}
     const args = args2Arr(arguments)
     data.finishedAt = new Date()
 

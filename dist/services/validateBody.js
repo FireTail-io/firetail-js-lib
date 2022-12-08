@@ -54,9 +54,8 @@ module.exports = function validateBody(schema, isIncoming, dev) {
         //console.log(1)
         //+++++++++++++++++++++++++++++++++++++ check required
         //++++++++++++++++++++++++++++++++++++++++++++++++++++
-        //console.log(required)
         required.forEach(function (scrm) {
-            //  console.log(body)
+            //  console.log(typeof body,body,new Error())
             //  console.log(scrm)
             //  console.log(`undefined === body[${scrm.name}]`,undefined === body[scrm.name])
             if (undefined === body[scrm.name]) {
