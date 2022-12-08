@@ -80,8 +80,9 @@ function apiKey(schemes, headers, authCb, decodedJwt) {
     }
     if (!token) {
         throw {
-            firetail: "missingJWTtoken",
-            status: 403
+            firetail: "missingAuthorizationToken",
+            status: 403,
+            val: schemes.name.toLowerCase()
         };
     }
     var scopes = schemes.scopes
@@ -124,7 +125,7 @@ var securityType = { http: http, oauth2: oauth2, openid: openid, apiKey: apiKey 
 //======================== validate security controller
 //=====================================================
 function security(_a) {
-    var authCallbacks = _a.authCallbacks, scamaVerb = _a.scamaVerb, operationsFn = _a.operationsFn, securitySchemes = _a.securitySchemes, headers = _a.headers, decodedJwt = _a.decodedJwt, req = _a.req, secName = _a.secName;
+    var authCallbacks = _a.authCallbacks, scamaVerb = _a.scamaVerb, operationsFn = _a.operationsFn, securitySchemes = _a.securitySchemes, headers = _a.headers, decodedJwt = _a.decodedJwt, req = _a.req, secName = _a.secName, dev = _a.data.dev;
     //++++++++ check caller has the right security headers
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
     return new Promise(function (resolve, reject) {
@@ -151,7 +152,7 @@ function security(_a) {
         }
         catch (err) {
             reject(err.firetail ? err : {
-                message: "Security Function \"".concat(scheme.type, "\" failed with:").concat(err.message || err),
+                message: dev ? "Security Function \"".concat(scheme.type, "\" failed with:").concat(err.message || err) : err.message || err,
                 status: 401
             }); // END reject
         } // END catch

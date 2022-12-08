@@ -690,12 +690,10 @@ describe('test Firetail:Serverless', () => {
       const cLog = console.log
 
       console.log = (txt)=>{
-        //cLog(txt,new Error().stack)
         expect(txt.startsWith("firetail:log-ext:")).toBe(true);
       }
       next(Serverless_Events["lambda function url"])
       .then((a)=>{
-        //cLog(a)
         const  {statusCode,body} = a
         expect(statusCode).toBe(200);
         expect(body).toBe('[{"id":1,"name":"Bubbles","tag":"fish"},'+

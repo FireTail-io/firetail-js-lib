@@ -195,7 +195,7 @@ module.exports = function before({scamaForEndPoint,data,genMessage}){
     if("object" === typeof data.reqBody
     ||       Array.isArray(data.reqBody)){
 
-      validater(data.reqBody)
+      data.reqBody = validater(data.reqBody)
 
       /*
         blocked.forEach(block=>{

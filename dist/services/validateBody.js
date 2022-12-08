@@ -35,7 +35,6 @@ module.exports = function validateBody(schema, isIncoming, dev) {
     //============================================= body fn
     //=====================================================
     return function (body) {
-        //console.log(body)
         //++++++++++++++++++++++++++ check for disallowed keys
         //+++++++++++++++++++++++++++++++++++++++ in its a req
         if (isIncoming)
@@ -75,9 +74,25 @@ module.exports = function validateBody(schema, isIncoming, dev) {
                 checkParameters(body[scrm.name], scrm);
             }
         }); // END optional.forEach
-        //  console.log(3)
+        //+++++++++++++++++++++++++++++++++++++++++ filter out
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++
+        if (isIncoming)
+            Object.keys(body).forEach(function (propName) {
+                if (!propertiesNames.includes(propName)) {
+                    if (dev) {
+                        throw {
+                            firetail: "valueForbidden",
+                            val: propName,
+                            status: 403
+                        }; // END throw
+                    } // END if dev
+                    else {
+                    }
+                } // END if ! propertiesNames
+            }); // END forEach
         return propertiesNames.reduce(function (n, key) {
-            n[key] = body[key];
+            if (key in body)
+                n[key] = body[key];
             return n;
         }, {});
     }; // END body

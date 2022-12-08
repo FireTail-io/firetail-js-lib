@@ -105,9 +105,8 @@ module.exports = function middleware(req, res, next) {
 let errorHandlerCalled = false
   const errorHandler = err => {
 
-  if( !areWeTestingWithJest()){
-    console.error(err,new Error().stack)
-
+  if( ! areWeTestingWithJest()){
+  //  console.error(err,new Error().stack)
   }
 
     if(errorHandlerCalled){
@@ -315,7 +314,8 @@ let errorHandlerCalled = false
         req,
         genMessage,
         authCallbacks,
-        secName
+        secName,
+        data
       }))).then( results =>{
             results.forEach((result,index)=>req[secNames[index]] = result)
 

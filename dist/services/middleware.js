@@ -79,7 +79,7 @@ module.exports = function middleware(req, res, next) {
     var errorHandlerCalled = false;
     var errorHandler = function (err) {
         if (!areWeTestingWithJest()) {
-            console.error(err, new Error().stack);
+            //  console.error(err,new Error().stack)
         }
         if (errorHandlerCalled) {
             console.error("errorHandler was already called");
@@ -269,7 +269,8 @@ module.exports = function middleware(req, res, next) {
             req: req,
             genMessage: genMessage,
             authCallbacks: authCallbacks,
-            secName: secName
+            secName: secName,
+            data: data
         }); })).then(function (results) {
             results.forEach(function (result, index) { return req[secNames[index]] = result; });
             /*    if(scamaForEndPoint){
