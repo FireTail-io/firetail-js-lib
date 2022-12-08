@@ -176,7 +176,7 @@ module.exports = function middleware(req, res, next) {
     };
     var end = function () {
         end = function () { };
-        //res.end = ()=>{}
+        //
         var args = args2Arr(arguments);
         data.finishedAt = new Date();
         removeFromHead.forEach(function (key) {
@@ -210,6 +210,7 @@ module.exports = function middleware(req, res, next) {
             } // END if data.resBody
             stashFnCalls.end.call(res);
             stashFnCalls.end = function () { };
+            res.end = function () { };
             // TODO: may need to buffer the responce..
             // as we can override the responce with out
             // warning about app sending data down the wire

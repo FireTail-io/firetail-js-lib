@@ -215,7 +215,7 @@ let errorHandlerCalled = false
 
   let end = function () {
     end = ()=> {}
-    //res.end = ()=>{}
+    //
     const args = args2Arr(arguments)
     data.finishedAt = new Date()
 
@@ -252,6 +252,7 @@ let errorHandlerCalled = false
       } // END if data.resBody
      stashFnCalls.end.call(res)
      stashFnCalls.end = ()=>{}
+     res.end = ()=>{}
     // TODO: may need to buffer the responce..
     // as we can override the responce with out
     // warning about app sending data down the wire
