@@ -77,7 +77,9 @@ Place your API YAML inside the root path of your application. Then run:
 const firetailSetup = require("@public.firetail.io/firetail-api");
 
 // ========== firetail options
-const firetailOpts = { lamdba:true, addApi: "./swagger.yaml" }
+const firetailOpts = { addApi: "./swagger.yaml" }
+// IF you run locally via 'serverless offline'
+// firetailOpts.lamdba = true // Add the lamdba flag
 
 // ========== install the firetail middleware
 const firetailWrapper = firetailSetup(firetailOpts)
