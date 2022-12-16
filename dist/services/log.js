@@ -73,7 +73,7 @@ function out(req, res, data, specificScama) {
         var req_1 = https.request(options, function (res) {
             res.setEncoding('utf8');
             res.on('data', function (d) {
-                console.log(JSON.parse(d));
+                //  console.log(JSON.parse(d))
                 //console.log(Buffer.isBuffer(d),d.toString('utf8'))
             });
         });

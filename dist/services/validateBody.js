@@ -10,6 +10,7 @@ var __assign = (this && this.__assign) || function () {
     return __assign.apply(this, arguments);
 };
 var checkParameters = require("./checkParameters");
+var validate = require('jsonschema').validate;
 module.exports = function validateBody(schema, isIncoming, dev) {
     //console.log(schema)
     var propertiesNames = Object.keys(schema.properties);
@@ -35,6 +36,16 @@ module.exports = function validateBody(schema, isIncoming, dev) {
     //============================================= body fn
     //=====================================================
     return function (body) {
+        /*
+        console.log(body)
+        if(isIncoming && dev){
+          try{
+            console.log(validate(body,schema))
+          }catch(err){
+            console.error(err)
+          }
+        }
+        */
         //++++++++++++++++++++++++++ check for disallowed keys
         //+++++++++++++++++++++++++++++++++++++++ in its a req
         if (isIncoming)
@@ -76,20 +87,25 @@ module.exports = function validateBody(schema, isIncoming, dev) {
         }); // END optional.forEach
         //+++++++++++++++++++++++++++++++++++++++++ filter out
         //++++++++++++++++++++++++++++++++++++++++++++++++++++
-        if (isIncoming)
-            Object.keys(body).forEach(function (propName) {
-                if (!propertiesNames.includes(propName)) {
-                    if (dev) {
-                        throw {
-                            firetail: "valueForbidden",
-                            val: propName,
-                            status: 403
-                        }; // END throw
-                    } // END if dev
-                    else {
-                    }
+        // CHECKOUT "additionalProperties"
+        // https://swagger.io/docs/specification/data-models/dictionaries/
+        /*
+              if(isIncoming)
+              Object.keys(body).forEach(propName=>{
+                if( ! propertiesNames.includes(propName)){
+                  if(dev){
+                    throw {
+                      firetail:"valueForbidden",
+                      val:propName,
+                      status:403
+                    } // END throw
+                  } // END if dev
+                  else {
+        
+                  }
                 } // END if ! propertiesNames
-            }); // END forEach
+              }) // END forEach
+        */
         return propertiesNames.reduce(function (n, key) {
             if (key in body)
                 n[key] = body[key];

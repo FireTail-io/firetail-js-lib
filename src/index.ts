@@ -11,12 +11,11 @@ function areWeTestingWithJest() {
     return process.env.JEST_WORKER_ID !== undefined;
 }
 
-
-
 function getFilesFromDir(dir:string, fileTypes:string[]) {
 
-  var filesToReturn = [];
-  function walkDir(currentPath) {
+  var filesToReturn: string[] = [];
+  function walkDir(currentPath:string) {
+  //  console.log(`currentPath:${typeof currentPath}`,currentPath)
     var files = fs.readdirSync(currentPath);
     for (var i in files) {
       var curFile = path.join(currentPath, files[i]);
@@ -33,7 +32,9 @@ function getFilesFromDir(dir:string, fileTypes:string[]) {
 }
 const re = /(?:\.([^.]+))?$/;
 
-function deepRequire(dirname,selector){
+function deepRequire(dirname:string,selector:[string]){
+//  console.log(`dirname:${typeof dirname}`,dirname)
+//  console.log(`selector:${typeof selector}`,selector)
   selector = selector || ["js"]
   return getFilesFromDir(dirname, selector.map(ext=>`.${ext}`)).reduce((packages,file) =>{
     if(file === "/index.js")  return packages
@@ -88,6 +89,8 @@ module.exports = function fileTaileSetup(opts: Options) : Function{
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
 
   const genMessage = (key,data) =>{
+    //console.log(`key:${typeof key}`,key)
+    //console.log(`data:${typeof data}`,data)
     // default
     let mess = errMessages.prod[key]
     // if dev.. then dev message

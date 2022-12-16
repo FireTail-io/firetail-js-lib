@@ -1,5 +1,7 @@
 
 const checkParameters = require("./checkParameters");
+const validate = require('jsonschema').validate;
+
 module.exports = function validateBody(schema,isIncoming,dev){
 //console.log(schema)
     const propertiesNames = Object.keys(schema.properties)
@@ -26,7 +28,16 @@ module.exports = function validateBody(schema,isIncoming,dev){
 //============================================= body fn
 //=====================================================
   return body => {
-    
+    /*
+    console.log(body)
+    if(isIncoming && dev){
+      try{
+        console.log(validate(body,schema))
+      }catch(err){
+        console.error(err)
+      }
+    }
+    */
 //++++++++++++++++++++++++++ check for disallowed keys
 //+++++++++++++++++++++++++++++++++++++++ in its a req
 
@@ -71,8 +82,14 @@ module.exports = function validateBody(schema,isIncoming,dev){
       }
     }) // END optional.forEach
 
+
 //+++++++++++++++++++++++++++++++++++++++++ filter out
 //++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+// CHECKOUT "additionalProperties"
+// https://swagger.io/docs/specification/data-models/dictionaries/
+
+/*
       if(isIncoming)
       Object.keys(body).forEach(propName=>{
         if( ! propertiesNames.includes(propName)){
@@ -88,7 +105,7 @@ module.exports = function validateBody(schema,isIncoming,dev){
           }
         } // END if ! propertiesNames
       }) // END forEach
-
+*/
 
     return propertiesNames.reduce((n,key)=>{
                               if(key in body)
