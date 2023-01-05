@@ -3,6 +3,7 @@
   "version": "0.5.1",
   "description": "",
   "main": "./dist/index.js",
+  "typings": "./index.d.ts",
   "license": "LGPL-3.0",
   "repository": {
     "type": "git",
