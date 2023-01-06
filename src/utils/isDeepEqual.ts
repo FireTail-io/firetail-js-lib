@@ -1,4 +1,4 @@
-function isDeepEqual (object1, object2) {
+function isDeepEqual (object1:object, object2:object) {
 
 	if(object1 === object2){
   	return true

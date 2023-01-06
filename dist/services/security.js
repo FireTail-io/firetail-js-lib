@@ -4,8 +4,7 @@ function http(schemes, headers, authCb, decodedJwt) {
     if (!authHeader) {
         throw {
             firetail: "missingJWTtoken",
-            status: 401,
-            stack: new Error().stack
+            status: 401
         }; // END throw
     } // if ! headers.authorization
     var bearerFormat = schemes.bearerFormat;
@@ -21,12 +20,12 @@ function http(schemes, headers, authCb, decodedJwt) {
         }, headers);
     }
     catch (err) {
+        //    console.error(err)
         throw {
             firetail: "authenticationFailed",
             message: err.message || err,
             headers: [['WWW-Authenticate', 'Basic']],
-            status: 401,
-            stack: new Error().stack
+            status: 401
         };
     }
 } // END http
@@ -35,8 +34,7 @@ function jwt(schemes, headers, authCb, decodedJwt) {
     if (!headers.authorization.toLowerCase().startsWith("bearer")) {
         throw {
             firetail: "notJWTBearer",
-            status: 401,
-            stack: new Error().stack
+            status: 401
         }; // END throw
     }
     var result = null;
@@ -82,9 +80,9 @@ function apiKey(schemes, headers, authCb, decodedJwt) {
     }
     if (!token) {
         throw {
-            firetail: "missingJWTtoken",
+            firetail: "missingAuthorizationToken",
             status: 403,
-            stack: new Error().stack
+            val: schemes.name.toLowerCase()
         };
     }
     var scopes = schemes.scopes
@@ -103,8 +101,7 @@ function oauth2(schemes, headers, authCb, decodedJwt) {
     if (!authHeader) {
         throw {
             firetail: "missingJWTtoken",
-            status: 401,
-            stack: new Error().stack
+            status: 401
         }; // END throw
     } // if ! headers.authorization
     var scopes = schemes.scopes
@@ -128,7 +125,7 @@ var securityType = { http: http, oauth2: oauth2, openid: openid, apiKey: apiKey 
 //======================== validate security controller
 //=====================================================
 function security(_a) {
-    var authCallbacks = _a.authCallbacks, scamaVerb = _a.scamaVerb, operationsFn = _a.operationsFn, securitySchemes = _a.securitySchemes, headers = _a.headers, decodedJwt = _a.decodedJwt, req = _a.req, secName = _a.secName;
+    var authCallbacks = _a.authCallbacks, scamaVerb = _a.scamaVerb, operationsFn = _a.operationsFn, securitySchemes = _a.securitySchemes, headers = _a.headers, decodedJwt = _a.decodedJwt, req = _a.req, secName = _a.secName, dev = _a.data.dev;
     //++++++++ check caller has the right security headers
     //++++++++++++++++++++++++++++++++++++++++++++++++++++
     return new Promise(function (resolve, reject) {
@@ -140,16 +137,14 @@ function security(_a) {
             if (!authCallbacks) {
                 throw {
                     firetail: "missingJWTtoken",
-                    status: 401,
-                    stack: new Error().stack
+                    status: 401
                 };
             } // END if
             var authCb = authCallbacks[secName];
             if ("function" !== typeof authCb) {
                 throw {
                     firetail: "missingJWTFunction",
-                    status: 401,
-                    stack: new Error().stack
+                    status: 401
                 };
             } // END if
             var result = securityType[scheme.type].call(req, scheme, headers, authCb, decodedJwt);
@@ -157,9 +152,8 @@ function security(_a) {
         }
         catch (err) {
             reject(err.firetail ? err : {
-                message: "Security Function \"".concat(scheme.type, "\" failed with:").concat(err.message || err),
-                status: 401,
-                stack: new Error().stack
+                message: dev ? "Security Function \"".concat(scheme.type, "\" failed with:").concat(err.message || err) : err.message || err,
+                status: 401
             }); // END reject
         } // END catch
     }); // END Promise

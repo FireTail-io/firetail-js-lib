@@ -19,8 +19,8 @@ function areWeTestingWithJest() {
 
 module.exports = function middleware(req, res, next) {
 
-    //res.setHeader("Server", "firetail-API");
-    //res.removeHeader("X-Powered-By");
+    res.setHeader("Server", "firetail-API");
+    res.removeHeader("X-Powered-By");
 
   const {
     genMessage,
@@ -105,9 +105,8 @@ module.exports = function middleware(req, res, next) {
 let errorHandlerCalled = false
   const errorHandler = err => {
 
-  if( !areWeTestingWithJest()){
-    console.error(err,new Error().stack)
-
+  if( ! areWeTestingWithJest()){
+  //  console.error(err,new Error().stack)
   }
 
     if(errorHandlerCalled){
@@ -215,7 +214,7 @@ let errorHandlerCalled = false
 
   let end = function () {
     end = ()=> {}
-    res.end = ()=>{}
+    //
     const args = args2Arr(arguments)
     data.finishedAt = new Date()
 
@@ -252,6 +251,7 @@ let errorHandlerCalled = false
       } // END if data.resBody
      stashFnCalls.end.call(res)
      stashFnCalls.end = ()=>{}
+     res.end = ()=>{}
     // TODO: may need to buffer the responce..
     // as we can override the responce with out
     // warning about app sending data down the wire
@@ -314,7 +314,8 @@ let errorHandlerCalled = false
         req,
         genMessage,
         authCallbacks,
-        secName
+        secName,
+        data
       }))).then( results =>{
             results.forEach((result,index)=>req[secNames[index]] = result)
 

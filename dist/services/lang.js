@@ -1,5 +1,6 @@
 var errMessages = {
     dev: {
+        missingAuthorizationToken: function (headerName) { return "The authorization value needs to be in header or url as \"".concat(headerName, "\""); },
         missingJWTtoken: "No authorization token provided",
         notJWTBearer: "token dont not start with 'bearer: '",
         urlNotInYaml: function (_a) {
@@ -47,6 +48,7 @@ var errMessages = {
         appContentTypeNotInYaml: function (replyContentType) { return "no schema definition was found for \"".concat(replyContentType, "\""); },
         noCustomBodyDecoder: function (replyContentType) { return "no customBodyDecoder was found for \"".concat(replyContentType, "\""); },
         problemWithCustomBodyDecoder: function (replyContentType) { return "\"".concat(replyContentType, "\" decoder has failed"); },
+        valueForbidden: function (name) { return "The key of \"".concat(name, "\" in your request body, is not part of your openApi"); }
     },
     prod: {
         badOptionYamlPath: function (yamlPath) { return "yamlPath is not validat:e: " + JSON.stringify(yamlPath); },

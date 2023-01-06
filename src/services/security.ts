@@ -91,8 +91,9 @@ function apiKey(schemes, headers, authCb, decodedJwt){
 
   if( ! token){
     throw {
-        firetail:"missingJWTtoken",
-        status:403
+        firetail:"missingAuthorizationToken",
+        status:403,
+        val:schemes.name.toLowerCase()
     }
   }
 
@@ -155,7 +156,9 @@ function security({ authCallbacks,
                     headers,
                     decodedJwt,
                     req,
-                    secName  }){
+                    secName,
+                    data:{dev}
+                    }){
   //++++++++ check caller has the right security headers
   //++++++++++++++++++++++++++++++++++++++++++++++++++++
   return new Promise((resolve, reject) => {
@@ -184,7 +187,7 @@ function security({ authCallbacks,
 
   }catch(err){
     reject( err.firetail ? err : {
-      message:`Security Function "${scheme.type}" failed with:${err.message || err}`,
+      message:dev?`Security Function "${scheme.type}" failed with:${err.message || err}`:err.message || err,
       status: 401
     }) // END reject
   } // END catch

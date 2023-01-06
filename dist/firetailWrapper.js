@@ -75,7 +75,11 @@ function firetailWrapper(next) {
             }), res = genRes({
                 end: function () {
                     if (callHasErrored) /* istanbul ignore next */
-                        setTimeout(function () { return resolve(res.__data); });
+                        resolve({
+                            statusCode: res.statusCode,
+                            body: JSON.stringify(res.__data)
+                        });
+                    //setTimeout(()=>resolve(res.__data))
                 }
             });
             var callHasErrored = true;

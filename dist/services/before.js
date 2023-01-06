@@ -166,7 +166,7 @@ module.exports = function before(_a) {
     } // END else
     if ("object" === typeof data.reqBody
         || Array.isArray(data.reqBody)) {
-        validater(data.reqBody);
+        data.reqBody = validater(data.reqBody);
         /*
           blocked.forEach(block=>{
             if(data.reqBody[block]){

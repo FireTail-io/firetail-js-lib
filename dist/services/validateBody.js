@@ -10,6 +10,7 @@ var __assign = (this && this.__assign) || function () {
     return __assign.apply(this, arguments);
 };
 var checkParameters = require("./checkParameters");
+var validate = require('jsonschema').validate;
 module.exports = function validateBody(schema, isIncoming, dev) {
     //console.log(schema)
     var propertiesNames = Object.keys(schema.properties);
@@ -35,7 +36,16 @@ module.exports = function validateBody(schema, isIncoming, dev) {
     //============================================= body fn
     //=====================================================
     return function (body) {
-        //console.log(body)
+        /*
+        console.log(body)
+        if(isIncoming && dev){
+          try{
+            console.log(validate(body,schema))
+          }catch(err){
+            console.error(err)
+          }
+        }
+        */
         //++++++++++++++++++++++++++ check for disallowed keys
         //+++++++++++++++++++++++++++++++++++++++ in its a req
         if (isIncoming)
@@ -54,9 +64,8 @@ module.exports = function validateBody(schema, isIncoming, dev) {
         //console.log(1)
         //+++++++++++++++++++++++++++++++++++++ check required
         //++++++++++++++++++++++++++++++++++++++++++++++++++++
-        //console.log(required)
         required.forEach(function (scrm) {
-            //  console.log(body)
+            //  console.log(typeof body,body,new Error())
             //  console.log(scrm)
             //  console.log(`undefined === body[${scrm.name}]`,undefined === body[scrm.name])
             if (undefined === body[scrm.name]) {
@@ -76,9 +85,30 @@ module.exports = function validateBody(schema, isIncoming, dev) {
                 checkParameters(body[scrm.name], scrm);
             }
         }); // END optional.forEach
-        //  console.log(3)
+        //+++++++++++++++++++++++++++++++++++++++++ filter out
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++
+        // CHECKOUT "additionalProperties"
+        // https://swagger.io/docs/specification/data-models/dictionaries/
+        /*
+              if(isIncoming)
+              Object.keys(body).forEach(propName=>{
+                if( ! propertiesNames.includes(propName)){
+                  if(dev){
+                    throw {
+                      firetail:"valueForbidden",
+                      val:propName,
+                      status:403
+                    } // END throw
+                  } // END if dev
+                  else {
+        
+                  }
+                } // END if ! propertiesNames
+              }) // END forEach
+        */
         return propertiesNames.reduce(function (n, key) {
-            n[key] = body[key];
+            if (key in body)
+                n[key] = body[key];
             return n;
         }, {});
     }; // END body

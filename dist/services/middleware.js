@@ -13,8 +13,8 @@ function areWeTestingWithJest() {
 //========================================== middleware
 //=====================================================
 module.exports = function middleware(req, res, next) {
-    //res.setHeader("Server", "firetail-API");
-    //res.removeHeader("X-Powered-By");
+    res.setHeader("Server", "firetail-API");
+    res.removeHeader("X-Powered-By");
     var _a = this, genMessage = _a.genMessage, yamlPathSt = _a.yamlPathSt, apiSpecPr = _a.apiSpecPr, apiSpec = _a.apiSpec, operationsFn = _a.operationsFn, dev = _a.dev, customBodyDecoders = _a.customBodyDecoders, decodedJwt = _a.decodedJwt, authCallbacks = _a.authCallbacks, apiKey = _a.apiKey, lambda = _a.lambda;
     var data = {
         apiKey: apiKey,
@@ -79,7 +79,7 @@ module.exports = function middleware(req, res, next) {
     var errorHandlerCalled = false;
     var errorHandler = function (err) {
         if (!areWeTestingWithJest()) {
-            console.error(err, new Error().stack);
+            //  console.error(err,new Error().stack)
         }
         if (errorHandlerCalled) {
             console.error("errorHandler was already called");
@@ -176,7 +176,7 @@ module.exports = function middleware(req, res, next) {
     };
     var end = function () {
         end = function () { };
-        res.end = function () { };
+        //
         var args = args2Arr(arguments);
         data.finishedAt = new Date();
         removeFromHead.forEach(function (key) {
@@ -210,6 +210,7 @@ module.exports = function middleware(req, res, next) {
             } // END if data.resBody
             stashFnCalls.end.call(res);
             stashFnCalls.end = function () { };
+            res.end = function () { };
             // TODO: may need to buffer the responce..
             // as we can override the responce with out
             // warning about app sending data down the wire
@@ -268,7 +269,8 @@ module.exports = function middleware(req, res, next) {
             req: req,
             genMessage: genMessage,
             authCallbacks: authCallbacks,
-            secName: secName
+            secName: secName,
+            data: data
         }); })).then(function (results) {
             results.forEach(function (result, index) { return req[secNames[index]] = result; });
             /*    if(scamaForEndPoint){

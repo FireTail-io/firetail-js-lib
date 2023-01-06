@@ -80,11 +80,11 @@ if(data.lambda){
 
     const req = https.request(options, res => {
 
-    res.setEncoding('utf8');
-            res.on('data', d => {
-              //  console.log(JSON.parse(d))
-              //console.log(Buffer.isBuffer(d),d.toString('utf8'))
-            })
+                res.setEncoding('utf8');
+                        res.on('data', d => {
+                          //  console.log(JSON.parse(d))
+                          //console.log(Buffer.isBuffer(d),d.toString('utf8'))
+                        })
           })
           req.write(JSON.stringify(payload))
           req.on('error', error => {console.error(error)})

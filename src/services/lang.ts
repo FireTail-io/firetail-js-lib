@@ -1,6 +1,7 @@
 
 const errMessages = {
   dev:{
+    missingAuthorizationToken:headerName=>`The authorization value needs to be in header or url as "${headerName}"`,
     missingJWTtoken:"No authorization token provided",
     notJWTBearer:"token dont not start with 'bearer: '",
     urlNotInYaml:({url,yamlPathSt})=>`${url} was NOT in ${yamlPathSt}`,
@@ -30,6 +31,7 @@ const errMessages = {
     appContentTypeNotInYaml:replyContentType=>`no schema definition was found for "${replyContentType}"`,
     noCustomBodyDecoder:replyContentType=>`no customBodyDecoder was found for "${replyContentType}"`,
     problemWithCustomBodyDecoder:replyContentType=>`"${replyContentType}" decoder has failed`,
+    valueForbidden:name=>`The key of "${name}" in your request body, is not part of your openApi`
   },
   prod:{
     badOptionYamlPath:yamlPath=>"yamlPath is not validat:e: "+JSON.stringify(yamlPath),
