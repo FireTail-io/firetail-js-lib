@@ -1,6 +1,6 @@
 {
   "name": "@public.firetail.io/firetail-api",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "",
   "main": "./dist/index.js",
   "typings": "./index.d.ts",
