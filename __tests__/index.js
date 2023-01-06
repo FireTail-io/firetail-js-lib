@@ -686,7 +686,7 @@ describe('test Firetail:Serverless', () => {
           body: JSON.stringify(data),
         };
       });
-
+      
       const cLog = console.log
 
       console.log = (txt)=>{

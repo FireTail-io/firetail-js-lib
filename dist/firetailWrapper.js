@@ -1,4 +1,3 @@
-"use strict";
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -10,7 +9,6 @@ var __assign = (this && this.__assign) || function () {
     };
     return __assign.apply(this, arguments);
 };
-Object.defineProperty(exports, "__esModule", { value: true });
 function genReq(override) {
     if (override === void 0) { override = {}; }
     var req = {
@@ -18,10 +16,8 @@ function genReq(override) {
         originalUrl: "/",
         params: {},
         query: {},
-        headers: {},
         get: function (key) {
             //'Content-Type'
-            return "";
         }
     };
     var headers = {};
@@ -31,7 +27,6 @@ function genReq(override) {
     return req; // END return
 } // END req
 function genRes(override) {
-    console.log("override:".concat(typeof override), override);
     var res = {
         setHeader: function () { },
         removeHeader: function () { },
@@ -54,18 +49,16 @@ function genRes(override) {
     // middleware references then but Lamdba never calls them..
     // but Jest will not see they a re every run
     res.end();
-    res.send("");
-    res.json({});
-    res.__data = undefined;
+    res.send();
+    res.json();
     return Object.assign(res, override);
 } // END genRes
-function firetailwrapper(next) {
-    var firetailMiddleware = this;
-    var instance = function (event, context) {
+function firetailWrapper(next) {
+    firetailMiddleware = this;
+    return function (event, context) {
         return new Promise(function (resolve, reject) {
             var protocol = event.requestContext.http ? "http" : "https";
-            var ip = event.requestContext.identity ?
-                event.requestContext.identity.sourceIp
+            var ip = event.requestContext.identity ? event.requestContext.identity.sourceIp
                 : event.requestContext[protocol].sourceIp;
             var req = genReq({
                 method: event.httpMethod || event.requestContext.http.method,
@@ -122,6 +115,6 @@ function firetailwrapper(next) {
             }); // END firetailMiddleware
         }); // END Promise
     };
-} // END firetailwrapper
-module.exports = firetailwrapper;
+} // END firetailWrapper
+module.exports = firetailWrapper;
 //# sourceMappingURL=firetailWrapper.js.map

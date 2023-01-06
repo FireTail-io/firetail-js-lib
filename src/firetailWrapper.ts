@@ -1,40 +1,11 @@
-import {
-  Handler,
-  APIGatewayProxyEventV2,
-  APIGatewayProxyResultV2,
-} from 'aws-lambda';
-
-type AwsRes = {
-  statusCode:Number,
-  body:String,
-  headers?:Object
-}
-
-type Req = {
-   method?: string,
-   originalUrl?: string,
-   params?: object,
-   query?: object,
-   headers?:object,
-   get?:(key:string)=>string
-}// END type Req
-
-type Event = {
-  requestContext:{
-    http:boolean
-  }
-}
-
-function genReq(override:Req={}) {
-  const req:Req = {
+function genReq(override={}) {
+  const req = {
    method: 'GET',
    originalUrl:"/",
    params: {},
    query: {},
-   headers:{},
    get:(key)=>{
        //'Content-Type'
-       return ""
    }
  }
 
@@ -50,7 +21,6 @@ function genReq(override:Req={}) {
 } // END req
 
 function genRes(override) {
-  console.log(`override:${typeof override}`,override)
   const res = {
     setHeader:()=>{},
     removeHeader:()=>{},
@@ -61,11 +31,11 @@ function genRes(override) {
      return res
    },
    end:()=>res,
-   send:(x:string)=>{
+   send:(x)=>{
      res.__data = res.__data || x;
      return res
    },
-   json:(x:object)=>{
+   json:(x)=>{
      res.__data = x;
      return res
    }
@@ -73,27 +43,21 @@ function genRes(override) {
  // middleware references then but Lamdba never calls them..
  // but Jest will not see they a re every run
  res.end();
- res.send("");
- res.json({});
- res.__data = undefined;
+ res.send();
+ res.json();
    return Object.assign(res,override)
 } // END genRes
 
 
-type ProxyHandler = Handler<APIGatewayProxyEventV2, APIGatewayProxyResultV2>;
-
-
-function firetailwrapper(next:Function){
-
-  const firetailMiddleware:Function = this;
-  const instance:ProxyHandler = (event:Object,context:Object):Promise<AwsRes>=> {
-    return new Promise((resolve:Function, reject:Function):void=>{
+function firetailWrapper(next){
+  firetailMiddleware = this;
+  return (event,context)=> {
+    return new Promise((resolve, reject)=>{
 
       const protocol = event.requestContext.http ? "http" : "https"
 
-      const ip: string = event.requestContext.identity ?
-                         event.requestContext.identity.sourceIp
-                       : event.requestContext[protocol].sourceIp
+      const ip = event.requestContext.identity ? event.requestContext.identity.sourceIp
+                                               : event.requestContext[protocol].sourceIp
 
       const req = genReq({
          method : event.httpMethod || event.requestContext.http.method,
@@ -120,13 +84,13 @@ function firetailwrapper(next:Function){
         }
       });
 
-      let callHasErrored: boolean = true
+      let callHasErrored = true
       firetailMiddleware(req,res,()=>{
         let result = next(event,context)
         if( ! result.then){
           result = Promise.resolve(result)
         }
-        result.then((val:{statusCode:number,body:string,headers?:[string]})=>{
+        result.then(val=>{
           callHasErrored = false
        if(val){
 
@@ -156,5 +120,5 @@ function firetailwrapper(next:Function){
       }) // END firetailMiddleware
     }) // END Promise
   }
-} // END firetailwrapper
-module.exports = firetailwrapper
+} // END firetailWrapper
+module.exports = firetailWrapper
