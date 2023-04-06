@@ -1,0 +1,67 @@
+{
+  "name": "@public.firetail.io/firetail-api",
+  "version": "0.5.2",
+  "description": "",
+  "author": "Timo Rüppell <timo@firetail.io>",
+  "main": "./dist/index.js",
+  "typings": "./dist/index.d.ts",
+  "license": "LGPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/firetail-io/firetail-js-lib.git"
+  },
+  "bugs": {
+    "url": "https://github.com/firetail-io/firetail-js-lib/issues"
+  },
+  "homepage": "https://github.com/firetail-io/firetail-js-lib#readme",
+  "dependencies": {
+    "@apidevtools/swagger-parser": "10.1.0",
+    "ajv": "8.12.0",
+    "lodash": "4.17.21",
+    "node-fetch": "2.6.9",
+    "openapi-request-validator": "12.1.0",
+    "openapi-response-validator": "12.1.0",
+    "openapi-security-handler": "12.1.0",
+    "type-is": "1.6.18"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "8.10.109",
+    "@types/express": "github:types/express",
+    "@types/express-serve-static-core": "4.17.33",
+    "@types/http-server": "0.12.1",
+    "@types/jest": "29.4.0",
+    "@types/node": "18.11.18",
+    "@typescript-eslint/eslint-plugin": "5.51.0",
+    "@typescript-eslint/parser": "5.51.0",
+    "eslint": "8.34.0",
+    "eslint-config-standard": "17.0.0",
+    "eslint-plugin-import": "2.27.5",
+    "eslint-plugin-n": "15.6.1",
+    "eslint-plugin-node": "11.1.0",
+    "eslint-plugin-promise": "6.1.1",
+    "express": "4.18.2",
+    "jest": "29.4.3",
+    "nodemon": "2.0.19",
+    "ts-jest": "29.0.5",
+    "ts-node": "10.9.1",
+    "typescript": "4.9.5"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "tsc --watch",
+    "lint": "npx eslint src/*",
+    "docker:build": "docker build --no-cache -t test-build:latest -f build_setup/Dockerfile .",
+    "docker:start": "docker run -it -p 3001:3001 -v ${PWD}/src:/code/src -v ${PWD}/sample:/code/sample -v ${PWD}/__tests__:/code/__tests__ -v ${PWD}/dist:/code/dist test-build:latest",
+    "test": "jest --no-cache",
+    "test:go": "npm test -- --watch --coverage",
+    "test:update": "npm test -- --updateSnapshot",
+    "test:cover": "npm test -- --verbose --coverage --detectOpenHandles",
+    "test:watch": "npm test -- --watch --runInBand"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
